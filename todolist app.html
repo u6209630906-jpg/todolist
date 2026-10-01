@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            /* DARK THEME (default) */
+            --bg-base-1: #0a0a14;
+            --bg-base-2: #05050a;
+            --bg-radial-1: #2a2a3e;
+            --bg-radial-2: #1a1a2e;
+            --blob-1: #3a3a5c;
+            --blob-2: #2c3e5c;
+            --blob-3: #3a2c4a;
+            --blob-opacity: 0.35;
+
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-bg-hover: rgba(255, 255, 255, 0.09);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-strong: rgba(255, 255, 255, 0.22);
+            --glass-highlight: rgba(255, 255, 255, 0.06);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            --glass-inner-top: rgba(255, 255, 255, 0.08);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.02);
+
+            --header-bg: rgba(10, 10, 20, 0.55);
+            --header-border: rgba(255, 255, 255, 0.08);
+
+            --text-primary: rgba(255, 255, 255, 0.92);
+            --text-secondary: rgba(255, 255, 255, 0.55);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+
+            --btn-primary-bg: rgba(255, 255, 255, 0.92);
+            --btn-primary-text: #0a0a14;
+            --btn-primary-hover: #ffffff;
+
+            --checkbox-bg: rgba(255, 255, 255, 0.03);
+            --checkbox-border: rgba(255, 255, 255, 0.3);
+            --checkbox-hover-border: rgba(255, 255, 255, 0.6);
+            --checkbox-hover-bg: rgba(255, 255, 255, 0.08);
+            --checkbox-checked-bg: rgba(255, 255, 255, 0.9);
+            --checkbox-check-color: #0a0a14;
+            --checkbox-checked-shadow: rgba(255, 255, 255, 0.3);
+
+            --input-bg: rgba(255, 255, 255, 0.06);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-focus-bg: rgba(255, 255, 255, 0.1);
+            --input-focus-border: rgba(255, 255, 255, 0.3);
+            --input-focus-ring: rgba(255, 255, 255, 0.05);
+
+            --icon-btn-hover: rgba(255, 255, 255, 0.08);
+            --icon-btn-danger-hover: rgba(255, 80, 70, 0.1);
+            --icon-btn-danger-color: #ff6b6b;
+
+            --danger-bg: rgba(255, 80, 70, 0.9);
+            --danger-bg-hover: rgba(255, 80, 70, 1);
+            --danger-icon-bg: rgba(255, 80, 70, 0.12);
+            --danger-icon-border: rgba(255, 80, 70, 0.2);
+            --danger-icon-color: #ff6b6b;
+
+            --modal-bg: rgba(20, 20, 30, 0.7);
+            --modal-border: rgba(255, 255, 255, 0.15);
+            --modal-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+
+            --toast-bg: rgba(20, 20, 30, 0.75);
+            --toast-border: rgba(255, 255, 255, 0.15);
+            --toast-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+
+            --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+
+            --sparkle-color: rgba(255, 255, 255, 0.9);
+            --sparkle-glow: rgba(255, 255, 255, 0.8);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.06);
+            --theme-toggle-border: rgba(255, 255, 255, 0.1);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.1);
+
+            --edit-input-bg: rgba(255, 255, 255, 0.1);
+            --edit-input-border: rgba(255, 255, 255, 0.25);
+        }
+
+        /* LIGHT THEME */
+        body.light {
+            --bg-base-1: #f0f2f5;
+            --bg-base-2: #e4e7ec;
+            --bg-radial-1: #dbeafe;
+            --bg-radial-2: #fce7f3;
+            --blob-1: #bfdbfe;
+            --blob-2: #fbcfe8;
+            --blob-3: #ddd6fe;
+            --blob-opacity: 0.55;
+
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg-hover: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-border-strong: rgba(255, 255, 255, 0.95);
+            --glass-highlight: rgba(255, 255, 255, 0.5);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --glass-inner-top: rgba(255, 255, 255, 0.9);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.3);
+
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --header-border: rgba(0, 0, 0, 0.06);
+
+            --text-primary: rgba(15, 23, 42, 0.92);
+            --text-secondary: rgba(15, 23, 42, 0.55);
+            --text-tertiary: rgba(15, 23, 42, 0.4);
+
+            --btn-primary-bg: rgba(15, 23, 42, 0.9);
+            --btn-primary-text: #ffffff;
+            --btn-primary-hover: rgba(15, 23, 42, 1);
+
+            --checkbox-bg: rgba(15, 23, 42, 0.03);
+            --checkbox-border: rgba(15, 23, 42, 0.25);
+            --checkbox-hover-border: rgba(15, 23, 42, 0.5);
+            --checkbox-hover-bg: rgba(15, 23, 42, 0.05);
+            --checkbox-checked-bg: rgba(15, 23, 42, 0.9);
+            --checkbox-check-color: #ffffff;
+            --checkbox-checked-shadow: rgba(15, 23, 42, 0.2);
+
+            --input-bg: rgba(255, 255, 255, 0.5);
+            --input-border: rgba(15, 23, 42, 0.1);
+            --input-focus-bg: rgba(255, 255, 255, 0.8);
+            --input-focus-border: rgba(15, 23, 42, 0.25);
+            --input-focus-ring: rgba(15, 23, 42, 0.05);
+
+            --icon-btn-hover: rgba(15, 23, 42, 0.06);
+            --icon-btn-danger-hover: rgba(220, 38, 38, 0.08);
+            --icon-btn-danger-color: #dc2626;
+
+            --danger-bg: rgba(220, 38, 38, 0.9);
+            --danger-bg-hover: rgba(220, 38, 38, 1);
+            --danger-icon-bg: rgba(220, 38, 38, 0.08);
+            --danger-icon-border: rgba(220, 38, 38, 0.15);
+            --danger-icon-color: #dc2626;
+
+            --modal-bg: rgba(255, 255, 255, 0.75);
+            --modal-border: rgba(255, 255, 255, 0.9);
+            --modal-shadow: 0 25px 60px rgba(31, 38, 135, 0.15), 0 10px 20px rgba(0, 0, 0, 0.06);
+            --modal-overlay: rgba(15, 23, 42, 0.25);
+
+            --toast-bg: rgba(255, 255, 255, 0.85);
+            --toast-border: rgba(255, 255, 255, 0.9);
+            --toast-shadow: 0 10px 40px rgba(31, 38, 135, 0.12);
+
+            --scrollbar-thumb: rgba(15, 23, 42, 0.1);
+            --scrollbar-thumb-hover: rgba(15, 23, 42, 0.2);
+
+            --sparkle-color: rgba(15, 23, 42, 0.8);
+            --sparkle-glow: rgba(99, 102, 241, 0.5);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.5);
+            --theme-toggle-border: rgba(255, 255, 255, 0.8);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.7);
+
+            --edit-input-bg: rgba(255, 255, 255, 0.85);
+            --edit-input-border: rgba(15, 23, 42, 0.2);
+        }
+
+        html, body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-primary);
+        }
+
+        /* === BACKGROUND === */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(ellipse at 20% 0%, var(--bg-radial-1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, var(--bg-radial-2) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-base-1) 0%, var(--bg-base-2) 100%);
+            transition: background 0.6s ease;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: var(--blob-opacity);
+            animation: float 25s infinite ease-in-out;
+            z-index: -1;
+            transition: opacity 0.6s ease, background 0.6s ease;
+        }
+
+        .blob-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--blob-1) 0%, transparent 70%);
+            top: -200px; left: -150px;
+        }
+        .blob-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, var(--blob-2) 0%, transparent 70%);
+            bottom: -150px; right: -100px;
+            animation-delay: -8s;
+        }
+        .blob-3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, var(--blob-3) 0%, transparent 70%);
+            top: 40%; left: 50%;
+            opacity: 0.25;
+            animation-delay: -15s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.05); }
+            66% { transform: translate(-30px, 40px) scale(0.97); }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.04;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* === GLASS SYSTEM === */
+        .glass {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            box-shadow:
+                var(--glass-shadow),
+                inset 0 1px 0 0 var(--glass-inner-top),
+                inset 0 -1px 0 0 var(--glass-inner-bottom);
+            overflow: hidden;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, 
+                var(--glass-highlight) 0%, 
+                rgba(255, 255, 255, 0.02) 40%,
+                transparent 100%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+            opacity: 0.06;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--header-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-bottom: 0.5px solid var(--header-border);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        /* === ANIMATIONS === */
+        .fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .fade-out {
+            animation: fadeOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .scale-in {
+            animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1) translateX(0); }
+            100% { opacity: 0; transform: scale(0.95) translateX(20px); max-height: 0; padding: 0; margin: 0; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes checkPop {
+            0% { transform: scale(0) rotate(-45deg); }
+            60% { transform: scale(1.15) rotate(-45deg); }
+            100% { transform: scale(1) rotate(-45deg); }
+        }
+        @keyframes sparkle {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1); }
+        }
+
+        /* === THEME TOGGLE === */
+        .theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 20;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--theme-toggle-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid var(--theme-toggle-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-shadow);
+        }
+        .theme-toggle:hover {
+            background: var(--theme-toggle-hover);
+            transform: scale(1.05);
+        }
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+        .theme-toggle svg {
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .theme-toggle.rotating svg {
+            transform: rotate(360deg);
+        }
+
+        /* === PROJECT CARDS === */
+        .project-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            background: var(--glass-bg-hover);
+            transform: translateY(-1px);
+            border-color: var(--glass-border-strong);
+        }
+        .project-card:active {
+            transform: scale(0.99);
+        }
+
+        .project-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+        .project-icon::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+            pointer-events: none;
+        }
+
+        /* === TASK ITEMS === */
+        .task-item {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .task-item:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .task-text {
+            cursor: default;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        .task-text.hint {
+            cursor: text;
+        }
+        .task-text.hint:hover {
+            color: var(--text-primary);
+        }
+
+        .task-edit-input {
+            flex: 1;
+            background: var(--edit-input-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 0.5px solid var(--edit-input-border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .task-edit-input:focus {
+            background: var(--input-focus-bg);
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        /* === CHECKBOX === */
+        .ios-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 1.5px solid var(--checkbox-border);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-shrink: 0;
+            background: var(--checkbox-bg);
+        }
+        .ios-checkbox:hover {
+            border-color: var(--checkbox-hover-border);
+            background: var(--checkbox-hover-bg);
+        }
+        .ios-checkbox:checked {
+            background: var(--checkbox-checked-bg);
+            border-color: transparent;
+            box-shadow: 0 0 0 1px var(--checkbox-checked-shadow), 0 2px 8px var(--checkbox-checked-shadow);
+        }
+        .ios-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 7.5px;
+            top: 3.5px;
+            width: 5px;
+            height: 10px;
+            border: solid var(--checkbox-check-color);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            animation: checkPop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* === BUTTONS === */
+        .btn-primary {
+            background: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover { background: var(--btn-primary-hover); transform: translateY(-1px); }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            border: 0.5px solid var(--glass-border);
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: var(--glass-bg-hover); }
+        .btn-secondary:active { transform: scale(0.97); }
+
+        .btn-danger {
+            background: var(--danger-bg);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.25);
+        }
+        .btn-danger:hover { background: var(--danger-bg-hover); }
+        .btn-danger:active { transform: scale(0.97); }
+
+        /* === INPUTS === */
+        .ios-input {
+            background: var(--input-bg);
+            border: 0.5px solid var(--input-border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            color: var(--text-primary);
+            font-size: 16px;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .ios-input::placeholder { color: var(--text-tertiary); }
+        .ios-input:focus {
+            background: var(--input-focus-bg);
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        /* === ADD TASK BAR === */
+        .add-task-bar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 6px 6px 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow:
+                var(--glass-shadow),
+                inset 0 1px 0 var(--glass-inner-top);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .add-task-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, var(--glass-highlight), transparent);
+            pointer-events: none;
+        }
+        .add-task-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            padding: 10px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .add-task-bar input::placeholder { color: var(--text-tertiary); }
+
+        .add-btn {
+            background: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 13px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+        .add-btn:hover { background: var(--btn-primary-hover); }
+        .add-btn:active { transform: scale(0.97); }
+
+        /* === ICON BUTTONS === */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover {
+            color: var(--text-primary);
+            background: var(--icon-btn-hover);
+        }
+        .icon-btn.danger:hover {
+            color: var(--icon-btn-danger-color);
+            background: var(--icon-btn-danger-hover);
+        }
+        .icon-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.3;
+        }
+        .icon-btn.disabled:hover {
+            background: transparent;
+            color: var(--text-tertiary);
+        }
+
+        /* === MODAL === */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.4s ease;
+        }
+        @media (min-width: 640px) {
+            .modal-overlay { align-items: center; }
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            backdrop-filter: blur(50px) saturate(200%);
+            -webkit-backdrop-filter: blur(50px) saturate(200%);
+            border: 0.5px solid var(--modal-border);
+            border-radius: 24px;
+            padding: 28px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow:
+                var(--modal-shadow),
+                inset 0 1px 0 var(--glass-inner-top);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, var(--glass-highlight-strong), transparent);
+            pointer-events: none;
+        }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--toast-border);
+            padding: 14px 22px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--toast-shadow);
+            z-index: 200;
+            animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+
+        /* === BADGE === */
+        .badge {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 0.5px solid var(--glass-border);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+
+        /* === EMPTY STATE === */
+        .empty-icon {
+            animation: floatIcon 4s ease-in-out infinite;
+            filter: grayscale(0.3);
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* === SCROLLBAR === */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+        /* === SPARKLE === */
+        .sparkle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            background: var(--sparkle-color);
+            box-shadow: 0 0 12px var(--sparkle-glow);
+            animation: sparkle 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .hidden { display: none !important; }
+
+        .back-btn {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .back-btn:hover { background: var(--glass-bg-hover); }
+
+        /* Danger icon container in modal */
+        .danger-icon-container {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--danger-icon-bg);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--danger-icon-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-canvas"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambia tema">
+        <svg id="themeIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+    </button>
+
+    <div id="app">
+        <!-- MAIN VIEW -->
+        <div id="mainView">
+            <header class="app-header">
+                <div style="max-width: 640px; margin: 0 auto; padding: 24px 20px 20px;">
+                    <h1 style="font-size: 32px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: 4px;">Progetti</h1>
+                    <p style="font-size: 14px; color: var(--text-secondary); font-weight: 400;">Organizza le tue attività</p>
+                </div>
+            </header>
+
+            <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
+                <button onclick="showNewProjectModal()" class="glass" style="width: 100%; border-radius: 18px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-secondary); cursor: pointer; transition: all 0.3s; margin-bottom: 16px; font-size: 15px; font-weight: 500; letter-spacing: 0.2px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Nuovo Progetto
+                </button>
+
+                <div id="projectsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+                <div id="emptyProjects" class="hidden" style="text-align: center; padding: 80px 20px;">
+                    <div class="empty-icon" style="font-size: 56px; margin-bottom: 20px; opacity: 0.7;">📋</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Nessun progetto</h3>
+                    <p style="color: var(--text-secondary); font-size: 14px;">Crea il tuo primo progetto per iniziare</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAIL VIEW -->
+        <div id="detailView" class="hidden">
+            <header class="app-header">
+                <div style="max-width: 640px; margin: 0 auto; padding: 16px 20px 20px;">
+                    <button onclick="goBack()" class="back-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Progetti
+                    </button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+                        <h2 id="projectTitle" style="font-size: 30px; font-weight: 700; letter-spacing: -0.6px;"></h2>
+                        <span id="taskCounter" class="badge"></span>
+                    </div>
+                </div>
+            </header>
+
+            <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
+                <div class="add-task-bar" style="margin-bottom: 20px;">
+                    <input id="taskInput" type="text" placeholder="Aggiungi attività..." onkeydown="if(event.key==='Enter') addTask()">
+                    <button onclick="addTask()" class="add-btn">Aggiungi</button>
+                </div>
+
+                <div id="taskList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+                <div id="emptyTasks" class="hidden" style="text-align: center; padding: 80px 20px;">
+                    <div class="empty-icon" style="font-size: 56px; margin-bottom: 20px; opacity: 0.7;">✨</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Tutto fatto</h3>
+                    <p style="color: var(--text-secondary); font-size: 14px;">Aggiungi una nuova attività qui sopra</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="newProjectModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px;">Nuovo Progetto</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Scegli un nome per il tuo progetto</p>
+            <input id="newProjectName" type="text" class="ios-input" placeholder="Es. Lavoro, Casa, Studio..." onkeydown="if(event.key==='Enter') createProject()">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="hideNewProjectModal()" class="btn-secondary" style="flex: 1;">Annulla</button>
+                <button onclick="createProject()" class="btn-primary" style="flex: 1;">Crea</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="danger-icon-container">
+                    <svg width="26" height="26" fill="none" stroke="var(--danger-icon-color)" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.2px;">Eliminare il progetto?</h3>
+                <p id="deleteProjectName" style="color: var(--text-secondary); font-size: 14px;"></p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="hideDeleteModal()" class="btn-secondary" style="flex: 1;">Annulla</button>
+                <button onclick="confirmDeleteProject()" class="btn-danger" style="flex: 1;">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = { projects: [], currentProjectId: null, theme: 'dark' };
+        let audioCtx = null;
+        let deleteTargetId = null;
+
+        // === THEME ===
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light');
+            } else {
+                document.body.classList.remove('light');
+            }
+            updateThemeIcon(theme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (theme === 'light') {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+            }
+        }
+
+        function toggleTheme() {
+            const btn = document.getElementById('themeToggle');
+            btn.classList.add('rotating');
+            setTimeout(() => btn.classList.remove('rotating'), 500);
+
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(state.theme);
+            saveState();
+        }
+
+        // === AUDIO ===
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+
+        function playCompleteSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.07);
+                    gain.gain.setValueAtTime(0, now + i * 0.07);
+                    gain.gain.linearRampToValueAtTime(0.1, now + i * 0.07 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.6);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(now + i * 0.07);
+                    osc.stop(now + i * 0.07 + 0.6);
+                });
+            } catch(e) {}
+        }
+
+        function playAddSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(now); osc.stop(now + 0.15);
+            } catch(e) {}
+        }
+
+        // === STATE ===
+        function loadState() {
+            const saved = localStorage.getItem('todoAppState_v4');
+            if (saved) {
+                state = JSON.parse(saved);
+                if (!state.theme) state.theme = 'dark';
+            }
+        }
+        function saveState() {
+            localStorage.setItem('todoAppState_v4', JSON.stringify(state));
+        }
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        const projectIcons = ['📁', '📂', '🗂️', '📌', '🎯', '💼', '🚀', '⭐', '💡', '🎨', '🎵', '📚'];
+        function getProjectIcon(project) {
+            const hash = project.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+            return projectIcons[hash % projectIcons.length];
+        }
+
+        // === RENDER ===
+        function renderProjects() {
+            const list = document.getElementById('projectsList');
+            const empty = document.getElementById('emptyProjects');
+
+            if (state.projects.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            list.innerHTML = state.projects.map((project, index) => {
+                const taskCount = project.tasks.length;
+                const icon = getProjectIcon(project);
+                const canDelete = taskCount === 0;
+
+                return `
+                    <div class="project-card glass fade-in" style="border-radius: 18px; padding: 14px 16px; animation-delay: ${index * 0.04}s" onclick="openProject('${project.id}')">
+                        <div style="display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;">
+                            <div class="project-icon">${icon}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.2px;">${escapeHtml(project.name)}</h3>
+                                <p style="font-size: 12px; color: var(--text-secondary);">
+                                    ${taskCount === 0 ? '<span style="color: var(--text-tertiary);">nessun task</span>' : `${taskCount} attiv${taskCount === 1 ? 'à' : 'à'}`}
+                                </p>
+                            </div>
+                            <button onclick="event.stopPropagation(); ${canDelete ? `showDeleteModal('${project.id}')` : `showCannotDeleteToast()`}" 
+                                class="icon-btn ${canDelete ? 'danger' : 'disabled'}"
+                                title="${canDelete ? 'Elimina' : 'Non eliminabile'}">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTasks() {
+            const project = state.projects.find(p => p.id === state.currentProjectId);
+            if (!project) return;
+
+            const list = document.getElementById('taskList');
+            const empty = document.getElementById('emptyTasks');
+            const counter = document.getElementById('taskCounter');
+
+            counter.textContent = `${project.tasks.length} attiv${project.tasks.length === 1 ? 'à' : 'à'}`;
+
+            if (project.tasks.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            list.innerHTML = project.tasks.map((task, index) => `
+                <div id="task-${task.id}" class="task-item glass fade-in" style="border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; animation-delay: ${index * 0.03}s">
+                    <input type="checkbox" class="ios-checkbox" onchange="completeTask('${task.id}', this)">
+                    <span id="task-text-${task.id}" class="task-text hint" style="flex: 1; font-size: 15px; color: var(--text-primary); letter-spacing: -0.1px;" ondblclick="startEditTask('${task.id}')">${escapeHtml(task.text)}</span>
+                    <button onclick="deleteTask('${task.id}')" class="icon-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // === EDIT TASK ===
+        function startEditTask(taskId) {
+            const project = state.projects.find(p => p.id === state.currentProjectId);
+            if (!project) return;
+            const task = project.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const textEl = document.getElementById(`task-text-${taskId}`);
+            if (!textEl || textEl.tagName === 'INPUT') return;
+
+            const currentValue = task.text;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'task-edit-input';
+            input.value = currentValue;
+            input.setAttribute('data-original', currentValue);
+
+            textEl.replaceWith(input);
+            input.focus();
+            input.select();
+
+            const commitEdit = () => {
+                const newValue = input.value.trim();
+                if (newValue && newValue !== currentValue) {
+                    task.text = newValue;
+                    saveState();
+                }
+                renderTasks();
+            };
+
+            const cancelEdit = () => {
+                renderTasks();
+            };
+
+            input.addEventListener('blur', commitEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    input.value = currentValue;
+                    input.removeEventListener('blur', commitEdit);
+                    input.addEventListener('blur', cancelEdit, { once: true });
+                    input.blur();
+                }
+            });
+        }
+
+        // === NAVIGATION ===
+        function openProject(projectId) {
+            state.currentProjectId = projectId;
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            document.getElementById('projectTitle').textContent = project.name;
+            document.getElementById('mainView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('hidden');
+            renderTasks();
+            setTimeout(() => document.getElementById('taskInput').focus(), 100);
+        }
+
+        function goBack() {
+            state.currentProjectId = null;
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('mainView').classList.remove('hidden');
+            renderProjects();
+        }
+
+        // === PROJECT MODALS ===
+        function showNewProjectModal() {
+            document.getElementById('newProjectModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('newProjectName').focus(), 100);
+        }
+        function hideNewProjectModal() {
+            document.getElementById('newProjectModal').classList.add('hidden');
+            document.getElementById('newProjectName').value = '';
+        }
+        function createProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) return;
+            state.projects.push({ id: generateId(), name, tasks: [] });
+            saveState();
+            renderProjects();
+            hideNewProjectModal();
+        }
+
+        function showDeleteModal(projectId) {
+            deleteTargetId = projectId;
+            const project = state.projects.find(p => p.id === projectId);
+            document.getElementById('deleteProjectName').textContent = `"${project.name}" verrà eliminato.`;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function hideDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            deleteTargetId = null;
+        }
+        function confirmDeleteProject() {
+            if (!deleteTargetId) return;
+            state.projects = state.projects.filter(p => p.id !== deleteTargetId);
+            saveState();
+            renderProjects();
+            hideDeleteModal();
+        }
+
+        function showCannotDeleteToast() {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <svg width="18" height="18" fill="none" stroke="var(--text-secondary)" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+                <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">Elimina prima tutte le attività</span>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // === TASK OPERATIONS ===
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const project = state.projects.find(p => p.id === state.currentProjectId);
+            if (!project) return;
+            project.tasks.push({ id: generateId(), text, createdAt: Date.now() });
+            saveState();
+            renderTasks();
+            input.value = '';
+            input.focus();
+            playAddSound();
+        }
+
+        function completeTask(taskId, checkboxEl) {
+            const project = state.projects.find(p => p.id === state.currentProjectId);
+            if (!project) return;
+            playCompleteSound();
+            createSparkles(checkboxEl);
+            const taskEl = document.getElementById(`task-${taskId}`);
+            if (taskEl) {
+                taskEl.classList.add('fade-out');
+                setTimeout(() => {
+                    project.tasks = project.tasks.filter(t => t.id !== taskId);
+                    saveState();
+                    renderTasks();
+                }, 500);
+            }
+        }
+
+        function deleteTask(taskId) {
+            const project = state.projects.find(p => p.id === state.currentProjectId);
+            if (!project) return;
+            const taskEl = document.getElementById(`task-${taskId}`);
+            if (taskEl) {
+                taskEl.classList.add('fade-out');
+                setTimeout(() => {
+                    project.tasks = project.tasks.filter(t => t.id !== taskId);
+                    saveState();
+                    renderTasks();
+                }, 500);
+            }
+        }
+
+        function createSparkles(element) {
+            const rect = element.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            for (let i = 0; i < 8; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 25 + Math.random() * 25;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                sparkle.style.left = cx + 'px';
+                sparkle.style.top = cy + 'px';
+                sparkle.style.setProperty('--tx', tx + 'px');
+                sparkle.style.setProperty('--ty', ty + 'px');
+                sparkle.style.width = (3 + Math.random() * 4) + 'px';
+                sparkle.style.height = sparkle.style.width;
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 700);
+            }
+        }
+
+        // === INIT ===
+        loadState();
+        applyTheme(state.theme);
+        renderProjects();
+    </script>
+</body>
+</html>
