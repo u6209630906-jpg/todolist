@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestore Giornata Gantt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .lane { height: 60px; }
+        .event-block { 
+            position: absolute; 
+            height: 50px; 
+            margin-top: 5px; 
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .event-block:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        .event-block.dragging { opacity: 0.9; box-shadow: 0 10px 15px rgba(0,0,0,0.3); z-index: 50 !important; border: 2px solid #111; }
+        
+        .resize-handle { width: 12px; height: 100%; z-index: 10; flex-shrink: 0; transition: background-color 0.2s; }
+        .resize-handle.left { cursor: w-resize; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+        .resize-handle.right { cursor: e-resize; border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+        .resize-handle:hover { background-color: rgba(0,0,0,0.2); }
+        
+        /* Custom scrollbar per l'area Gantt */
+        .scroll-area::-webkit-scrollbar { height: 12px; width: 12px; }
+        .scroll-area::-webkit-scrollbar-track { background: #f1f5f9; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid #f1f5f9; }
+        .scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col h-screen overflow-hidden text-gray-800">
+
+    <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between z-10 shadow-sm gap-4 shrink-0">
+        <div class="flex flex-wrap items-center space-x-4 gap-y-2 w-full sm:w-auto">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800">Gestore Settimana</h1>
+            <button onclick="window.addEvent()" class="flex items-center bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Nuovo Evento
+            </button>
+
+            <!-- Selettore Fascia Oraria -->
+            <div class="flex items-center space-x-2 text-sm ml-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200" title="Imposta orario visibile (non cancella eventi nascosti)">
+                <svg class="w-4 h-4 text-gray-500 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <select id="startHour" onchange="window.updateTimeRange()" class="bg-transparent border-none font-semibold text-gray-700 outline-none cursor-pointer">
+                    <!-- Generato via JS -->
+                </select>
+                <span class="text-gray-400 font-bold">-</span>
+                <select id="endHour" onchange="window.updateTimeRange()" class="bg-transparent border-none font-semibold text-gray-700 outline-none cursor-pointer">
+                    <!-- Generato via JS -->
+                </select>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+            <!-- Selettore Settimana -->
+            <div class="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 transition-all shadow-sm">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <input type="week" id="weekSelector" class="bg-transparent border-none outline-none text-sm font-semibold text-gray-700 cursor-pointer">
+            </div>
+            
+            <!-- Bottoni Import/Export -->
+            <div class="flex space-x-2">
+                <input type="file" id="fileInput" accept=".json" class="hidden" onchange="window.importJSON(event)">
+                <button onclick="document.getElementById('fileInput').click()" class="flex items-center text-gray-700 hover:text-gray-900 bg-white border border-gray-300 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm">
+                    <svg class="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span class="hidden sm:inline">Importa</span>
+                </button>
+                <button onclick="window.exportJSON()" class="flex items-center text-gray-700 hover:text-gray-900 bg-white border border-gray-300 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm">
+                    <svg class="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span class="hidden sm:inline">Esporta</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-hidden relative flex p-2 sm:p-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex overflow-hidden w-full relative">
+            
+            <!-- Container unico per lo scroll bidirezionale (Unisce Giorni e Griglia) -->
+            <div class="flex-1 overflow-auto scroll-area flex w-full relative" id="ganttScrollArea">
+                
+                <!-- Colonna Fissa (Giorni della Settimana) - Ora "appiccicata" a sinistra -->
+                <div class="w-24 sm:w-28 shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col z-40 sticky left-0 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                    <div class="h-12 border-b border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50 z-50">
+                        Giorno
+                    </div>
+                    <div id="daysContainer" class="flex-1 flex flex-col bg-gray-50">
+                        <!-- Generato via JS -->
+                    </div>
+                </div>
+
+                <!-- Area Griglia e Eventi -->
+                <div class="relative" id="ganttGrid">
+                    
+                    <!-- Intestazione delle Ore (Asse X) - "Appiccicata" in alto -->
+                    <div class="flex border-b border-gray-200 bg-gray-50 sticky top-0 z-30 h-12 w-full shadow-sm" id="hoursHeader">
+                        <!-- Generato via JS -->
+                    </div>
+
+                    <!-- Griglia di Sfondo (Linee) -->
+                    <div class="relative w-full" style="height: 420px;" id="gridBackground">
+                        <!-- Generato via JS -->
+                    </div>
+                    
+                    <!-- Contenitore Eventi -->
+                    <div id="eventsContainer" class="absolute top-12 left-0 w-full h-[420px] pointer-events-none">
+                        <!-- Eventi generati via JS -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Pannello Laterale (Dettaglio Giorno) -->
+        <div id="dayPanel" class="absolute top-0 right-0 h-full w-72 sm:w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-gray-200">
+            <div class="px-4 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 shrink-0">
+                <h2 id="dayPanelTitle" class="text-lg font-bold text-gray-800">Lunedì</h2>
+                <div class="flex space-x-2">
+                    <!-- Tasto Copia Giornata -->
+                    <button id="copyDayBtn" onclick="window.copyDayToClipboard()" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100 transition-colors" title="Copia eventi di questo giorno">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </button>
+                    <!-- Tasto Incolla Giornata (Nascosto di default) -->
+                    <button id="pasteDayBtn" onclick="window.pasteDayFromClipboard()" class="text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-100 transition-colors hidden" title="Incolla eventi qui">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </button>
+                    <!-- Tasto Chiudi -->
+                    <button onclick="window.closeDayPanel()" class="text-gray-500 hover:text-gray-800 p-1.5 rounded-full hover:bg-gray-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="dayPanelContent" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
+                <!-- Generato via JS -->
+            </div>
+        </div>
+    </main>
+
+    <div id="editModal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-gray-800">Dettagli Evento</h2>
+                <button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Titolo -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Titolo</label>
+                    <input type="text" id="modalTitle" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm" placeholder="Es: Riunione, Palestra, Studio...">
+                </div>
+
+                <!-- Descrizione -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Descrizione / Appunti</label>
+                    <textarea id="modalDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm resize-none" placeholder="Aggiungi dettagli o note..."></textarea>
+                </div>
+                
+                <!-- Colore -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Colore</label>
+                    <div class="flex flex-wrap gap-2.5" id="modalColors">
+                        <!-- Generato via JS -->
+                    </div>
+                </div>
+                
+                <!-- Bottoni Azione -->
+                <div class="flex justify-between pt-5 mt-2 border-t border-gray-100">
+                    <button onclick="window.deleteEvent()" class="flex items-center text-red-600 font-medium hover:bg-red-50 px-3 py-2 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Elimina
+                    </button>
+                    <div class="space-x-2 flex">
+                        <button onclick="window.closeModal()" class="px-4 py-2 border border-gray-300 font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                            Annulla
+                        </button>
+                        <button onclick="window.saveModal()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                            Salva
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale Copia Giornata -->
+        <div id="copyDayModal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 transition-opacity">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform transition-all">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-lg font-bold text-gray-800">Copia Giornata</h2>
+                    <button onclick="window.closeCopyDayModal()" class="text-gray-400 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-600">Copia tutti gli eventi di <strong id="copySourceDayName">questo giorno</strong> in una nuova data.</p>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Giorno di destinazione</label>
+                        <select id="copyTargetDate" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                            <!-- Generato via JS -->
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end pt-4 mt-2 border-t border-gray-100 space-x-2">
+                        <button onclick="window.closeCopyDayModal()" class="px-4 py-2 border border-gray-300 font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                            Annulla
+                        </button>
+                        <button onclick="window.executeCopyDay()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                            Copia
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+            import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+            import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+            // Variabili di configurazione e costanti
+            const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#64748b'];
+            const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+            const LANE_HEIGHT = 60;
+            const PIXELS_PER_MINUTE = 2; // 120px l'ora = 2px al minuto
+            const MIN_DURATION = 15;
+
+            // Stato dell'applicazione
+            let events = [];
+            let currentWeekStr = '';
+            let weekDates = [];
+            let displayStartHour = 8;
+            let displayEndHour = 20;
+            let editingEventId = null;
+            let selectedColor = COLORS[5];
+            let currentPanelDate = null;
+            let currentPanelTitle = null;
+            let dragInfo = null;
+            let clipboardEvents = null; // Memorizza gli eventi copiati per poterli incollare
+
+            // Variabili Firebase
+            let auth = null;
+            let db = null;
+
+        let userId = null;
+        let isFirebaseActive = false;
+        let appId = 'default-app-id';
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            initColors();
+            loadSettings();
+            initTimeSelectors();
+            initGrid();
+            
+            // Imposta la settimana corrente senza problemi di fuso orario
+            const today = new Date();
+            currentWeekStr = getWeekString(today);
+            document.getElementById('weekSelector').value = currentWeekStr;
+            updateWeekDates();
+            
+            // Gestione Drag & Drop globale
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+
+            document.getElementById('weekSelector').addEventListener('change', (e) => {
+                currentWeekStr = e.target.value;
+                updateWeekDates();
+            });
+
+            // Avvio intelligente: Cloud se in piattaforma, Locale se scaricato
+            await initStorage();
+        });
+
+        async function initStorage() {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    isFirebaseActive = true;
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            loadFromFirestore();
+                        }
+                    });
+                } catch (e) {
+                    console.error("Firebase init error, fallback a LocalStorage:", e);
+                    loadEventsFromLocalFallback();
+                }
+            } else {
+                console.log("App aperta localmente. Uso LocalStorage.");
+                loadEventsFromLocalFallback();
+            }
+        }
+
+        function loadFromFirestore() {
+            if (!userId) return;
+            const eventsRef = collection(db, 'artifacts', appId, 'users', userId, 'gantt_events');
+            onSnapshot(eventsRef, (snapshot) => {
+                events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderEvents();
+            }, (error) => {
+                console.error("Firestore error:", error);
+            });
+        }
+
+        function loadEventsFromLocalFallback() {
+            const saved = localStorage.getItem('gantt_events');
+            if (saved) {
+                try {
+                    events = JSON.parse(saved);
+                } catch(e) {
+                    events = [];
+                }
+            }
+            renderEvents();
+        }
+
+        async function saveEventDB(ev) {
+            const idx = events.findIndex(x => x.id === ev.id);
+            if (idx === -1) events.push(ev);
+            else events[idx] = ev;
+
+            if (isFirebaseActive && userId) {
+                try {
+                    const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
+                    await setDoc(ref, ev);
+                } catch(e) {
+                    console.error("Errore Cloud", e);
+                }
+            } else {
+                localStorage.setItem('gantt_events', JSON.stringify(events));
+                renderEvents();
+            }
+        }
+
+        async function deleteEventDB(id) {
+            events = events.filter(x => x.id !== id);
+            if (isFirebaseActive && userId) {
+                try {
+                    const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', id);
+                    await deleteDoc(ref);
+                } catch(e) {
+                    console.error("Errore Cloud", e);
+                }
+            } else {
+                localStorage.setItem('gantt_events', JSON.stringify(events));
+                renderEvents();
+            }
+        }
+
+        function initColors() {
+            const modalColors = document.getElementById('modalColors');
+            if(modalColors) {
+                modalColors.innerHTML = COLORS.map(c => 
+                    `<button type="button" onclick="window.selectModalColor('${c}')" id="color-btn-${c.replace('#','')}" class="w-8 h-8 rounded-full shadow-sm transform transition-transform hover:scale-110 focus:outline-none" style="background-color: ${c}"></button>`
+                ).join('');
+            }
+        }
+
+        function getWeekString(d) {
+            const date = new Date(d.getTime());
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            return `${date.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
+        }
+
+        function getDatesOfWeek(weekStr) {
+            if(!weekStr) return [];
+            const parts = weekStr.split('-W');
+            const year = parseInt(parts[0]);
+            const week = parseInt(parts[1]);
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const isoStart = new Date(simple.getTime());
+            
+            if (dow <= 4) isoStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else isoStart.setDate(simple.getDate() + 8 - simple.getDay());
+            
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(isoStart.getFullYear(), isoStart.getMonth(), isoStart.getDate() + i);
+                const pad = n => n.toString().padStart(2, '0');
+                dates.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+            }
+            return dates;
+        }
+
+        function formatTime(mins) {
+            const h = Math.floor(mins / 60).toString().padStart(2, '0');
+            const m = (mins % 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        }
+
+        function loadSettings() {
+            const savedStart = localStorage.getItem('gantt_start_hour');
+            const savedEnd = localStorage.getItem('gantt_end_hour');
+            if(savedStart !== null) displayStartHour = parseInt(savedStart);
+            if(savedEnd !== null) displayEndHour = parseInt(savedEnd);
+        }
+
+        function saveSettings() {
+            localStorage.setItem('gantt_start_hour', displayStartHour);
+            localStorage.setItem('gantt_end_hour', displayEndHour);
+        }
+
+        function initTimeSelectors() {
+            const startSelect = document.getElementById('startHour');
+            const endSelect = document.getElementById('endHour');
+            startSelect.innerHTML = '';
+            endSelect.innerHTML = '';
+
+            for(let i = 0; i <= 23; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = `${i.toString().padStart(2, '0')}:00`;
+                if(i === displayStartHour) option.selected = true;
+                startSelect.appendChild(option);
+            }
+
+            for(let i = 1; i <= 24; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = i === 24 ? '24:00' : `${i.toString().padStart(2, '0')}:00`;
+                if(i === displayEndHour) option.selected = true;
+                endSelect.appendChild(option);
+            }
+        }
+
+        window.updateTimeRange = function() {
+            const start = parseInt(document.getElementById('startHour').value);
+            const end = parseInt(document.getElementById('endHour').value);
+            
+            if(start >= end) {
+                initTimeSelectors(); 
+                return;
+            }
+
+            displayStartHour = start;
+            displayEndHour = end;
+            saveSettings();
+            initGrid();
+            renderEvents();
+        }
+
+        function initGrid() {
+            const totalHours = displayEndHour - displayStartHour;
+            const gridWidth = totalHours * 120; // 120px per ora
+            
+            document.getElementById('ganttGrid').style.width = `${gridWidth}px`;
+
+            const hoursHeader = document.getElementById('hoursHeader');
+            const gridBackground = document.getElementById('gridBackground');
+            
+            let headerHTML = '';
+            let bgHTML = '';
+
+            for (let i = 0; i < totalHours; i++) {
+                const currentHour = displayStartHour + i;
+                headerHTML += `
+                    <div class="absolute top-0 bottom-0 border-l border-gray-200 flex items-center px-2" style="left: ${i * 120}px; width: 120px;">
+                        <span class="text-xs font-semibold text-gray-500">${currentHour.toString().padStart(2, '0')}:00</span>
+                    </div>`;
+                bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100" style="left: ${i * 120}px;"></div>`;
+            }
+            
+            bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100" style="left: ${totalHours * 120}px;"></div>`;
+
+            for (let i = 0; i < 7; i++) {
+                bgHTML += `<div class="absolute left-0 right-0 border-t border-gray-100" style="top: ${i * LANE_HEIGHT}px; height: ${LANE_HEIGHT}px; width: ${gridWidth}px;"></div>`;
+            }
+
+            hoursHeader.innerHTML = headerHTML;
+            gridBackground.innerHTML = bgHTML;
+        }
+
+        function updateWeekDates() {
+            weekDates = getDatesOfWeek(currentWeekStr);
+            const daysContainer = document.getElementById('daysContainer');
+            let daysHTML = '';
+            
+            DAY_NAMES.forEach((day, i) => {
+                const dateParts = weekDates[i].split('-');
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}`;
+                daysHTML += `
+                    <div onclick="window.openDayPanel('${weekDates[i]}', '${day} ${formattedDate}')" class="border-b border-gray-100 flex flex-col items-center justify-center bg-white cursor-pointer hover:bg-blue-50 transition-colors" style="height: ${LANE_HEIGHT}px; min-height: 3rem;" title="Clicca per i dettagli del giorno">
+                        <span class="text-sm font-semibold text-gray-700 pointer-events-none">${day}</span>
+                        <span class="text-xs text-gray-500 pointer-events-none">${formattedDate}</span>
+                    </div>`;
+            });
+            daysContainer.innerHTML = daysHTML;
+            renderEvents();
+        }
+
+        function renderEvents() {
+            const container = document.getElementById('eventsContainer');
+            container.innerHTML = '';
+
+            const currentWeekEvents = events.filter(e => weekDates.includes(e.date));
+
+            currentWeekEvents.forEach(ev => {
+                const laneIndex = weekDates.indexOf(ev.date);
+                if (laneIndex === -1) return;
+
+                const visibleStartMinute = ev.startMinute - (displayStartHour * 60);
+                
+                // Salta graficamente gli eventi totalmente fuori fascia
+                if (visibleStartMinute + ev.durationMinute <= 0 || visibleStartMinute >= (displayEndHour - displayStartHour) * 60) {
+                    return; 
+                }
+
+                const left = visibleStartMinute * PIXELS_PER_MINUTE;
+                const width = ev.durationMinute * PIXELS_PER_MINUTE;
+                const top = laneIndex * LANE_HEIGHT;
+
+                const el = document.createElement('div');
+                el.className = 'event-block z-10 pointer-events-auto';
+                el.id = `event-${ev.id}`;
+                el.style.left = `${left}px`;
+                el.style.width = `${width}px`;
+                el.style.top = `${top}px`;
+                el.style.backgroundColor = ev.color;
+                
+                let timeText = '';
+                if(ev.durationMinute >= 45) {
+                    timeText = `<span class="text-[10px] text-white/90 drop-shadow-md truncate font-medium mt-0.5">${formatTime(ev.startMinute)} - ${formatTime(ev.startMinute + ev.durationMinute)}</span>`;
+                }
+                
+                const descIcon = ev.description ? `<div class="absolute top-1 right-1 opacity-70"><svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg></div>` : '';
+
+                el.innerHTML = `
+                    <div class="resize-handle left" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-left')"></div>
+                    <div class="flex flex-col px-1 w-full overflow-hidden pointer-events-none text-center justify-center relative h-full">
+                        ${descIcon}
+                        <span class="text-sm font-medium text-white drop-shadow-md truncate px-2">${ev.title}</span>
+                        ${timeText}
+                    </div>
+                    <div class="resize-handle right" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-right')"></div>
+                `;
+
+                el.onmousedown = (e) => {
+                    if(e.target.classList.contains('resize-handle')) return;
+                    window.onMouseDown(e, ev.id, 'move');
+                };
+
+                container.appendChild(el);
+            });
+
+            // Aggiorna dinamicamente il pannello laterale se è attualmente aperto
+            if (currentPanelDate) {
+                window.openDayPanel(currentPanelDate, currentPanelTitle);
+            }
+        }
+
+        window.onMouseDown = function(e, id, type) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const ev = events.find(x => x.id === id);
+            if(!ev) return;
+
+            dragInfo = {
+                type: type,
+                event: ev,
+                startX: e.clientX,
+                startY: e.clientY,
+                originalStart: ev.startMinute,
+                originalDuration: ev.durationMinute,
+                originalDate: ev.date,
+                hasMoved: false
+            };
+
+            const domEl = document.getElementById(`event-${id}`);
+            if(domEl) domEl.classList.add('dragging');
+        }
+
+        function onMouseMove(e) {
+            if (!dragInfo) return;
+            
+            const deltaX = e.clientX - dragInfo.startX;
+            const deltaY = e.clientY - dragInfo.startY;
+            
+            if(Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                dragInfo.hasMoved = true;
+            }
+
+            if(!dragInfo.hasMoved) return;
+
+            const deltaMinutes = Math.round(deltaX / (PIXELS_PER_MINUTE * 15)) * 15;
+            const deltaLanes = Math.round(deltaY / LANE_HEIGHT);
+
+            let newStart = dragInfo.originalStart;
+            let newDuration = dragInfo.originalDuration;
+            const currentLane = weekDates.indexOf(dragInfo.originalDate);
+            let newLane = currentLane;
+
+            // Limiti: tutta la giornata 0..24
+            const MINUTE_LIMIT_START = 0;
+            const MINUTE_LIMIT_END = 24 * 60;
+
+            if (dragInfo.type === 'move') {
+                newStart += deltaMinutes;
+                newLane += deltaLanes;
+                
+                if (newStart < MINUTE_LIMIT_START) newStart = MINUTE_LIMIT_START;
+                if (newStart + newDuration > MINUTE_LIMIT_END) newStart = MINUTE_LIMIT_END - newDuration;
+                if (newLane < 0) newLane = 0;
+                if (newLane > 6) newLane = 6;
+                
+            } else if (dragInfo.type === 'resize-right') {
+                newDuration += deltaMinutes;
+                if (newDuration < MIN_DURATION) newDuration = MIN_DURATION;
+                if (newStart + newDuration > MINUTE_LIMIT_END) newDuration = MINUTE_LIMIT_END - newStart;
+            } else if (dragInfo.type === 'resize-left') {
+                newStart += deltaMinutes;
+                newDuration -= deltaMinutes;
+                
+                if (newDuration < MIN_DURATION) {
+                    newStart -= (MIN_DURATION - newDuration);
+                    newDuration = MIN_DURATION;
+                }
+                if (newStart < MINUTE_LIMIT_START) {
+                    newDuration -= (MINUTE_LIMIT_START - newStart); 
+                    newStart = MINUTE_LIMIT_START;
+                }
+            }
+
+            const domEl = document.getElementById(`event-${dragInfo.event.id}`);
+            if (domEl) {
+                // Calcola lo scostamento relativo alla fascia oraria attiva per renderlo correttamente
+                const visibleStartMinute = newStart - (displayStartHour * 60);
+                domEl.style.left = `${visibleStartMinute * PIXELS_PER_MINUTE}px`;
+                domEl.style.width = `${newDuration * PIXELS_PER_MINUTE}px`;
+                if(dragInfo.type === 'move') {
+                    domEl.style.top = `${newLane * LANE_HEIGHT}px`;
+                }
+            }
+        }
+
+        function onMouseUp(e) {
+            if (!dragInfo) return;
+
+            const domEl = document.getElementById(`event-${dragInfo.event.id}`);
+            if(domEl) domEl.classList.remove('dragging');
+
+            if (!dragInfo.hasMoved && dragInfo.type === 'move') {
+                openModal(dragInfo.event.id);
+            } else if (dragInfo.hasMoved) {
+                const left = parseFloat(domEl.style.left);
+                const width = parseFloat(domEl.style.width);
+                const top = parseFloat(domEl.style.top || '0');
+
+                const visibleStart = Math.round(left / PIXELS_PER_MINUTE);
+                const newStart = visibleStart + (displayStartHour * 60);
+                const newDuration = Math.round(width / PIXELS_PER_MINUTE);
+                const newLane = Math.round(top / LANE_HEIGHT);
+                const newDate = weekDates[newLane];
+
+                const evIndex = events.findIndex(x => x.id === dragInfo.event.id);
+                if(evIndex > -1) {
+                    const updatedEv = {
+                        ...events[evIndex],
+                        startMinute: newStart,
+                        durationMinute: newDuration,
+                        date: newDate
+                    };
+                    saveEventDB(updatedEv); 
+                }
+            }
+            dragInfo = null;
+        }
+
+        window.addEvent = function() {
+            let defaultStart = 9 * 60; 
+            if(defaultStart < displayStartHour * 60) defaultStart = displayStartHour * 60;
+            if(defaultStart >= displayEndHour * 60) defaultStart = (displayEndHour - 1) * 60;
+
+            const newEvent = {
+                id: generateId(),
+                title: 'Nuovo Impegno',
+                description: '',
+                date: weekDates[0] || getDatesOfWeek(currentWeekStr)[0],
+                startMinute: defaultStart,
+                durationMinute: 60,
+                color: COLORS[5]
+            };
+            saveEventDB(newEvent);
+        }
+
+        function openModal(id) {
+            const ev = events.find(x => x.id === id);
+            if(!ev) return;
+            
+            editingEventId = id;
+            document.getElementById('modalTitle').value = ev.title;
+            document.getElementById('modalDescription').value = ev.description || '';
+            window.selectModalColor(ev.color);
+            
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        window.closeModal = function() {
+            const modal = document.getElementById('editModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            editingEventId = null;
+        }
+
+        window.selectModalColor = function(color) {
+            selectedColor = color;
+            COLORS.forEach(c => {
+                const btn = document.getElementById(`color-btn-${c.replace('#','')}`);
+                if (btn) {
+                    if(c === color) {
+                        btn.classList.add('ring-2', 'ring-offset-2', 'ring-gray-800', 'scale-110');
+                    } else {
+                        btn.classList.remove('ring-2', 'ring-offset-2', 'ring-gray-800', 'scale-110');
+                    }
+                }
+            });
+        }
+
+        window.saveModal = function() {
+            if(!editingEventId) return;
+            const evIndex = events.findIndex(x => x.id === editingEventId);
+            if(evIndex > -1) {
+                const updatedEv = {
+                    ...events[evIndex],
+                    title: document.getElementById('modalTitle').value || 'Senza Titolo',
+                    description: document.getElementById('modalDescription').value || '',
+                    color: selectedColor
+                };
+                saveEventDB(updatedEv);
+            }
+            window.closeModal();
+        }
+
+        window.deleteEvent = function() {
+            if(!editingEventId) return;
+            deleteEventDB(editingEventId);
+            window.closeModal();
+        }
+
+        window.exportJSON = function() {
+            const dataStr = JSON.stringify(events, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_gantt_${currentWeekStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        window.importJSON = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        for (let ev of imported) {
+                            await saveEventDB(ev);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Errore importazione JSON:", error);
+                    alert("Il file selezionato non è un formato JSON valido per questa app.");
+                }
+                e.target.value = ''; // Resetta l'input per permettere re-import
+            };
+            reader.readAsText(file);
+        }
+
+        window.openDayPanel = function(dateStr, dayTitle) {
+            currentPanelDate = dateStr;
+            currentPanelTitle = dayTitle;
+            
+            document.getElementById('dayPanelTitle').innerText = dayTitle;
+            const panelContent = document.getElementById('dayPanelContent');
+            
+            const dayEvents = events
+                .filter(e => e.date === dateStr)
+                .sort((a, b) => a.startMinute - b.startMinute);
+            
+            if(dayEvents.length === 0) {
+                panelContent.innerHTML = '<div class="text-center text-gray-500 text-sm mt-10">Nessun evento pianificato.</div>';
+            } else {
+                panelContent.innerHTML = dayEvents.map(ev => `
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden transition-shadow hover:shadow-md">
+                        <div class="p-3 border-l-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center" style="border-left-color: ${ev.color}" onclick="window.togglePanelDesc('${ev.id}')">
+                            <div class="flex flex-col overflow-hidden pr-2">
+                                <span class="text-sm font-bold text-gray-800 truncate">${ev.title}</span>
+                                <span class="text-xs text-gray-500">${formatTime(ev.startMinute)} - ${formatTime(ev.startMinute + ev.durationMinute)}</span>
+                            </div>
+                            <svg id="icon-${ev.id}" class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div id="desc-${ev.id}" class="hidden px-4 py-3 bg-gray-50 text-sm text-gray-700 border-t border-gray-100">
+                            ${ev.description ? ev.description.replace(/\n/g, '<br>') : '<em class="text-gray-400">Nessuna descrizione per questo evento.</em>'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Gestisce la visibilità del tasto INCOLLA se ci sono elementi in memoria
+            const pasteBtn = document.getElementById('pasteDayBtn');
+            if (pasteBtn) {
+                if (clipboardEvents && clipboardEvents.length > 0) {
+                    pasteBtn.classList.remove('hidden');
+                } else {
+                    pasteBtn.classList.add('hidden');
+                }
+            }
+
+            const panel = document.getElementById('dayPanel');
+            panel.classList.remove('translate-x-full');
+        }
+
+        window.closeDayPanel = function() {
+            document.getElementById('dayPanel').classList.add('translate-x-full');
+            currentPanelDate = null;
+        }
+
+        window.togglePanelDesc = function(id) {
+            const descEl = document.getElementById(`desc-${id}`);
+            const iconEl = document.getElementById(`icon-${id}`);
+            if (descEl.classList.contains('hidden')) {
+                descEl.classList.remove('hidden');
+                iconEl.classList.add('rotate-180');
+            } else {
+                descEl.classList.add('hidden');
+                iconEl.classList.remove('rotate-180');
+            }
+        }
+
+        // --- STREAMING_CHUNK:Aggiunta funzioni per copia e incolla istantaneo ---
+        window.copyDayToClipboard = function() {
+            if (!currentPanelDate) return;
+            
+            const dayEvents = events.filter(e => e.date === currentPanelDate);
+            if (dayEvents.length === 0) return; // Niente da copiare
+            
+            // Salviamo una copia indipendente degli eventi correnti in memoria
+            clipboardEvents = JSON.parse(JSON.stringify(dayEvents));
+
+            // Mostriamo subito il tasto "Incolla" nel pannello
+            const pasteBtn = document.getElementById('pasteDayBtn');
+            if (pasteBtn) pasteBtn.classList.remove('hidden');
+
+            // Feedback visivo sul tasto "Copia" per indicare successo (Spunta verde temporanea)
+            const copyBtn = document.getElementById('copyDayBtn');
+            if (copyBtn) {
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                copyBtn.classList.add('text-green-600', 'bg-green-100');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('text-green-600', 'bg-green-100');
+                }, 1000);
+            }
+        }
+
+        window.pasteDayFromClipboard = async function() {
+            if (!clipboardEvents || clipboardEvents.length === 0 || !currentPanelDate) return;
+
+            // Crea le copie dei nuovi eventi scalandoli nella data correntemente aperta
+            const newEvents = clipboardEvents.map(ev => ({
+                ...ev,
+                id: generateId(), // Genera un ID nuovo per evitare conflitti con gli originali
+                date: currentPanelDate
+            }));
+
+            // Aggiorna lo stato in memoria locale aggiungendo gli eventi cloni
+            events.push(...newEvents);
+
+            // Effettua il salvataggio in parallelo nel Database e Locale
+            if (isFirebaseActive && userId) {
+                try {
+                    for(let ev of newEvents) {
+                        const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
+                        await setDoc(ref, ev);
+                    }
+                } catch(e) {
+                    console.error("Errore durante l'incolla cloud degli eventi:", e);
+                }
+            } else {
+                localStorage.setItem('gantt_events', JSON.stringify(events));
+            }
+            
+            // Renderizza sia la griglia principale che il pannello laterale istantaneamente
+            renderEvents();
+            window.openDayPanel(currentPanelDate, currentPanelTitle);
+        }
+    </script>
+</body>
+</html>
