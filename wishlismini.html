@@ -1,0 +1,3378 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<title>Wishlismini</title>
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* I controlli dei form non ereditano il colore del documento: senza questa
+           regola il testo dei pulsanti resta nero (ButtonText) anche in modalità notte. */
+        button, input, select, textarea {
+            color: inherit;
+        }
+
+        :root {
+            --bg-base-1: #0a0a14;
+            --bg-base-2: #05050a;
+            --bg-radial-1: #2a2a3e;
+            --bg-radial-2: #1a1a2e;
+            --blob-1: #3a3a5c;
+            --blob-2: #2c3e5c;
+            --blob-3: #3a2c4a;
+            --blob-opacity: 0.35;
+
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-bg-hover: rgba(255, 255, 255, 0.09);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-strong: rgba(255, 255, 255, 0.22);
+            --glass-highlight: rgba(255, 255, 255, 0.06);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            --glass-inner-top: rgba(255, 255, 255, 0.08);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.02);
+
+            --header-bg: rgba(10, 10, 20, 0.55);
+            --header-border: rgba(255, 255, 255, 0.08);
+
+            --text-primary: rgba(255, 255, 255, 0.92);
+            --text-secondary: rgba(255, 255, 255, 0.55);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+
+            --btn-primary-bg: rgba(255, 255, 255, 0.92);
+            --btn-primary-text: #0a0a14;
+            --btn-primary-hover: #ffffff;
+
+            --input-bg: rgba(255, 255, 255, 0.06);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-focus-bg: rgba(255, 255, 255, 0.1);
+            --input-focus-border: rgba(255, 255, 255, 0.3);
+            --input-focus-ring: rgba(255, 255, 255, 0.05);
+
+            --icon-btn-hover: rgba(255, 255, 255, 0.08);
+            --icon-btn-danger-hover: rgba(255, 80, 70, 0.1);
+            --icon-btn-danger-color: #ff6b6b;
+
+            --danger-bg: rgba(255, 80, 70, 0.9);
+            --danger-bg-hover: rgba(255, 80, 70, 1);
+            --danger-icon-bg: rgba(255, 80, 70, 0.12);
+            --danger-icon-border: rgba(255, 80, 70, 0.2);
+            --danger-icon-color: #ff6b6b;
+
+            --accent: #a78bfa;
+            --accent-2: #f0abfc;
+            --accent-soft: rgba(167, 139, 250, 0.16);
+            --accent-border: rgba(167, 139, 250, 0.35);
+
+            --modal-bg: rgba(20, 20, 30, 0.7);
+            --modal-border: rgba(255, 255, 255, 0.15);
+            --modal-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+
+            --toast-bg: rgba(20, 20, 30, 0.75);
+            --toast-border: rgba(255, 255, 255, 0.15);
+            --toast-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+
+            --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+
+            --sparkle-color: rgba(255, 255, 255, 0.9);
+            --sparkle-glow: rgba(255, 255, 255, 0.8);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.06);
+            --theme-toggle-border: rgba(255, 255, 255, 0.1);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.1);
+
+            --thumb-bg: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+        }
+
+        body.light {
+            --bg-base-1: #f0f2f5;
+            --bg-base-2: #e4e7ec;
+            --bg-radial-1: #dbeafe;
+            --bg-radial-2: #fce7f3;
+            --blob-1: #bfdbfe;
+            --blob-2: #fbcfe8;
+            --blob-3: #ddd6fe;
+            --blob-opacity: 0.55;
+
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg-hover: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-border-strong: rgba(255, 255, 255, 0.95);
+            --glass-highlight: rgba(255, 255, 255, 0.5);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --glass-inner-top: rgba(255, 255, 255, 0.9);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.3);
+
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --header-border: rgba(0, 0, 0, 0.06);
+
+            --text-primary: rgba(15, 23, 42, 0.92);
+            --text-secondary: rgba(15, 23, 42, 0.55);
+            --text-tertiary: rgba(15, 23, 42, 0.4);
+
+            --btn-primary-bg: rgba(15, 23, 42, 0.9);
+            --btn-primary-text: #ffffff;
+            --btn-primary-hover: rgba(15, 23, 42, 1);
+
+            --input-bg: rgba(255, 255, 255, 0.5);
+            --input-border: rgba(15, 23, 42, 0.1);
+            --input-focus-bg: rgba(255, 255, 255, 0.8);
+            --input-focus-border: rgba(15, 23, 42, 0.25);
+            --input-focus-ring: rgba(15, 23, 42, 0.05);
+
+            --icon-btn-hover: rgba(15, 23, 42, 0.06);
+            --icon-btn-danger-hover: rgba(220, 38, 38, 0.08);
+            --icon-btn-danger-color: #dc2626;
+
+            --danger-bg: rgba(220, 38, 38, 0.9);
+            --danger-bg-hover: rgba(220, 38, 38, 1);
+            --danger-icon-bg: rgba(220, 38, 38, 0.08);
+            --danger-icon-border: rgba(220, 38, 38, 0.15);
+            --danger-icon-color: #dc2626;
+
+            --accent: #7c3aed;
+            --accent-2: #c026d3;
+            --accent-soft: rgba(124, 58, 237, 0.12);
+            --accent-border: rgba(124, 58, 237, 0.28);
+
+            --modal-bg: rgba(255, 255, 255, 0.75);
+            --modal-border: rgba(255, 255, 255, 0.9);
+            --modal-shadow: 0 25px 60px rgba(31, 38, 135, 0.15), 0 10px 20px rgba(0, 0, 0, 0.06);
+            --modal-overlay: rgba(15, 23, 42, 0.25);
+
+            --toast-bg: rgba(255, 255, 255, 0.85);
+            --toast-border: rgba(255, 255, 255, 0.9);
+            --toast-shadow: 0 10px 40px rgba(31, 38, 135, 0.12);
+
+            --scrollbar-thumb: rgba(15, 23, 42, 0.1);
+            --scrollbar-thumb-hover: rgba(15, 23, 42, 0.2);
+
+            --sparkle-color: rgba(124, 58, 237, 0.9);
+            --sparkle-glow: rgba(124, 58, 237, 0.5);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.5);
+            --theme-toggle-border: rgba(255, 255, 255, 0.8);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.7);
+
+            --thumb-bg: linear-gradient(135deg, rgba(15,23,42,0.05), rgba(15,23,42,0.02));
+        }
+
+        html, body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-primary);
+        }
+
+        /* === BACKGROUND === */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                radial-gradient(ellipse at 20% 0%, var(--bg-radial-1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, var(--bg-radial-2) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-base-1) 0%, var(--bg-base-2) 100%);
+            transition: background 0.6s ease;
+        }
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: var(--blob-opacity);
+            z-index: -1;
+            transition: opacity 0.6s ease, background 0.6s ease;
+            animation: float 25s infinite ease-in-out;
+        }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--blob-1) 0%, transparent 70%); top: -200px; left: -150px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, var(--blob-2) 0%, transparent 70%); bottom: -150px; right: -100px; animation-delay: -8s; }
+        .blob-3 { width: 400px; height: 400px; background: radial-gradient(circle, var(--blob-3) 0%, transparent 70%); top: 40%; left: 50%; opacity: 0.25; animation-delay: -15s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.05); }
+            66% { transform: translate(-30px, 40px) scale(0.97); }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.04;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* === GLASS SYSTEM === */
+        .glass {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            box-shadow:
+                var(--glass-shadow),
+                inset 0 1px 0 0 var(--glass-inner-top),
+                inset 0 -1px 0 0 var(--glass-inner-bottom);
+            overflow: hidden;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, var(--glass-highlight) 0%, rgba(255,255,255,0.02) 40%, transparent 100%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        .glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+            opacity: 0.06;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none !important; }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--header-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-bottom: 0.5px solid var(--header-border);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        /* === ANIMATIONS === */
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .fade-out { animation: fadeOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .scale-in { animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.94); max-height: 0; padding: 0; margin: 0; }
+        }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes sparkle {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1); }
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* === THEME TOGGLE === */
+        .theme-toggle {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 60;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--theme-toggle-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid var(--theme-toggle-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-shadow);
+        }
+        .theme-toggle:hover { background: var(--theme-toggle-hover); transform: scale(1.05); }
+        .theme-toggle:active { transform: scale(0.95); }
+        .theme-toggle svg { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .theme-toggle.rotating svg { transform: rotate(360deg); }
+
+        /* === BUTTONS === */
+        .btn-primary {
+            background: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border: none;
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { background: var(--btn-primary-hover); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover { background: var(--glass-bg-hover); }
+        .btn-secondary:active { transform: scale(0.97); }
+
+        .btn-danger {
+            background: var(--danger-bg);
+            color: #fff;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-danger:hover { background: var(--danger-bg-hover); }
+        .btn-danger:active { transform: scale(0.97); }
+
+        .glass-btn {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 13px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        .glass-btn:hover { background: var(--glass-bg-hover); transform: translateY(-1px); border-color: var(--glass-border-strong); }
+        .glass-btn:active { transform: scale(0.97); }
+        .glass-btn.accent { background: var(--accent-soft); border-color: var(--accent-border); }
+        .glass-btn.accent:hover { background: var(--accent-soft); filter: brightness(1.15); }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover { color: var(--text-primary); background: var(--icon-btn-hover); }
+        .icon-btn.danger:hover { color: var(--icon-btn-danger-color); background: var(--icon-btn-danger-hover); }
+
+        .back-btn {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .back-btn:hover { background: var(--glass-bg-hover); }
+
+        /* === INPUTS === */
+        .ios-input {
+            background: var(--input-bg);
+            border: 0.5px solid var(--input-border);
+            border-radius: 14px;
+            padding: 13px 16px;
+            color: var(--text-primary);
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .ios-input::placeholder { color: var(--text-tertiary); }
+        .ios-input:focus {
+            background: var(--input-focus-bg);
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+        textarea.ios-input { resize: vertical; min-height: 84px; line-height: 1.5; }
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 7px;
+        }
+        .field-hint {
+            margin-top: 10px;
+            padding: 10px 13px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            border-radius: 12px;
+        }
+        .field-hint a { color: var(--accent); font-weight: 600; }
+
+        /* === SECTION TITLES === */
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 26px 0 14px;
+        }
+        .section-title {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .section-title .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* === ITEM GRID === */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 14px;
+        }
+        @media (max-width: 560px) {
+            .item-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; }
+        }
+
+        .item-card {
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .item-card:hover {
+            background: var(--glass-bg-hover);
+            transform: translateY(-3px);
+            border-color: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow), 0 12px 40px rgba(0,0,0,0.18);
+        }
+        .item-inner { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
+
+        .thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            background: var(--thumb-bg);
+            overflow: hidden;
+            cursor: zoom-in;
+            flex-shrink: 0;
+        }
+        .thumb img {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .item-card:hover .thumb img { transform: scale(1.05); }
+        .thumb-ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            opacity: 0.45;
+        }
+        .thumb::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.35) 100%);
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.7;
+        }
+        .price-badge {
+            position: absolute;
+            z-index: 3;
+            bottom: 9px;
+            left: 9px;
+            background: rgba(10, 10, 20, 0.6);
+            color: #fff;
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border: 0.5px solid rgba(255,255,255,0.22);
+            padding: 5px 11px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .item-body { padding: 13px 14px 14px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+        .item-title {
+            font-size: 15.5px;
+            font-weight: 650;
+            letter-spacing: -0.2px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .item-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .item-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 4px;
+        }
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 7px 11px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            transition: all 0.2s;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .link-btn:hover { filter: brightness(1.2); }
+        .item-actions-right { display: flex; gap: 2px; flex-shrink: 0; }
+
+        .lock-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+        }
+
+        /* === FRIEND CARDS === */
+        .friend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .friend-card {
+            border-radius: 18px;
+            padding: 15px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .friend-card:hover { background: var(--glass-bg-hover); transform: translateY(-2px); border-color: var(--glass-border-strong); }
+        .friend-card:active { transform: scale(0.99); }
+        .avatar {
+            width: 42px; height: 42px;
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        /* === BADGE / CHIP === */
+        .badge {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 0.5px solid var(--glass-border);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 5px 14px 5px 5px;
+            cursor: pointer;
+            transition: all 0.25s;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            max-width: 230px;
+        }
+        .user-chip:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-strong); }
+        .user-chip .avatar { width: 30px; height: 30px; border-radius: 50%; font-size: 13px; }
+        .user-chip span {
+            font-size: 14px; font-weight: 600;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* === EMPTY STATE === */
+        .empty-icon { animation: floatIcon 4s ease-in-out infinite; filter: grayscale(0.25); }
+        .empty-state { text-align: center; padding: 70px 20px; }
+
+        /* === MODAL === */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 16px;
+            overflow-y: auto;
+            transition: background 0.4s ease;
+        }
+        @media (min-width: 640px) { .modal-overlay { align-items: center; } }
+
+        .modal-content {
+            background: var(--modal-bg);
+            backdrop-filter: blur(50px) saturate(200%);
+            -webkit-backdrop-filter: blur(50px) saturate(200%);
+            border: 0.5px solid var(--modal-border);
+            border-radius: 24px;
+            padding: 26px;
+            width: 100%;
+            max-width: 460px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: var(--modal-shadow), inset 0 1px 0 var(--glass-inner-top);
+            position: relative;
+            transition: all 0.4s ease;
+            margin: auto 0;
+        }
+        @media (min-width: 640px) { .modal-content { margin: auto; } }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 130px;
+            background: linear-gradient(180deg, var(--glass-highlight-strong), transparent);
+            pointer-events: none;
+        }
+        .modal-content.wide { max-width: 620px; }
+        .modal-body { position: relative; z-index: 1; }
+
+        .field { margin-bottom: 16px; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; min-width: 0; }
+
+        /* === IMAGE PICKER === */
+        .img-picker {
+            position: relative;
+            border-radius: 16px;
+            border: 1px dashed var(--glass-border-strong);
+            background: var(--glass-bg);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 132px;
+            aspect-ratio: 16 / 9;
+            transition: all 0.25s;
+        }
+        .img-picker img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .img-picker .ph { font-size: 13px; color: var(--text-tertiary); text-align: center; line-height: 1.5; }
+        .img-picker .ph b { display: block; font-size: 22px; font-weight: 400; margin-bottom: 6px; opacity: .8; }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--toast-border);
+            padding: 13px 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--toast-shadow);
+            z-index: 300;
+            animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: calc(100vw - 32px);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        .toast.leaving { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translate(-50%, 14px) scale(0.94); }
+        }
+
+        /* === MISC === */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+        .sparkle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            background: var(--sparkle-color);
+            box-shadow: 0 0 12px var(--sparkle-glow);
+            animation: sparkle 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .danger-icon-container {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--danger-icon-bg);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--danger-icon-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .spinner {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+
+        /* === GATE (login) === */
+        #gateView {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 18px;
+        }
+        .gate-card {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 28px;
+            padding: 34px 28px 28px;
+            text-align: center;
+        }
+        .gate-logo {
+            font-size: 52px;
+            line-height: 1;
+            margin-bottom: 14px;
+            display: inline-block;
+            animation: floatIcon 4s ease-in-out infinite;
+            filter: drop-shadow(0 8px 24px var(--accent-soft));
+        }
+        .gate-card h1 {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.9px;
+            margin-bottom: 6px;
+            background: linear-gradient(120deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gate-card p.sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+        .gate-body { position: relative; z-index: 1; }
+
+        .saved-users { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .saved-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: left;
+        }
+        .saved-user:hover { background: var(--glass-bg-hover); transform: translateY(-1px); }
+        .saved-user .avatar { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            margin: 20px 0 4px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 0.5px;
+            background: var(--glass-border);
+        }
+
+        /* === DROP ZONE === */
+        .drop-zone {
+            border: 1.5px dashed var(--glass-border-strong);
+            border-radius: 18px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--glass-bg);
+            transition: all 0.25s;
+        }
+        .drop-zone:hover, .drop-zone.over {
+            background: var(--accent-soft);
+            border-color: var(--accent-border);
+        }
+
+        .own-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+        }
+        .own-banner .avatar { width: 46px; height: 46px; border-radius: 15px; font-size: 19px; }
+
+        .price-inline { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+</style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-canvas"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambia tema">
+        <svg id="themeIcon" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+    </button>
+
+    <!-- ============ GATE VIEW ============ -->
+    <div id="gateView">
+        <div class="gate-card glass scale-in">
+            <div class="gate-body">
+                <div class="gate-logo">🎁</div>
+                <h1>Wishlismini</h1>
+                <p class="sub">La tua lista dei desideri, sempre con te.</p>
+
+                <input id="userNameInput" class="ios-input" type="text" placeholder="Come ti chiami?" maxlength="24"
+                       onkeydown="if(event.key==='Enter') login()" style="text-align:center; margin-bottom:12px;">
+                <button class="btn-primary" style="width:100%;" onclick="login()">Entra nella mia wishlist</button>
+
+                <div id="savedUsersBox" class="hidden">
+                    <div class="divider">oppure riprendi</div>
+                    <div id="savedUsers" class="saved-users"></div>
+                </div>
+
+                <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:22px; line-height:1.6;">
+                    Tutti i dati restano sul tuo dispositivo.<br>Nessun account, nessun server.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ APP VIEW ============ -->
+    <div id="appView" class="hidden">
+        <header class="app-header">
+            <div class="wrap" style="padding-top:16px; padding-bottom:14px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                        <span style="font-size:24px; line-height:1;">🎁</span>
+                        <div style="min-width:0;">
+                            <h1 style="font-size:21px; font-weight:700; letter-spacing:-0.5px; line-height:1.15;">Wishlismini</h1>
+                            <p style="font-size:12px; color:var(--text-secondary);">La tua lista dei desideri</p>
+                        </div>
+                    </div>
+                    <button class="user-chip" onclick="openUsersModal()" title="Cambia utente" style="margin-right:56px;">
+                        <div class="avatar" id="headerAvatar">A</div>
+                        <span id="headerUserName">Utente</span>
+                    </button>
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;">
+                    <button class="glass-btn accent" onclick="openItemModal(null)">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Aggiungi desiderio
+                    </button>
+                    <button class="glass-btn" onclick="openShareModal()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
+                        Condividi
+                    </button>
+                    <button class="glass-btn" onclick="openImportModal()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
+                        Carica wishlist
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="wrap">
+            <div class="section-head">
+                <h2 class="section-title"><span class="dot"></span>La mia wishlist</h2>
+                <span class="badge" id="ownCount">0</span>
+            </div>
+
+            <div id="ownGrid" class="item-grid"></div>
+
+            <div id="ownEmpty" class="empty-state hidden">
+                <div class="empty-icon" style="font-size:56px; margin-bottom:18px; opacity:0.7;">✨</div>
+                <h3 style="font-size:18px; font-weight:600; margin-bottom:6px;">La tua wishlist è vuota</h3>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:20px;">Aggiungi il tuo primo desiderio, oppure carica una wishlist da un file.</p>
+                <button class="glass-btn accent" onclick="openItemModal(null)" style="padding:12px 20px;">+ Aggiungi desiderio</button>
+            </div>
+
+            <div id="friendsSection" class="hidden">
+                <div class="section-head">
+                    <h2 class="section-title"><span class="dot"></span>Wishlist dei miei amici</h2>
+                    <span class="badge" id="friendsCount">0</span>
+                </div>
+                <div id="friendsList" class="friend-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ FRIEND (READ-ONLY) VIEW ============ -->
+    <div id="friendView" class="hidden">
+        <header class="app-header">
+            <div class="wrap" style="padding-top:16px; padding-bottom:16px;">
+                <button class="back-btn" onclick="closeFriendView()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    Indietro
+                </button>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                        <div class="avatar" id="friendAvatar" style="width:46px;height:46px;border-radius:15px;font-size:19px;">A</div>
+                        <div style="min-width:0;">
+                            <h2 id="friendTitle" style="font-size:24px; font-weight:700; letter-spacing:-0.6px; line-height:1.2;"></h2>
+                            <p id="friendSubtitle" style="font-size:12.5px; color:var(--text-secondary);"></p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="badge">👀 Sola lettura</span>
+                        <button class="icon-btn danger" title="Rimuovi questa wishlist" onclick="confirmRemoveFriendList()">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="wrap">
+            <div id="friendGrid" class="item-grid"></div>
+            <div id="friendEmpty" class="empty-state hidden">
+                <div class="empty-icon" style="font-size:56px; margin-bottom:18px; opacity:0.7;">🫙</div>
+                <h3 style="font-size:18px; font-weight:600; margin-bottom:6px;">Wishlist vuota</h3>
+                <p style="color:var(--text-secondary); font-size:14px;">Questa wishlist non contiene desideri.</p>
+            </div>
+        </main>
+    </div>
+    <!-- ============ ITEM MODAL (add / edit) ============ -->
+    <div id="itemModal" class="modal-overlay hidden">
+        <div class="modal-content wide scale-in">
+            <div class="modal-body">
+                <h3 id="itemModalTitle" style="font-size:20px; font-weight:700; letter-spacing:-0.3px; margin-bottom:4px;">Nuovo desiderio</h3>
+                <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:20px;">Incolla un link: immagine, titolo e prezzo vengono compilati da soli.</p>
+
+                <div class="field">
+                    <label class="field-label" for="fLink">Link prodotto</label>
+                    <div style="display:flex; gap:8px;">
+                        <input id="fLink" class="ios-input" type="url" placeholder="https://..." style="flex:1;"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault(); autoFillFromLink();}">
+                        <button id="autoFillBtn" class="btn-primary" style="padding:13px 16px; white-space:nowrap; font-size:14px;" onclick="autoFillFromLink()">Importa</button>
+                    </div>
+                    <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:7px; line-height:1.5;">
+                        Il recupero automatico passa da un servizio esterno: se non funziona, compila i campi a mano.
+                        Il prezzo dipende dall'offerta e dalla spedizione, e non tutti i negozi lo rendono leggibile
+                        (AliExpress, per esempio): controllalo prima di salvare.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="field-label">Immagine</label>
+                    <div class="img-picker" id="imgPicker">
+                        <div class="ph" id="imgPickerPh"><b>🖼️</b>Nessuna immagine<br><span style="opacity:.7">Importa un link o carica un file</span></div>
+                        <img id="imgPreview" class="hidden" alt="">
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap;">
+                        <button class="glass-btn" style="font-size:13px; padding:9px 13px;" onclick="document.getElementById('imgFile').click()">📁 Carica file</button>
+                        <button class="glass-btn" style="font-size:13px; padding:9px 13px;" onclick="promptImageUrl()">🔗 Da URL</button>
+                        <button class="glass-btn" style="font-size:13px; padding:9px 13px;" onclick="clearImage()">✕ Rimuovi</button>
+                    </div>
+                    <input id="imgFile" type="file" accept="image/*" class="hidden" onchange="handleImageFile(this.files[0])">
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="fTitle">Titolo *</label>
+                    <input id="fTitle" class="ios-input" type="text" placeholder="Es. Cuffie wireless" maxlength="140">
+                </div>
+
+                <div class="row field">
+                    <div>
+                        <label class="field-label" for="fPrice">Prezzo</label>
+                        <input id="fPrice" class="ios-input" type="text" placeholder="Es. 49,90" maxlength="24" oninput="hidePriceHint()" onchange="cleanPriceInput()">
+                    </div>
+                    <div style="flex:0 0 128px;">
+                        <label class="field-label" for="fCurrency">Valuta</label>
+                        <input id="fCurrency" class="ios-input" type="text" value="EUR" readonly title="Le wishlist usano sempre l'euro" maxlength="8">
+                    </div>
+                </div>
+                <div class="field-hint hidden" id="priceHint"></div>
+
+                <div class="field">
+                    <label class="field-label" for="fDesc">Descrizione</label>
+                    <textarea id="fDesc" class="ios-input" placeholder="Taglia, colore, note... (opzionale)" maxlength="600"></textarea>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:22px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="closeItemModal()">Annulla</button>
+                    <button class="btn-primary" style="flex:1;" id="itemSaveBtn" onclick="saveItem()">Salva</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SHARE MODAL ============ -->
+    <div id="shareModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:18px;">
+                    <div style="font-size:40px; margin-bottom:8px;">📤</div>
+                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
+                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Viene scaricato un file <b>.json</b> che puoi inviare a chi vuoi (WhatsApp, email...).</p>
+                </div>
+
+                <div style="background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin-bottom:18px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div>
+                            <div style="font-size:14px; font-weight:600;">Includi le immagini</div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">File più grande, ma funziona offline</div>
+                        </div>
+                        <input type="checkbox" id="shareImages" checked style="width:20px; height:20px; accent-color:var(--accent); cursor:pointer;">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="closeShareModal()">Annulla</button>
+                    <button class="btn-primary" style="flex:1;" onclick="downloadShare()">Scarica file</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ IMPORT MODAL ============ -->
+    <div id="importModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:4px;">Carica una wishlist</h3>
+                <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:18px;">Seleziona un file <b>.json</b> esportato da Wishlismini.</p>
+
+                <div class="drop-zone" id="dropZone">
+                    <div style="font-size:32px; margin-bottom:8px;">📥</div>
+                    <div style="font-size:14px; font-weight:600; margin-bottom:4px;">Trascina qui il file</div>
+                    <div style="font-size:12.5px; color:var(--text-secondary);">oppure tocca per sceglierlo</div>
+                </div>
+                <input id="importFile" type="file" accept=".json,.txt,application/json" class="hidden">
+
+                <div style="display:flex; gap:10px; margin-top:18px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="closeImportModal()">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ IMPORT CHOICE MODAL ============ -->
+    <div id="importChoiceModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:18px;">
+                    <div style="font-size:38px; margin-bottom:8px;">🤔</div>
+                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Di chi è questa wishlist?</h3>
+                    <p id="importChoiceInfo" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;"></p>
+                </div>
+
+                <button class="glass-btn" style="width:100%; padding:16px; border-radius:16px; justify-content:flex-start; gap:14px; margin-bottom:10px;" onclick="applyImport('own')">
+                    <span style="font-size:24px;">🙋</span>
+                    <span style="text-align:left;">
+                        <span style="display:block; font-size:14.5px; font-weight:650;">È la mia wishlist</span>
+                        <span style="display:block; font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Unisce i desideri alla mia lista (modificabile)</span>
+                    </span>
+                </button>
+
+                <button class="glass-btn" style="width:100%; padding:16px; border-radius:16px; justify-content:flex-start; gap:14px;" onclick="applyImport('friend')">
+                    <span style="font-size:24px;">👥</span>
+                    <span style="text-align:left;">
+                        <span style="display:block; font-size:14.5px; font-weight:650;">È di un amico</span>
+                        <span style="display:block; font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Aggiunta come lista separata, sola lettura</span>
+                    </span>
+                </button>
+
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeImportChoiceModal()">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ USERS MODAL ============ -->
+    <div id="usersModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:4px;">Utenti</h3>
+                <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:18px;">Ogni utente ha la propria wishlist, salvata su questo dispositivo.</p>
+                <div id="usersList" class="saved-users"></div>
+
+                <div class="divider">aggiungi utente</div>
+                <div style="display:flex; gap:8px;">
+                    <input id="newUserName" class="ios-input" type="text" placeholder="Nome utente" maxlength="24" style="flex:1;"
+                           onkeydown="if(event.key==='Enter') addUserFromModal()">
+                    <button class="btn-primary" style="padding:13px 18px;" onclick="addUserFromModal()">Crea</button>
+                </div>
+
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeUsersModal()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ IMAGE VIEWER ============ -->
+    <div id="imageModal" class="modal-overlay hidden" onclick="closeImageModal()">
+        <div class="modal-content wide scale-in" onclick="event.stopPropagation()" style="padding:14px;">
+            <div class="modal-body">
+                <img id="imageModalImg" alt="" style="width:100%; border-radius:16px; display:block; max-height:66vh; object-fit:contain; background:var(--thumb-bg);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; padding:0 6px 6px;">
+                    <div style="min-width:0;">
+                        <div id="imageModalTitle" style="font-size:15px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+                        <div id="imageModalPrice" style="font-size:13px; color:var(--text-secondary);"></div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-shrink:0;">
+                        <a id="imageModalLink" class="link-btn" target="_blank" rel="noopener">Apri link</a>
+                        <button class="btn-secondary" style="padding:9px 15px; font-size:14px;" onclick="closeImageModal()">Chiudi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CONFIRM MODAL ============ -->
+    <div id="confirmModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in" style="max-width:400px;">
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div class="danger-icon-container">
+                        <svg width="26" height="26" fill="none" stroke="var(--danger-icon-color)" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <h3 id="confirmTitle" style="font-size:18px; font-weight:700; margin-bottom:6px; letter-spacing:-0.2px;">Sei sicuro?</h3>
+                    <p id="confirmText" style="color:var(--text-secondary); font-size:14px; line-height:1.5;"></p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="closeConfirm()">Annulla</button>
+                    <button class="btn-danger" style="flex:1;" id="confirmOkBtn" onclick="runConfirm()">Elimina</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+        /* =========================================================
+           WISHLISMINI
+           ========================================================= */
+
+        // ---------- CONSTANTS ----------
+        var DB_NAME = 'wishlismini';
+        var DB_VERSION = 1;
+        var STORES = ['meta', 'users', 'lists', 'items'];
+        var LS_KEY = 'wishlismini_ls_v1';
+
+        // ---------- STATE ----------
+        var state = {
+            theme: 'dark',
+            currentUserId: null,
+            ownListId: null,
+            viewingFriendListId: null,
+            editingItemId: null,
+            draftImage: '',
+            pendingImport: null,
+            confirmAction: null,
+            storageMode: 'idb'
+        };
+
+        // ---------- SMALL HELPERS ----------
+        function $(id) { return document.getElementById(id); }
+        function qs(sel) { return document.querySelector(sel); }
+        function uid(prefix) {
+            return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        }
+        function escapeHtml(text) {
+            return String(text == null ? '' : text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        function safeUrl(raw) {
+            if (!raw) return '';
+            var value = String(raw).trim();
+            if (!value) return '';
+            if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)) value = 'https://' + value;
+            try {
+                var u = new URL(value);
+                if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+            } catch (e) { }
+            return '';
+        }
+        function safeImgSrc(raw) {
+            if (!raw) return '';
+            var value = String(raw).trim();
+            if (/^data:image\//i.test(value)) return value;
+            return safeUrl(value);
+        }
+        function initialOf(name) {
+            var n = String(name || '?').trim();
+            return n ? n[0].toUpperCase() : '?';
+        }
+        function slugify(name) {
+            return String(name || 'wishlist').toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'wishlist';
+        }
+        function formatDate(ts) {
+            try {
+                return new Date(ts).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+            } catch (e) { return ''; }
+        }
+
+        // ---------- STORAGE ABSTRACTION (IndexedDB -> localStorage fallback) ----------
+        var _db = null;
+
+        function lsRead() {
+            try {
+                return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
+            } catch (e) { return {}; }
+        }
+        function lsWrite(data) {
+            try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { }
+        }
+
+        // Se in passato l'app ha usato il fallback localStorage e ora IndexedDB è disponibile,
+        // riporta i dati dentro IndexedDB senza perderli.
+        async function migrateFromLocalStorage() {
+            var ls = lsRead();
+            var hasAny = false;
+            STORES.forEach(function (s) { if (ls[s] && Object.keys(ls[s]).length) hasAny = true; });
+            if (!hasAny) return;
+            var existing = await Store.getAll('users');
+            if (existing.length) return;
+            for (var i = 0; i < STORES.length; i++) {
+                var name = STORES[i];
+                var bucket = ls[name] || {};
+                var keys = Object.keys(bucket);
+                for (var j = 0; j < keys.length; j++) {
+                    var v = bucket[keys[j]];
+                    if (name === 'meta') await Store.put('meta', v, keys[j]);
+                    else if (v && v.id) await Store.put(name, v);
+                }
+            }
+            try { localStorage.removeItem(LS_KEY); } catch (e) { }
+        }
+
+        function openDatabase() {
+            return new Promise(function (resolve, reject) {
+                if (!window.indexedDB) { reject(new Error('IndexedDB non disponibile')); return; }
+                var req;
+                try { req = indexedDB.open(DB_NAME, DB_VERSION); }
+                catch (e) { reject(e); return; }
+                req.onupgradeneeded = function (ev) {
+                    var db = ev.target.result;
+                    if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+                    if (!db.objectStoreNames.contains('users')) db.createObjectStore('users', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('lists')) db.createObjectStore('lists', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('items')) {
+                        var s = db.createObjectStore('items', { keyPath: 'id' });
+                        s.createIndex('listId', 'listId', { unique: false });
+                    }
+                };
+                req.onsuccess = function () { resolve(req.result); };
+                req.onerror = function () { reject(req.error || new Error('Errore apertura DB')); };
+                req.onblocked = function () { reject(new Error('DB bloccato')); };
+            });
+        }
+
+        var Store = {
+            async init() {
+                try {
+                    _db = await openDatabase();
+                    // smoke test: IndexedDB puo' esistere ma essere inaccessibile (es. alcune build su file://)
+                    await Store.put('meta', 1, 'selfTest');
+                    await Store.del('meta', 'selfTest');
+                    state.storageMode = 'idb';
+                    await migrateFromLocalStorage();
+                } catch (e) {
+                    _db = null;
+                    state.storageMode = 'ls';
+                }
+                return state.storageMode;
+            },
+            get(store, key) {
+                if (_db) {
+                    return new Promise(function (resolve, reject) {
+                        var tx = _db.transaction(store, 'readonly');
+                        var r = tx.objectStore(store).get(key);
+                        r.onsuccess = function () { resolve(r.result); };
+                        r.onerror = function () { reject(r.error); };
+                    });
+                }
+                var data = lsRead();
+                return Promise.resolve(data[store] ? data[store][key] : undefined);
+            },
+            put(store, value, key) {
+                if (_db) {
+                    return new Promise(function (resolve, reject) {
+                        var tx = _db.transaction(store, 'readwrite');
+                        var os = tx.objectStore(store);
+                        var r = (key === undefined) ? os.put(value) : os.put(value, key);
+                        r.onsuccess = function () { resolve(r.result); };
+                        r.onerror = function () { reject(r.error); };
+                    });
+                }
+                var data = lsRead();
+                if (!data[store]) data[store] = {};
+                data[store][key === undefined ? value.id : key] = (key === undefined) ? value : value;
+                lsWrite(data);
+                return Promise.resolve(key === undefined ? value.id : key);
+            },
+            del(store, key) {
+                if (_db) {
+                    return new Promise(function (resolve, reject) {
+                        var tx = _db.transaction(store, 'readwrite');
+                        var r = tx.objectStore(store).delete(key);
+                        r.onsuccess = function () { resolve(); };
+                        r.onerror = function () { reject(r.error); };
+                    });
+                }
+                var data = lsRead();
+                if (data[store]) { delete data[store][key]; lsWrite(data); }
+                return Promise.resolve();
+            },
+            getAll(store) {
+                if (_db) {
+                    return new Promise(function (resolve, reject) {
+                        var tx = _db.transaction(store, 'readonly');
+                        var r = tx.objectStore(store).getAll();
+                        r.onsuccess = function () { resolve(r.result || []); };
+                        r.onerror = function () { reject(r.error); };
+                    });
+                }
+                var data = lsRead();
+                var bucket = data[store] || {};
+                return Promise.resolve(Object.keys(bucket).map(function (k) { return bucket[k]; }));
+            },
+            async byIndex(store, indexName, value) {
+                if (_db) {
+                    var all = await Store.getAll(store);
+                    return all.filter(function (r) { return r.listId === value; });
+                }
+                var all2 = await Store.getAll(store);
+                return all2.filter(function (r) { return r.listId === value; });
+            },
+            async removeListCascade(listId) {
+                var items = await Store.byIndex('items', 'listId', listId);
+                for (var i = 0; i < items.length; i++) await Store.del('items', items[i].id);
+                await Store.del('lists', listId);
+            }
+        };
+
+        // ---------- AUDIO ----------
+        var audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                var Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return null;
+                audioCtx = new Ctx();
+            }
+            if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) { } }
+            return audioCtx;
+        }
+        function tone(freq, delay, dur, vol, type, endFreq) {
+            var ctx = getAudioContext();
+            if (!ctx) return;
+            try {
+                var now = ctx.currentTime + delay;
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = type || 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(vol, now + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + dur + 0.05);
+            } catch (e) { }
+        }
+
+        function playAddSound() { tone(880, 0, 0.16, 0.055, 'sine', 1240); }
+        function playClickSound() { tone(520, 0, 0.07, 0.032, 'sine', 700); }
+        function playSuccessSound() {
+            [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.075, 0.55, 0.075, 'sine'); });
+        }
+        function playPopSound() { tone(660, 0, 0.09, 0.05, 'sine', 990); }
+        function playOpenSound() { tone(420, 0, 0.18, 0.045, 'sine', 620); tone(840, 0.05, 0.22, 0.03, 'sine', 1180); }
+        function playDeleteSound() { tone(400, 0, 0.2, 0.05, 'triangle', 170); }
+        function playErrorSound() { tone(240, 0, 0.12, 0.05, 'square', 200); tone(200, 0.13, 0.16, 0.045, 'square', 150); }
+        function playShareSound() { tone(700, 0, 0.12, 0.05, 'sine', 1050); tone(1050, 0.1, 0.28, 0.055, 'sine', 1400); }
+
+        // ---------- THEME ----------
+        function applyTheme(theme) {
+            if (theme === 'light') document.body.classList.add('light');
+            else document.body.classList.remove('light');
+            updateThemeIcon(theme);
+            var meta = qs('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f0f2f5' : '#0a0a14');
+        }
+        function updateThemeIcon(theme) {
+            var icon = $('themeIcon');
+            if (!icon) return;
+            if (theme === 'light') {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+            }
+        }
+        function toggleTheme() {
+            var btn = $('themeToggle');
+            btn.classList.add('rotating');
+            setTimeout(function () { btn.classList.remove('rotating'); }, 500);
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(state.theme);
+            playPopSound();
+            Store.put('meta', state.theme, 'theme').catch(function () { });
+        }
+
+        // ---------- TOAST ----------
+        function showToast(message, opts) {
+            opts = opts || {};
+            var existing = qs('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast';
+            var icon = opts.icon || '';
+            if (!icon) {
+                icon = opts.variant === 'error'
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+            }
+            toast.innerHTML =
+                '<svg width="18" height="18" fill="none" stroke="' + (opts.variant === 'error' ? 'var(--danger-icon-color)' : 'var(--text-secondary)') + '" stroke-width="1.9" viewBox="0 0 24 24">' + icon + '</svg>' +
+                '<span style="font-size:13.5px; font-weight:500; color:var(--text-primary); line-height:1.4;">' + escapeHtml(message) + '</span>';
+            document.body.appendChild(toast);
+            setTimeout(function () {
+                toast.classList.add('leaving');
+                setTimeout(function () { toast.remove(); }, 300);
+            }, opts.duration || 3200);
+        }
+
+        // ---------- SPARKLES ----------
+        function createSparkles(element, count, colorized) {
+            if (!element || !element.getBoundingClientRect) return;
+            var rect = element.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
+            var n = count || 8;
+            for (var i = 0; i < n; i++) {
+                var sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                var angle = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+                var distance = 25 + Math.random() * 45;
+                sparkle.style.left = cx + 'px';
+                sparkle.style.top = cy + 'px';
+                sparkle.style.setProperty('--tx', (Math.cos(angle) * distance).toFixed(1) + 'px');
+                sparkle.style.setProperty('--ty', (Math.sin(angle) * distance).toFixed(1) + 'px');
+                var size = 3 + Math.random() * 4;
+                sparkle.style.width = size + 'px';
+                sparkle.style.height = size + 'px';
+                if (colorized) {
+                    var hue = 250 + Math.random() * 90;
+                    sparkle.style.background = 'hsla(' + hue + ', 90%, 72%, 0.95)';
+                    sparkle.style.boxShadow = '0 0 14px hsla(' + hue + ', 90%, 70%, 0.9)';
+                }
+                document.body.appendChild(sparkle);
+                (function (el) { setTimeout(function () { el.remove(); }, 800); })(sparkle);
+            }
+        }
+
+        // ---------- MODAL HELPERS ----------
+        function showModal(id) { var el = $(id); if (el) el.classList.remove('hidden'); }
+        function hideModal(id) { var el = $(id); if (el) el.classList.add('hidden'); }
+
+        // ---------- CONFIRM ----------
+        function askConfirm(title, text, okLabel, action) {
+            $('confirmTitle').textContent = title;
+            $('confirmText').textContent = text;
+            $('confirmOkBtn').textContent = okLabel || 'Elimina';
+            state.confirmAction = action;
+            showModal('confirmModal');
+        }
+        function closeConfirm() {
+            hideModal('confirmModal');
+            state.confirmAction = null;
+        }
+        async function runConfirm() {
+            var action = state.confirmAction;
+            state.confirmAction = null;
+            hideModal('confirmModal');
+            if (typeof action !== 'function') return;
+            try {
+                await action();
+            } catch (e) {
+                playErrorSound();
+                showToast('Operazione non riuscita', { variant: 'error' });
+            }
+        }
+
+        // ---------- GATE / USERS ----------
+        async function loadUsers() {
+            return await Store.getAll('users');
+        }
+
+        function renderSavedUsers(users, container) {
+            var box = $('savedUsersBox');
+            if (container === 'modal') {
+                box = null;
+            }
+            var target = container === 'modal' ? $('usersList') : $('savedUsers');
+            if (!users.length) {
+                if (box) box.classList.add('hidden');
+                if (target) target.innerHTML = '';
+                return;
+            }
+            if (box && container !== 'modal') box.classList.remove('hidden');
+
+            var sorted = users.slice().sort(function (a, b) { return (b.lastLogin || b.createdAt || 0) - (a.lastLogin || a.createdAt || 0); });
+            target.innerHTML = sorted.map(function (u) {
+                var badge = (state.currentUserId === u.id && container === 'modal')
+                    ? '<span class="badge" style="margin-left:auto;">attivo</span>' : '';
+                var del = (container === 'modal')
+                    ? '<button class="icon-btn danger" title="Elimina utente" onclick="event.stopPropagation(); confirmDeleteUser(\'' + u.id + '\')">' +
+                      '<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>'
+                    : '<svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24" style="margin-left:auto;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
+                return '<div class="saved-user" onclick="pickUser(\'' + u.id + '\')">' +
+                    '<div class="avatar">' + escapeHtml(initialOf(u.name)) + '</div>' +
+                    '<div style="min-width:0; flex:1;">' +
+                        '<div style="font-size:14.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(u.name) + '</div>' +
+                        '<div style="font-size:11.5px; color:var(--text-secondary);">' + (u.lastLogin ? 'ultimo accesso ' + formatDate(u.lastLogin) : 'creato ' + formatDate(u.createdAt)) + '</div>' +
+                    '</div>' + badge + del + '</div>';
+            }).join('');
+        }
+
+        async function refreshGateUsers() {
+            var users = await loadUsers();
+            renderSavedUsers(users, 'gate');
+        }
+
+        async function login() {
+            var input = $('userNameInput');
+            var name = input.value.trim();
+            if (!name) {
+                playErrorSound();
+                input.focus();
+                showToast('Inserisci un nome utente', { variant: 'error' });
+                return;
+            }
+            var users = await loadUsers();
+            var existing = users.filter(function (u) { return u.name.toLowerCase() === name.toLowerCase(); })[0];
+            var user = existing;
+            if (!user) {
+                user = { id: uid('u'), name: name, createdAt: Date.now(), lastLogin: Date.now() };
+                await Store.put('users', user);
+                playSuccessSound();
+            } else {
+                user.lastLogin = Date.now();
+                await Store.put('users', user);
+                playOpenSound();
+            }
+            input.value = '';
+            await enterApp(user.id);
+        }
+
+        async function pickUser(userId) {
+            var users = await loadUsers();
+            var user = users.filter(function (u) { return u.id === userId; })[0];
+            if (!user) return;
+            user.lastLogin = Date.now();
+            await Store.put('users', user);
+            playOpenSound();
+            await enterApp(user.id);
+        }
+
+        async function ensureOwnList(user) {
+            var lists = await Store.getAll('lists');
+            var own = lists.filter(function (l) { return l.type === 'own' && l.ownerId === user.id; })[0];
+            if (!own) {
+                own = {
+                    id: uid('l'), ownerId: user.id, ownerName: user.name,
+                    type: 'own', title: 'Wishlist di ' + user.name,
+                    createdAt: Date.now(), updatedAt: Date.now()
+                };
+                await Store.put('lists', own);
+            }
+            return own;
+        }
+
+        async function enterApp(userId) {
+            var users = await loadUsers();
+            var user = users.filter(function (u) { return u.id === userId; })[0];
+            if (!user) return;
+            state.currentUserId = user.id;
+            await Store.put('meta', user.id, 'currentUserId');
+
+            var own = await ensureOwnList(user);
+            state.ownListId = own.id;
+            state.viewingFriendListId = null;
+
+            $('headerUserName').textContent = user.name;
+            $('headerAvatar').textContent = initialOf(user.name);
+
+            $('gateView').classList.add('hidden');
+            $('friendView').classList.add('hidden');
+            $('appView').classList.remove('hidden');
+            closeAllModals();
+
+            await renderAll();
+        }
+
+        async function logout() {
+            state.currentUserId = null;
+            state.ownListId = null;
+            state.viewingFriendListId = null;
+            await Store.put('meta', null, 'currentUserId');
+            $('appView').classList.add('hidden');
+            $('friendView').classList.add('hidden');
+            $('gateView').classList.remove('hidden');
+            closeAllModals();
+            await refreshGateUsers();
+            setTimeout(function () { $('userNameInput').focus(); }, 120);
+        }
+
+        function openUsersModal() {
+            playClickSound();
+            loadUsers().then(function (users) {
+                renderSavedUsers(users, 'modal');
+                showModal('usersModal');
+                setTimeout(function () { $('newUserName').focus(); }, 120);
+            });
+        }
+        function closeUsersModal() {
+            hideModal('usersModal');
+            $('newUserName').value = '';
+        }
+        async function addUserFromModal() {
+            var name = $('newUserName').value.trim();
+            if (!name) { playErrorSound(); showToast('Inserisci un nome', { variant: 'error' }); return; }
+            var users = await loadUsers();
+            var existing = users.filter(function (u) { return u.name.toLowerCase() === name.toLowerCase(); })[0];
+            if (existing) {
+                $('newUserName').value = '';
+                closeUsersModal();
+                await enterApp(existing.id);
+                showToast('Bentornato, ' + existing.name + '!');
+                return;
+            }
+            var user = { id: uid('u'), name: name, createdAt: Date.now(), lastLogin: Date.now() };
+            await Store.put('users', user);
+            $('newUserName').value = '';
+            closeUsersModal();
+            playSuccessSound();
+            await enterApp(user.id);
+            showToast('Wishlist creata per ' + user.name);
+        }
+        function confirmDeleteUser(userId) {
+            askConfirm('Eliminare l\'utente?', 'Verranno eliminati anche la sua wishlist e tutti i desideri salvati su questo dispositivo.', 'Elimina', async function () {
+                var lists = await Store.getAll('lists');
+                var mine = lists.filter(function (l) { return l.ownerId === userId || l.viewerId === userId; });
+                for (var i = 0; i < mine.length; i++) await Store.removeListCascade(mine[i].id);
+                await Store.del('users', userId);
+                var users = await loadUsers();
+                renderSavedUsers(users, 'modal');
+                if (state.currentUserId === userId) {
+                    await logout();
+                } else {
+                    await renderAll();
+                }
+                playDeleteSound();
+                showToast('Utente eliminato');
+            });
+        }
+
+        // ---------- PRICE FORMATTING ----------
+        var CURRENCY_SYMBOLS = {
+            EUR: '€', USD: '$', GBP: '£', JPY: '¥', CHF: 'CHF', CAD: 'CA$', AUD: 'A$',
+            SEK: 'kr', NOK: 'kr', DKK: 'kr', PLN: 'zł', CZK: 'Kč', HUF: 'Ft',
+            RON: 'lei', BGN: 'лв', TRY: '₺', INR: '₹', BRL: 'R$', MXN: 'MX$', CNY: '¥'
+        };
+        function parsePriceNumber(raw) {
+            var s = String(raw == null ? '' : raw).replace(/[^\d.,]/g, '');
+            if (!s) return null;
+            var lastComma = s.lastIndexOf(','), lastDot = s.lastIndexOf('.');
+            if (lastComma > -1 && lastDot > -1) {
+                if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+                else s = s.replace(/,/g, '');
+            } else if (lastComma > -1) {
+                var dec = s.length - lastComma - 1;
+                s = (dec === 2) ? s.replace(',', '.') : s.replace(/,/g, '');
+            }
+            var n = parseFloat(s);
+            return isNaN(n) ? null : n;
+        }
+        function formatPrice(item) {
+            var raw = item.price ? String(item.price).trim() : '';
+            if (!raw) return '';
+            var n = parsePriceNumber(raw);
+            // Le wishlist sono sempre in euro, anche se il prezzo arriva da un
+            // sito in un'altra moneta o da una lista condivisa da altri.
+            var symbol = CURRENCY_SYMBOLS.EUR;
+            if (n === null) return raw;
+            var decimals = (Math.round(n * 100) % 100 === 0) ? 0 : 2;
+            var num = n.toLocaleString('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            return (symbol ? symbol + ' ' : '') + num;
+        }
+
+        // ---------- ITEM CARD ----------
+        function itemCardHtml(item, readOnly) {
+            var img = safeImgSrc(item.image);
+            var price = formatPrice(item);
+            var link = safeUrl(item.link);
+            var title = item.title || 'Senza titolo';
+            var desc = item.desc || '';
+
+            var thumbInner = '<span class="thumb-ph">' + (item.image ? '🖼️' : '🎁') + '</span>' +
+                (img ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
+                (price ? '<span class="price-badge">' + escapeHtml(price) + '</span>' : '');
+
+            var actions;
+            if (readOnly) {
+                actions = '<div class="item-actions">' +
+                    (link
+                        ? '<a class="link-btn" href="' + escapeHtml(link) + '" target="_blank" rel="noopener" onclick="playClickSound()">🔗 Apri link</a>'
+                        : '<span class="lock-tag">👀 Sola lettura</span>') +
+                    '</div>';
+            } else {
+                actions = '<div class="item-actions">' +
+                    (link ? '<a class="link-btn" href="' + escapeHtml(link) + '" target="_blank" rel="noopener" onclick="playClickSound()">🔗 Apri link</a>' : '<span></span>') +
+                    '<div class="item-actions-right">' +
+                        '<button class="icon-btn" title="Modifica" onclick="openItemModal(\'' + item.id + '\')">' +
+                            '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>' +
+                        '<button class="icon-btn danger" title="Elimina" onclick="confirmDeleteItem(\'' + item.id + '\')">' +
+                            '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>' +
+                    '</div></div>';
+            }
+
+            return '<article class="item-card glass fade-in" id="item-' + item.id + '">' +
+                '<div class="item-inner">' +
+                    '<div class="thumb" onclick="openImageViewer(\'' + item.id + '\')">' + thumbInner + '</div>' +
+                    '<div class="item-body">' +
+                        '<h3 class="item-title">' + escapeHtml(title) + '</h3>' +
+                        (desc ? '<p class="item-desc">' + escapeHtml(desc) + '</p>' : '') +
+                        actions +
+                    '</div>' +
+                '</div></article>';
+        }
+
+        // ---------- RENDER ----------
+        function delayStyle(i) {
+            return '" style="animation-delay:' + Math.min(i * 0.03, 0.4).toFixed(2) + 's';
+        }
+
+        async function renderAll() {
+            await renderOwnList();
+            await renderFriendLists();
+        }
+
+        async function renderOwnList() {
+            if (!state.ownListId) return;
+            var items = await Store.byIndex('items', 'listId', state.ownListId);
+            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+            $('ownCount').textContent = items.length + (items.length === 1 ? ' desiderio' : ' desideri');
+            var grid = $('ownGrid');
+            var empty = $('ownEmpty');
+
+            if (!items.length) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            grid.innerHTML = items.map(function (it, i) {
+                return itemCardHtml(it, false).replace('fade-in', 'fade-in' + delayStyle(i));
+            }).join('');
+        }
+
+        async function renderFriendLists() {
+            var lists = await Store.getAll('lists');
+            var friends = lists.filter(function (l) {
+                return l.type === 'friend' && (!l.viewerId || l.viewerId === state.currentUserId);
+            })
+                .sort(function (a, b) { return (b.importedAt || 0) - (a.importedAt || 0); });
+
+            var section = $('friendsSection');
+            if (!friends.length) {
+                section.classList.add('hidden');
+                $('friendsList').innerHTML = '';
+                return;
+            }
+            section.classList.remove('hidden');
+            $('friendsCount').textContent = friends.length;
+
+            var cards = [];
+            for (var i = 0; i < friends.length; i++) {
+                var l = friends[i];
+                var items = await Store.byIndex('items', 'listId', l.id);
+                var total = 0, hasPrice = false, currency = '';
+                items.forEach(function (it) {
+                    var n = parsePriceNumber(it.price);
+                    if (n !== null) { total += n; hasPrice = true; if (!currency && it.currency) currency = it.currency; }
+                });
+                var sub = items.length + (items.length === 1 ? ' desiderio' : ' desideri');
+                if (hasPrice) sub += ' · ' + formatPrice({ price: String(total), currency: currency });
+
+                cards.push('<div class="friend-card glass fade-in" style="animation-delay:' + (i * 0.04).toFixed(2) + 's" onclick="openFriendList(\'' + l.id + '\')">' +
+                    '<div class="avatar">' + escapeHtml(initialOf(l.ownerName)) + '</div>' +
+                    '<div style="min-width:0; flex:1;">' +
+                        '<div style="font-size:15px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(l.ownerName || 'Amico') + '</div>' +
+                        '<div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">' + escapeHtml(sub) + '</div>' +
+                    '</div>' +
+                    '<svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>' +
+                '</div>');
+            }
+            $('friendsList').innerHTML = cards.join('');
+        }
+
+        // ---------- FRIEND VIEW ----------
+        async function openFriendList(listId) {
+            var list = await Store.get('lists', listId);
+            if (!list) return;
+            if (list.viewerId && list.viewerId !== state.currentUserId) return;
+            state.viewingFriendListId = listId;
+            playOpenSound();
+
+            $('friendTitle').textContent = list.title || ('Wishlist di ' + (list.ownerName || 'Amico'));
+            $('friendSubtitle').textContent = (list.ownerName || 'Amico') +
+                (list.importedAt ? ' · caricata il ' + formatDate(list.importedAt) : '');
+            $('friendAvatar').textContent = initialOf(list.ownerName);
+
+            var items = await Store.byIndex('items', 'listId', listId);
+            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+            if (!items.length) {
+                $('friendGrid').innerHTML = '';
+                $('friendEmpty').classList.remove('hidden');
+            } else {
+                $('friendEmpty').classList.add('hidden');
+                $('friendGrid').innerHTML = items.map(function (it, i) {
+                    return itemCardHtml(it, true).replace('fade-in', 'fade-in' + delayStyle(i));
+                }).join('');
+            }
+
+            $('appView').classList.add('hidden');
+            $('friendView').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function closeFriendView() {
+            state.viewingFriendListId = null;
+            $('friendView').classList.add('hidden');
+            $('appView').classList.remove('hidden');
+            playClickSound();
+        }
+
+        function confirmRemoveFriendList() {
+            var listId = state.viewingFriendListId;
+            if (!listId) return;
+            askConfirm('Rimuovere questa wishlist?', 'La wishlist dell\'amico verrà rimossa da questo dispositivo.', 'Rimuovi', async function () {
+                await Store.removeListCascade(listId);
+                playDeleteSound();
+                state.viewingFriendListId = null;
+                $('friendView').classList.add('hidden');
+                $('appView').classList.remove('hidden');
+                await renderAll();
+                showToast('Wishlist rimossa');
+            });
+        }
+
+        // ---------- IMAGE VIEWER ----------
+        async function openImageViewer(itemId) {
+            var item = await Store.get('items', itemId);
+            if (!item || !item.image) return;
+            var src = safeImgSrc(item.image);
+            if (!src) return;
+            playPopSound();
+            $('imageModalImg').src = src;
+            $('imageModalTitle').textContent = item.title || 'Senza titolo';
+            $('imageModalPrice').textContent = formatPrice(item);
+            var link = safeUrl(item.link);
+            var linkEl = $('imageModalLink');
+            if (link) { linkEl.href = link; linkEl.style.display = ''; }
+            else { linkEl.style.display = 'none'; }
+            showModal('imageModal');
+        }
+        function closeImageModal() {
+            hideModal('imageModal');
+            $('imageModalImg').src = '';
+        }
+
+        // ---------- IMAGE UTILITIES ----------
+        function loadImageElement(src) {
+            return new Promise(function (resolve, reject) {
+                var img = new Image();
+                img.onload = function () { resolve(img); };
+                img.onerror = function () { reject(new Error('Immagine non caricabile')); };
+                img.src = src;
+            });
+        }
+
+        function drawToDataUrl(source, width, height, maxSize) {
+            var max = maxSize || 900;
+            var scale = Math.min(1, max / Math.max(width, height));
+            var w = Math.max(1, Math.round(width * scale));
+            var h = Math.max(1, Math.round(height * scale));
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(source, 0, 0, w, h);
+            return canvas.toDataURL('image/jpeg', 0.82);
+        }
+
+        async function blobToDataUrl(blob) {
+            if (!blob.type || blob.type.indexOf('image/') !== 0) throw new Error('Non è un\'immagine');
+            try {
+                var bmp = await createImageBitmap(blob);
+                return drawToDataUrl(bmp, bmp.width, bmp.height);
+            } catch (e) {
+                var url = URL.createObjectURL(blob);
+                try {
+                    var img = await loadImageElement(url);
+                    return drawToDataUrl(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            }
+        }
+
+        async function remoteImageToDataUrl(srcUrl) {
+            var clean = String(srcUrl).replace(/^https?:\/\//i, '');
+            var candidates = [
+                srcUrl,
+                'https://images.weserv.nl/?url=' + encodeURIComponent(clean) + '&w=900&output=jpg&q=80'
+            ];
+            for (var i = 0; i < candidates.length; i++) {
+                try {
+                    var res = await fetchWithTimeout(candidates[i], 12000);
+                    if (!res.ok) continue;
+                    var blob = await res.blob();
+                    if (!blob || !blob.type || blob.type.indexOf('image/') !== 0) continue;
+                    return await blobToDataUrl(blob);
+                } catch (e) { /* prova il prossimo */ }
+            }
+            return '';
+        }
+
+        // ---------- IMAGE PICKER ----------
+        function setDraftImage(src) {
+            state.draftImage = src || '';
+            var preview = $('imgPreview');
+            var ph = $('imgPickerPh');
+            if (state.draftImage) {
+                preview.src = state.draftImage;
+                preview.classList.remove('hidden');
+                ph.classList.add('hidden');
+            } else {
+                preview.src = '';
+                preview.classList.add('hidden');
+                ph.classList.remove('hidden');
+            }
+        }
+
+        function clearImage() {
+            setDraftImage('');
+            playPopSound();
+        }
+
+        async function promptImageUrl() {
+            var url = window.prompt('Incolla l\'URL dell\'immagine:', '');
+            if (!url) return;
+            var clean = safeUrl(url);
+            if (!clean) { playErrorSound(); showToast('URL non valido', { variant: 'error' }); return; }
+            showToast('Scarico l\'immagine...');
+            var data = await remoteImageToDataUrl(clean);
+            if (data) {
+                setDraftImage(data);
+                playSuccessSound();
+                showToast('Immagine caricata');
+            } else {
+                setDraftImage(clean);
+                playPopSound();
+                showToast('Immagine collegata (senza download)');
+            }
+        }
+
+        async function handleImageFile(file) {
+            if (!file) return;
+            try {
+                var dataUrl = await blobToDataUrl(file);
+                setDraftImage(dataUrl);
+                playSuccessSound();
+            } catch (e) {
+                playErrorSound();
+                showToast('Impossibile leggere l\'immagine', { variant: 'error' });
+            }
+            $('imgFile').value = '';
+        }
+
+        // ---------- ITEM MODAL ----------
+        async function openItemModal(itemId) {
+            if (!state.ownListId) return;
+            state.editingItemId = itemId || null;
+            var item = null;
+            if (itemId) {
+                item = await Store.get('items', itemId);
+                if (!item || item.listId !== state.ownListId) {
+                    showToast('Puoi modificare solo la tua wishlist', { variant: 'error' });
+                    return;
+                }
+            }
+
+            $('itemModalTitle').textContent = item ? 'Modifica desiderio' : 'Nuovo desiderio';
+            $('itemSaveBtn').textContent = item ? 'Salva modifiche' : 'Aggiungi';
+            $('fLink').value = item ? (item.link || '') : '';
+            $('fTitle').value = item ? (item.title || '') : '';
+            $('fPrice').value = item ? (item.price || '') : '';
+            $('fCurrency').value = 'EUR';
+            $('fDesc').value = item ? (item.desc || '') : '';
+            hidePriceHint();
+            setDraftImage(item ? (item.image || '') : '');
+
+            showModal('itemModal');
+            var focusTarget = item ? $('fTitle') : $('fLink');
+            setTimeout(function () { focusTarget.focus(); }, 120);
+        }
+
+        function closeItemModal() {
+            hideModal('itemModal');
+            state.editingItemId = null;
+            hidePriceHint();
+            setDraftImage('');
+        }
+
+        async function saveItem() {
+            if (!state.ownListId) return;
+            var title = $('fTitle').value.trim();
+            var link = safeUrl($('fLink').value.trim());
+            if (!title) {
+                if (link) {
+                    title = link.replace(/^https?:\/\/(www\.)?/i, '').split('/')[0];
+                }
+            }
+            if (!title) {
+                playErrorSound();
+                showToast('Il titolo è obbligatorio', { variant: 'error' });
+                $('fTitle').focus();
+                return;
+            }
+
+            var payload = {
+                listId: state.ownListId,
+                title: title,
+                link: link,
+                price: $('fPrice').value.trim(),
+                currency: $('fCurrency').value.trim().toUpperCase(),
+                desc: $('fDesc').value.trim(),
+                image: state.draftImage || '',
+                updatedAt: Date.now()
+            };
+
+            if (state.editingItemId) {
+                var existing = await Store.get('items', state.editingItemId);
+                if (!existing) { closeItemModal(); return; }
+                Object.keys(payload).forEach(function (k) { existing[k] = payload[k]; });
+                await Store.put('items', existing);
+                playSuccessSound();
+                showToast('Desiderio aggiornato');
+            } else {
+                payload.id = uid('i');
+                payload.createdAt = Date.now();
+                await Store.put('items', payload);
+                playAddSound();
+                showToast('Aggiunto alla tua wishlist!');
+            }
+
+            var list = await Store.get('lists', state.ownListId);
+            if (list) { list.updatedAt = Date.now(); await Store.put('lists', list); }
+
+            closeItemModal();
+            await renderOwnList();
+            var cards = document.querySelectorAll('#ownGrid .item-card');
+            if (cards.length) createSparkles(cards[0], 10, true);
+        }
+
+        function confirmDeleteItem(itemId) {
+            askConfirm('Eliminare il desiderio?', 'Verrà rimosso dalla tua wishlist.', 'Elimina', async function () {
+                var el = $('item-' + itemId);
+                playDeleteSound();
+                if (el) {
+                    el.classList.add('fade-out');
+                    await new Promise(function (r) { setTimeout(r, 450); });
+                }
+                await Store.del('items', itemId);
+                await renderOwnList();
+                showToast('Desiderio eliminato');
+            });
+        }
+
+        // ---------- LINK SCRAPING ----------
+        function fetchWithTimeout(url, ms) {
+            var ctrl = ('AbortController' in window) ? new AbortController() : null;
+            var timer = null;
+            var opts = {};
+            if (ctrl) { opts.signal = ctrl.signal; }
+            var promise = fetch(url, opts);
+            if (ctrl) {
+                timer = setTimeout(function () { ctrl.abort(); }, ms || 15000);
+            }
+            return promise.then(function (res) {
+                if (timer) clearTimeout(timer);
+                return res;
+            }, function (err) {
+                if (timer) clearTimeout(timer);
+                throw err;
+            });
+        }
+
+        // Ogni sorgente e' indipendente: quella che risponde prima compila i campi ancora vuoti.
+        var HTML_PROXIES = [
+            { build: function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); } },
+            { build: function (u) { return 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u); } },
+            { build: function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); } },
+            { build: function (u) { return 'https://api.allorigins.win/get?url=' + encodeURIComponent(u); }, json: 'contents' }
+        ];
+
+        var TEXT_PROXIES = [
+            { build: function (u) { return 'https://r.jina.ai/' + u; } }
+        ];
+
+        var META_APIS = [
+            { build: function (u) { return 'https://api.microlink.io/?url=' + encodeURIComponent(u); } }
+        ];
+
+        var METADATA_TIMEOUT = 9000;
+
+        function metaContent(doc, names) {
+            for (var i = 0; i < names.length; i++) {
+                var el = doc.querySelector('meta[property="' + names[i] + '"]') ||
+                        doc.querySelector('meta[name="' + names[i] + '"]') ||
+                        doc.querySelector('meta[itemprop="' + names[i] + '"]');
+                if (el) {
+                    var v = el.getAttribute('content');
+                    if (v && v.trim()) return v.trim();
+                }
+            }
+            return '';
+        }
+
+        function collectJsonLd(doc) {
+            var out = [];
+            var scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+            for (var i = 0; i < scripts.length; i++) {
+                var txt = (scripts[i].textContent || '').trim();
+                if (!txt) continue;
+                try { out.push(JSON.parse(txt)); }
+                catch (e) {
+                    try { out.push(JSON.parse(txt.replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, ''))); }
+                    catch (e2) { }
+                }
+            }
+            return out;
+        }
+
+        function deepFindKey(node, keys, depth) {
+            if (node == null || depth > 6) return null;
+            if (Array.isArray(node)) {
+                for (var i = 0; i < node.length; i++) {
+                    var r0 = deepFindKey(node[i], keys, depth + 1);
+                    if (r0 != null) return r0;
+                }
+                return null;
+            }
+            if (typeof node !== 'object') return null;
+            var k;
+            for (k in node) {
+                if (!Object.prototype.hasOwnProperty.call(node, k)) continue;
+                if (keys.indexOf(k.toLowerCase()) > -1 && node[k] != null && typeof node[k] !== 'object') return node[k];
+            }
+            for (k in node) {
+                if (!Object.prototype.hasOwnProperty.call(node, k)) continue;
+                var v = node[k];
+                if (v && typeof v === 'object') {
+                    var r1 = deepFindKey(v, keys, depth + 1);
+                    if (r1 != null) return r1;
+                }
+            }
+            return null;
+        }
+
+        function resolveUrl(value, base) {
+            if (!value) return '';
+            try { return new URL(value.trim(), base).href; }
+            catch (e) { return safeUrl(value); }
+        }
+
+        // --- Amazon: l'ASIN identifica il prodotto, quindi l'immagine ufficiale si puo'
+        // ricostruire anche quando la pagina espone solo loghi e pixel di tracciamento.
+        var AMAZON_HOST_RE = /(^|\.)amazon\.[a-z.]{2,8}$/i;
+        var AMAZON_ASIN_RE = /\/(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})(?:[/?]|$)/i;
+        var AMAZON_ASIN_PATH_RE = /\/d\/[^/]+\/dp\/([A-Z0-9]{10})(?:[/?]|$)/i;
+
+        function isAmazonUrl(url) {
+            try { return AMAZON_HOST_RE.test(new URL(url).hostname); }
+            catch (e) { return false; }
+        }
+
+        function amazonAsin(url) {
+            if (!isAmazonUrl(url)) return '';
+            try {
+                var u = new URL(url);
+                var m = u.pathname.match(AMAZON_ASIN_RE) || u.pathname.match(AMAZON_ASIN_PATH_RE) || u.search.match(/[?&]asin=([A-Z0-9]{10})/i);
+                return m ? String(m[1]).toUpperCase() : '';
+            } catch (e) { return ''; }
+        }
+
+        function amazonAsinImage(asin) {
+            return asin ? 'https://images-na.ssl-images-amazon.com/images/P/' + asin + '.01.LZZZZZZZ.jpg' : '';
+        }
+
+        // --- AliExpress: la pagina desktop risponde con un captcha ai lettori
+        // automatici, mentre la versione mobile dello stesso articolo e' leggibile.
+        var ALIEXPRESS_HOST_RE = /(^|\.)aliexpress\.[a-z]{2,4}(\.[a-z]{2})?$/i;
+        var ALIEXPRESS_ITEM_RE = /\/(?:item|i)\/(\d{6,})\.html/i;
+
+        function isAliExpressUrl(url) {
+            try { return ALIEXPRESS_HOST_RE.test(new URL(url).hostname); }
+            catch (e) { return false; }
+        }
+
+        function aliexpressItemId(url) {
+            if (!isAliExpressUrl(url)) return '';
+            try {
+                var m = new URL(url).pathname.match(ALIEXPRESS_ITEM_RE);
+                return m ? m[1] : '';
+            } catch (e) { return ''; }
+        }
+
+        // Alcuni negozi servono una pagina illeggibile all'indirizzo principale ma
+        // una versione leggibile su un altro host: per il recupero si usa quella.
+        // Alcuni negozi servono una pagina illeggibile all'indirizzo principale ma
+        // una versione leggibile su un altro host: per il recupero si usa quella.
+        // AliExpress risponde sulla pagina mobile, ma il lettore automatico puo'
+        // conservare a lungo una copia della pagina di blocco: la variante "fresh"
+        // aggiunge un parametro sempre diverso per costringerlo a riscaricare.
+        function aliexpressReadUrl(id, fresh) {
+            return 'https://m.aliexpress.com/item/' + id + '.html' +
+                (fresh ? '?wlm=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) : '');
+        }
+
+        function crawlerUrl(url, fresh) {
+            if (isAliExpressUrl(url)) {
+                var id = aliexpressItemId(url);
+                if (id) return aliexpressReadUrl(id, fresh);
+            }
+            return url;
+        }
+
+        // Il CDN di AliExpress mette la misura nel nome del file
+        // ("<id>.jpg_220x220q75.jpg_.avif"): si tiene solo il file originale.
+        function upgradeCdnImage(raw) {
+            var u = String(raw == null ? '' : raw);
+            if (!/alicdn\.com|aliexpress-media\.com/i.test(u)) return u;
+            var s = u.replace(/\.avif$/i, '').replace(/_$/, '');
+            var m = /_(\d+)x(\d+)(?:q\d+)?(\.(?:jpe?g|png|webp))?(?:_\.avif|\.avif)?$/i.exec(s);
+            if (!m) return u;
+            var base = s.slice(0, m.index);
+            var stripped = /\.(?:jpe?g|png|webp)$/i.test(base) ? base : base + (m[3] || '');
+            if (!/\.(?:jpe?g|png|webp)$/i.test(stripped)) return u;
+            return stripped;
+        }
+
+        // Un'immagine con la misura nel nome viene preferita a icone e miniature.
+        function imageSizeScore(url) {
+            var m = /[_-](\d+)x(\d+)(?:q\d+)?(?:\.(?:jpe?g|png|webp))?(?:_\.avif|\.avif)?$/i.exec(url);
+            if (!m) return 0;
+            var px = parseInt(m[1], 10) * parseInt(m[2], 10);
+            if (!px) return 0;
+            return Math.min(px / 8000, 120);
+        }
+
+        // Titoli presi dalle pagine: via i suffissi del sito e le code di separatori.
+        function cleanTitle(value) {
+            return String(value == null ? '' : value)
+                .replace(/\s+/g, ' ')
+                .replace(/\s*[|•]\s*(?:Amazon|eBay|Etsy|AliExpress|Temu|Shein)[^|]*$/i, '')
+                .replace(/\s*[-–—]\s*(?:Amazon|eBay|Etsy|AliExpress|Temu|Shein|Wish|Zalando)\b.*$/i, '')
+                .replace(/\s*[:|-]\s*Amazon\.[a-z.]{2,8}.*$/i, '')
+                .replace(/[\s,;:|–—-]+$/, '')
+                .trim();
+        }
+
+        // Accorcia un testo senza tagliare una parola a meta'.
+        function clipText(value, max) {
+            var s = String(value == null ? '' : value).trim();
+            if (s.length <= max) return s;
+            return s.slice(0, max).replace(/\s+\S*$/, '').replace(/[\s,;:.\-–—]+$/, '') + '…';
+        }
+
+        // Alcuni proxy restituiscono la pagina di blocco ("Robot Check", "Access Denied")
+        // o la sola homepage: quei titoli non sono il nome del prodotto e vanno scartati.
+        var JUNK_TITLE_RE = /^(?:amazon(?:\.(?:it|com|de|fr|es|co\.uk))?|amazon\.it:.*|aliexpress(?:\.(?:com|us|it|ru|es|fr|de|pl|nl|pt|br))?(?::.*)?|robot check|access denied|attention required|just a moment|error|403 forbidden|404 not found|service unavailable|sicurezza|verifica|atenci[oó]n|zugriff verweigert|acceso denegado)$/i;
+
+        function isJunkTitle(title, pageUrl) {
+            var t = String(title == null ? '' : title).trim();
+            if (!t) return true;
+            if (JUNK_TITLE_RE.test(t)) return true;
+            if (/robot|captcha|are you a human|verify you are human|accesso negato|scusiamo per l['’]?interruzione|non disponibile|site can['’]?t be reached|maintaining|under maintenance|sit(o|e) in manutenzione|unusual traffic/i.test(t)) return true;
+            // Quando il lettore automatico non riesce a leggere la pagina restituisce
+            // il nome del file al posto del titolo ("1005007914556601.html").
+            if (/^[a-z0-9._~-]{4,}\.(?:html?|php|aspx?|jsp)$/i.test(t)) return true;
+            if (/^\d{6,}$/.test(t)) return true;
+            var host = '';
+            try { host = new URL(pageUrl).hostname.replace(/^www\./i, '').toLowerCase(); } catch (e) { }
+            if (host) {
+                var low = t.toLowerCase();
+                if (low === host || low === host.split('.')[0] || low.replace(/^https?:\/\//, '').replace(/\/+$/, '') === host) return true;
+            }
+            return false;
+        }
+
+        function extractLinkMeta(html, baseUrl) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            var jsonld = collectJsonLd(doc);
+
+            var title = metaContent(doc, ['og:title', 'twitter:title', 'title']);
+            if (!title && doc.querySelector('title')) title = (doc.querySelector('title').textContent || '').trim();
+            if (!title) {
+                var h1 = doc.querySelector('h1');
+                if (h1) title = (h1.textContent || '').trim();
+            }
+
+            var description = metaContent(doc, ['og:description', 'twitter:description', 'description']);
+            if (description.length > 400) description = description.slice(0, 400).trim() + '…';
+
+            var image = metaContent(doc, ['og:image:secure_url', 'og:image:url', 'og:image', 'twitter:image:src', 'twitter:image']);
+            if (image && isJunkImage(resolveUrl(image, baseUrl), '')) image = '';
+            if (!image) {
+                for (var j = 0; j < jsonld.length; j++) {
+                    var img2 = deepFindKey(jsonld[j], ['image', 'thumbnailurl', 'contenturl'], 0);
+                    if (img2) {
+                        image = (typeof img2 === 'string') ? img2 : (img2.url || '');
+                        if (image) break;
+                    }
+                }
+            }
+            if (!image) {
+                var candidates = doc.querySelectorAll('img');
+                var best = '', bestScore = 0;
+                for (var i = 0; i < candidates.length; i++) {
+                    var src = candidates[i].getAttribute('src') || candidates[i].getAttribute('data-src') || '';
+                    if (!src || /^data:/i.test(src)) continue;
+                    var abs = resolveUrl(src, baseUrl);
+                    if (isJunkImage(abs, candidates[i].getAttribute('alt') || '')) continue;
+                    var w = parseInt(candidates[i].getAttribute('width') || '0', 10);
+                    var h = parseInt(candidates[i].getAttribute('height') || '0', 10);
+                    var score = (w && h) ? w * h : 1;
+                    if (score > bestScore) { bestScore = score; best = src; }
+                }
+                image = best;
+            }
+
+            var price = deepFindKey(jsonld, ['price', 'lowprice', 'highprice'], 0);
+            var currency = deepFindKey(jsonld, ['pricecurrency', 'currency'], 0);
+
+            if (price == null) {
+                var pm = metaContent(doc, ['product:price:amount', 'og:price:amount', 'twitter:data1', 'price:amount']);
+                if (pm) price = pm;
+            }
+            if (!price) {
+                var pe = doc.querySelector('[itemprop="price"]');
+                if (pe) price = pe.getAttribute('content') || (pe.textContent || '').trim();
+            }
+            if (!currency) {
+                currency = metaContent(doc, ['product:price:currency', 'og:price:currency', 'price:currency']);
+            }
+            if (!currency) {
+                var ce = doc.querySelector('[itemprop="priceCurrency"]');
+                if (ce) currency = ce.getAttribute('content') || (ce.textContent || '').trim();
+            }
+
+            if (price != null && typeof price === 'object') price = '';
+            if (price != null) price = String(price).trim();
+            if (price && /[€£$¥₹]|CHF|EUR|USD|GBP/i.test(price)) {
+                var detected = findPriceInText(price, baseUrl);
+                if (detected) {
+                    price = detected.price;
+                    if (!currency) currency = detected.currency;
+                }
+            } else if (price) {
+                price = normalizePriceNumber(price, baseUrl) || price;
+            }
+            if (currency) currency = String(currency).toUpperCase().trim();
+
+            var title2 = cleanTitle(title);
+            if (isJunkTitle(title2, baseUrl)) title2 = '';
+            return {
+                title: clipText(title2, 140),
+                description: description || '',
+                image: image ? upgradeCdnImage(resolveUrl(image, baseUrl)) : '',
+                price: price || '',
+                currency: currency || ''
+            };
+        }
+
+        var SYMBOL_TO_CURRENCY = {
+            '€': 'EUR', '$': 'USD', '£': 'GBP', '¥': 'JPY', '₹': 'INR',
+            '₽': 'RUB', '₩': 'KRW', '฿': 'THB', '₺': 'TRY', 'zł': 'PLN'
+        };
+
+        // Un prezzo e' un simbolo di valuta attaccato a un numero. Nessuno spazio dentro
+        // il numero, cosi' "€53,71 53,71" non diventa un unico "53,7153,71".
+        var PRICE_TOKEN_RE = /(?:€|£|\$|¥|₹|₽|₩|฿|₺|zł|CHF|EUR|USD|GBP)\s?\d+(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s?(?:€|£|\$|¥|₹|CHF|EUR|USD|GBP)/gi;
+
+        // Contesti che aiutano a capire se un prezzo e' quello del prodotto.
+        var SHIPPING_RE = /(?:delivery|shipping|spedizione|consegna|spedito|postage|versand|livraison|env[ií]o)/i;
+        var SHIPPING_BEFORE_RE = /(?:delivery|shipping|spedizione|consegna|spedito|postage|versand|livraison|env[ií]o)\s*(?:a|di|cost|fee|:|da)?\s*$/i;
+        var PRODUCT_PRICE_RE = /(?:price|prezzo|purchase|acquisto|includes?|subtotal|totale|buybox|quantit)/i;
+        var OTHER_OFFER_RE = /(?:offers? from|other sellers|new & used|new and used|used from|from \d|a partire da|altri venditori|usato|ricondizionato|refurbished)/i;
+        var DISCOUNT_RE = /(?:\d{1,2}\s?%|save |risparmi|sconto|discount|list price|prezzo consigliato|prezzo di listino)/i;
+        var PRICE_BEFORE_RE = /[€£$¥₹]\s?\d+(?:[.,]\d{1,3})?(?:[.,]\d{1,2})?$/;
+        var PRICE_AFTER_RE = /^\s*(?:€|£|\$|¥|₹|CHF|EUR|USD|GBP)\s?\d/;
+
+        function currencyFromPage(pageUrl) {
+            var map = {
+                it: 'EUR', de: 'EUR', fr: 'EUR', es: 'EUR', nl: 'EUR', at: 'EUR', be: 'EUR', pt: 'EUR', ie: 'EUR', fi: 'EUR',
+                uk: 'GBP', com: 'USD', ca: 'CAD', ch: 'CHF', jp: 'JPY', se: 'SEK', pl: 'PLN', dk: 'DKK'
+            };
+            try {
+                var parts = new URL(pageUrl).hostname.toLowerCase().split('.');
+                return map[parts[parts.length - 1]] || '';
+            } catch (e) { return ''; }
+        }
+
+        function currencyOfToken(token) {
+            var m = String(token).match(/[€£$¥₹₽₩฿₺]|zł|CHF|EUR|USD|GBP/i);
+            if (!m) return '';
+            return SYMBOL_TO_CURRENCY[m[0]] || m[0].toUpperCase();
+        }
+
+        // Normalizza separatori di migliaia/decimali: "1.234,56" e "1,234.56" -> "1234.56".
+        function normalizePriceNumber(num, pageUrl) {
+            var s = String(num == null ? '' : num).replace(/\s/g, '').replace(/[^\d.,]/g, '');
+            if (!s || !/\d/.test(s)) return '';
+            var lastComma = s.lastIndexOf(','), lastDot = s.lastIndexOf('.');
+            if (lastComma > -1 && lastDot > -1) {
+                return (lastComma > lastDot) ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+            }
+            if (lastComma > -1) {
+                if (s.length - lastComma - 1 === 3 && currencyFromPage(pageUrl) === 'USD') return s.replace(/,/g, '');
+                return s.replace(',', '.');
+            }
+            return s;
+        }
+
+        // Primo prezzo trovato: si usa quando il testo e' gia' attendibile (meta tag).
+        function findPriceInText(text, pageUrl) {
+            if (!text) return null;
+            PRICE_TOKEN_RE.lastIndex = 0;
+            var m = PRICE_TOKEN_RE.exec(text);
+            if (!m) return null;
+            var price = normalizePriceNumber(m[0], pageUrl);
+            if (!price) return null;
+            return { price: price, currency: currencyOfToken(m[0]) };
+        }
+
+        // Amazon pubblica in un blob JSON il prezzo dell'offerta principale ("buybox"):
+        // e' piu' affidabile di un prezzo letto a testo libero, perche' non si confonde
+        // con spedizioni, prezzi barrati o offerte di altri venditori.
+        function amazonBuyboxPrice(text, pageUrl) {
+            if (!text) return null;
+            var i = text.search(/"desktop_buybox_group_\d"\s*:/);
+            if (i === -1) return null;
+            var seg = text.slice(i, i + 800);
+            var m = seg.match(/"displayPrice"\s*:\s*"([^"]{1,24})"/);
+            if (!m) return null;
+            var price = normalizePriceNumber(m[1], pageUrl);
+            if (!price) return null;
+            var currency = currencyOfToken(m[1]);
+            if (!currency) {
+                var sm = seg.match(/"currencySymbol"\s*:\s*"([^"]{1,4})"/);
+                if (sm) currency = SYMBOL_TO_CURRENCY[sm[1]] || sm[1].toUpperCase();
+            }
+            return { price: price, currency: currency };
+        }
+
+        function lineBoundsAt(text, index) {
+            var start = text.lastIndexOf('\n', index) + 1;
+            var end = text.indexOf('\n', index);
+            return { start: start, end: (end === -1 ? text.length : end) };
+        }
+
+        // Le pagine prodotto (Amazon in primis) elencano anche spedizioni, prezzi di
+        // offerte secondarie e prezzi scontati barrati. Si valutano tutti i prezzi e si
+        // tiene quello piu' plausibile come prezzo del prodotto.
+        function pickBestPrice(text, pageUrl) {
+            if (!text) return null;
+            var expected = currencyFromPage(pageUrl);
+            var best = null, bestScore = -Infinity, bestIndex = Infinity;
+
+            var lines = [], offset = 0;
+            text.split('\n').forEach(function (l) { lines.push({ text: l, start: offset }); offset += l.length + 1; });
+
+            function lineIndexAt(index) {
+                for (var i = lines.length - 1; i >= 0; i--) { if (index >= lines[i].start) return i; }
+                return 0;
+            }
+            function prevText(i) {
+                for (var j = i - 1; j >= 0; j--) { if (lines[j].text.trim()) return lines[j].text.trim(); }
+                return '';
+            }
+            function nextText(i) {
+                for (var j = i + 1; j < lines.length; j++) { if (lines[j].text.trim()) return lines[j].text.trim(); }
+                return '';
+            }
+
+            PRICE_TOKEN_RE.lastIndex = 0;
+            var m;
+            while ((m = PRICE_TOKEN_RE.exec(text))) {
+                var token = m[0];
+                var price = normalizePriceNumber(token, pageUrl);
+                if (!price) continue;
+
+                var li = lineIndexAt(m.index);
+                var line = lines[li].text;
+                var before = text.slice(lines[li].start, m.index);
+                var after = text.slice(m.index + token.length, lines[li].start + line.length);
+                var prevLine = prevText(li);
+                var nextLine = nextText(li);
+
+                // La spedizione non e' il prezzo del prodotto: si riconosce dalla parola
+                // chiave prima o dopo il prezzo, o sulla riga successiva quando questa
+                // inizia con un altro importo ("€10,86 Delivery...", "Consegna a 4,99€").
+                var beforeTail = before.slice(-24);
+                var shipping = SHIPPING_RE.test(after) || SHIPPING_BEFORE_RE.test(beforeTail) ||
+                    (!after.trim() && /[€£$¥₹]\s?\d/.test(nextLine) && SHIPPING_RE.test(nextLine.slice(0, 24)));
+                if (shipping) continue;
+
+                var score = 0;
+                if (PRODUCT_PRICE_RE.test(before) || PRODUCT_PRICE_RE.test(line) || PRODUCT_PRICE_RE.test(prevLine)) score += 45;
+                if (OTHER_OFFER_RE.test(before) || OTHER_OFFER_RE.test(prevLine)) score -= 85;
+                if (DISCOUNT_RE.test(before)) score -= 60;
+                if (PRICE_BEFORE_RE.test(before)) score -= 40;     // prezzo spezzato dal layout ("€3490€34 90")
+
+                // Il prezzo ripetuto due volte e' lo stesso valore renderizzato due volte,
+                // non un prezzo barrato seguito da quello reale.
+                var afterNum = after.match(/^\s*(?:€|£|\$|¥|₹|CHF|EUR|USD|GBP)?\s*(\d[\d.,]*)/i);
+                var duplicate = afterNum && normalizePriceNumber(afterNum[1], pageUrl) === price;
+                if (PRICE_AFTER_RE.test(after) && !duplicate) score -= 50;
+                if (SHIPPING_RE.test(prevLine)) score -= 30;       // riga precedente dedicata alla spedizione
+
+                var letters = line.replace(/\d/g, '').replace(/[.,]/g, '').replace(/[€£$¥₹₽₩฿₺]/g, '').replace(/[^A-Za-zÀ-ÿ]/g, '');
+                if (letters.length <= 2) score += 30;              // riga composta solo dal prezzo
+                else if (line.length > 90) score -= 25;
+
+                if (expected && currencyOfToken(token) === expected) score += 10;
+
+                if (score > bestScore) {
+                    best = { price: price, currency: currencyOfToken(token) };
+                    bestScore = score;
+                    bestIndex = m.index;
+                } else if (score === bestScore && m.index < bestIndex) {
+                    best = { price: price, currency: currencyOfToken(token) };
+                    bestIndex = m.index;
+                }
+            }
+            return best;
+        }
+
+        // Immagini di servizio (pixel di tracciamento, sprite, loghi, banner pubblicitari)
+        // che non hanno niente a che vedere con il prodotto.
+        var JUNK_IMAGE_RE = /uedata=|grey-pixel|transparent-pixel|pixel\.gif|1x1|\/sprites?\/|sprite-|sash\/|social_share|amazon_logo|\/gno\/|aax-|al-eu-|\.svg(?:$|[?#])|\/\d{1,3}x\d{1,3}\.(?:png|gif|jpe?g)|XXXXXX|-tps-\d+-\d+\.|captcha/i;
+        var JUNK_ALT_RE = /(?:logo|icon|sprite|banner|advert|sponsor|refurbished|offerte|deal|coupon|avatar|rating|stars?|all categories|search by image|download the|subscribe|flag|slider|verify)/i;
+
+        function isJunkImage(url, alt) {
+            if (!url) return true;
+            if (/^data:/i.test(url)) return false;
+            if (!/^https?:\/\//i.test(url)) return true;
+            if (JUNK_IMAGE_RE.test(url)) return true;
+            if (alt && JUNK_ALT_RE.test(alt)) return true;
+            return false;
+        }
+
+        function significantWords(value) {
+            return String(value == null ? '' : value).toLowerCase()
+                .replace(/[^a-z0-9àèéìòùâêîôûäöüçñß\s]/g, ' ')
+                .split(/\s+/)
+                .filter(function (w) { return w.length >= 4; });
+        }
+
+        function sharedWords(a, b) {
+            var A = significantWords(a), B = significantWords(b);
+            var set = {}, hits = 0;
+            for (var i = 0; i < B.length; i++) set[B[i]] = 1;
+            for (var j = 0; j < A.length; j++) { if (set[A[j]]) hits++; }
+            return { hits: hits, a: A.length, b: B.length };
+        }
+
+        function wordOverlap(a, b) {
+            var s = sharedWords(a, b);
+            if (!s.a || !s.b) return 0;
+            return s.hits / Math.min(s.a, s.b);
+        }
+
+        // La meta description dei negozi online spesso ripete il titolo del prodotto o e'
+        // un invito promozionale: in entrambi i casi non aggiunge nulla alla scheda.
+        var DESC_BOILER_RE = /(?:acquista|compra|buy now|buy the|shop now|scopri|best price|miglior prezzo|spedizione gratuita|free shipping|free delivery|sconto del|coupon|all rights reserved|diritti riservati|privacy policy|cookie|drag the slider|slide to verify|verify to ensure)/i;
+        // Pagine di blocco, elenchi di link di piede pagina (Alibaba/AliExpress e simili)
+        // e avvisi legali non sono descrizioni del prodotto.
+        var DESC_JUNK_RE = /(?:alibaba group|alimama|fliggy|taobao|tmall|dingtalk|juhuasuan|aliyun|1688\.com|all rights reserved|tutti i diritti riservati|informativa sulla privacy|cookie policy|sitemap|unusual traffic|we have detected|are you a human|verify you are human|captcha|slide to verify|drag the slider)/i;
+
+        function descriptionScore(value, title) {
+            var desc = String(value == null ? '' : value).trim();
+            var words = significantWords(desc);
+            if (!words.length) return -1;
+            if (DESC_JUNK_RE.test(desc)) return -1;
+            // Un elenco separato da sole virgole senza frasi (menu, selettori di
+            // lingua, liste di link) non e' una descrizione del prodotto.
+            if ((desc.match(/,/g) || []).length >= 5 && !/[.!?;:]/.test(desc)) return -1;
+            var shared = title ? sharedWords(desc, title) : { hits: 0, a: words.length, b: 0 };
+            if (shared.hits >= 4 && shared.hits / Math.max(1, Math.min(shared.a, shared.b)) >= 0.6) return -1;
+            if (DESC_BOILER_RE.test(desc) && words.length < 14) return -1;
+            return Math.min(words.length, 40) + (desc.indexOf('·') > -1 ? 20 : 0);
+        }
+
+        // Nel markdown di r.jina.ai l'alt text dell'immagine principale ripete il titolo
+        // del prodotto: e' il segnale piu' affidabile per distinguerla da loghi e banner.
+        function pickMarkdownImage(md, title, baseUrl) {
+            var re = /!\[([^\]]*)\]\(([^)\s]+)/g;
+            var m, bestUrl = '', bestScore = -Infinity, firstClean = '';
+            while ((m = re.exec(md))) {
+                var alt = (m[1] || '').trim();
+                var raw = m[2];
+                var url = resolveUrl(raw, baseUrl);
+                if (isJunkImage(url, alt)) continue;
+                if (!firstClean) firstClean = url;
+
+                var score = 0;
+                if (alt && title) score += Math.round(wordOverlap(alt, title) * 120);
+                if (/images\/I\/|ssl-images-amazon\.com\/images\/I\//i.test(url)) score += 25;
+                if (/\.(?:jpe?g|png|webp)/i.test(url)) score += 5;
+                if (alt.length >= 15) score += 10;
+                score += imageSizeScore(url);
+                if (score > bestScore) { bestScore = score; bestUrl = url; }
+            }
+            var pick = (bestScore >= 45) ? bestUrl : (firstClean || bestUrl);
+            return pick ? upgradeCdnImage(pick) : pick;
+        }
+
+        // Usato quando il proxy restituisce il testo della pagina (formato markdown di r.jina.ai).
+        function extractMetaFromMarkdown(md, baseUrl) {
+            var out = { title: '', description: '', image: '', price: '', currency: '' };
+            if (!md) return out;
+
+            var mt = md.match(/^Title:\s*(.+)$/m);
+            if (mt) {
+                var mdTitle = cleanTitle(mt[1]);
+                out.title = isJunkTitle(mdTitle, baseUrl) ? '' : clipText(mdTitle, 140);
+            }
+
+            out.image = pickMarkdownImage(md, out.title, baseUrl);
+
+            var body = md
+                .replace(/^Title:.*$/m, '')
+                .replace(/^URL Source:.*$/m, '')
+                .replace(/^Published Time:.*$/m, '');
+
+            var pp = amazonBuyboxPrice(body, baseUrl) || pickBestPrice(body, baseUrl);
+            if (pp) { out.price = pp.price; out.currency = pp.currency; }
+
+            // Le immagini markdown (spesso banner pubblicitari) non sono descrizioni:
+            // si tolgono e si tengono i paragrafi/elenchi di testo utile.
+            var clean = body
+                .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+                .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+
+            var BOILER_RE = /(?:cookie|accetta|rifiuta|skip to|main content|back to top|torna su|security and privacy|payment security|not signed in|signed in|privacy|terms|ships from|sold by|venduto da|add to cart|aggiungi al carrello|buy now|acquista ora|customer reviews|recensioni|segnala|report|recycle|ricicla|smaltimento|disposal|alibaba group|alimama|fliggy|taobao|tmall|dingtalk|juhuasuan|aliyun|1688\.com|all rights reserved|diritti riservati|app store|google play|follow us|sitemap|newsletter)/i;
+            var lines = clean.split('\n'), bestLine = '', bullets = [];
+            for (var i = 0; i < lines.length; i++) {
+                var ln = lines[i].trim();
+                if (!ln) continue;
+                var isBullet = /^[-*+]\s+/.test(ln) || /^\d+[.)]\s+/.test(ln);
+                var text = ln.replace(/^[-*+\s]+/, '').replace(/\s+/g, ' ').replace(/[*_`|>#]/g, '').trim();
+                if (text.length < 40 || text.length > 600) continue;
+                if (BOILER_RE.test(text) || /https?:\/\//.test(text)) continue;
+                if (isBullet) bullets.push(text);
+                if (text.length > bestLine.length) bestLine = text;
+            }
+
+            var desc = bullets.slice(0, 3).join(' · ');
+            if (desc.length < 60) desc = bestLine;
+            if (desc.length > 400) desc = desc.slice(0, 400).trim() + '…';
+            out.description = desc;
+
+            return out;
+        }
+
+        // Usato con le API che restituiscono gia' i metadati in JSON.
+        function extractMetaFromJson(json, pageUrl) {
+            var out = { title: '', description: '', image: '', price: '', currency: '' };
+            var d = (json && json.data) || json || {};
+
+            if (d.title) {
+                var t = cleanTitle(d.title);
+                var parts = t.split(/\s+[|•]\s+/);
+                if (parts.length > 1 && parts[0].length >= 8) t = parts[0];
+                out.title = isJunkTitle(t, pageUrl) ? '' : clipText(t, 140);
+            }
+            if (d.description) {
+                var desc = String(d.description).replace(/\s+/g, ' ').trim();
+                out.description = desc.length > 400 ? desc.slice(0, 400).trim() + '…' : desc;
+            }
+            var img = d.image;
+            if (img && typeof img === 'object') img = img.url || '';
+            img = img ? String(img) : '';
+            if (img && /^https?:\/\//i.test(img) && !isJunkImage(img, '')) out.image = upgradeCdnImage(img);
+
+            var price = d.price || d.offers || '';
+            if (price && typeof price === 'object') price = price.price || price.lowPrice || '';
+            if (price) {
+                var found = findPriceInText(String(price), pageUrl) || { price: normalizePriceNumber(price, pageUrl), currency: '' };
+                out.price = found.price || '';
+                out.currency = found.currency || '';
+            }
+            return out;
+        }
+
+        function mergeMeta(target, src) {
+            if (!src) return;
+            var keys = ['title', 'description', 'image', 'price', 'currency'];
+            for (var i = 0; i < keys.length; i++) {
+                var k = keys[i];
+                if (!target[k] && src[k]) target[k] = src[k];
+            }
+            if (!target.currency && target.price) target.currency = 'EUR';
+        }
+
+        // Il lettore di pagine puo' essere lento: per i siti che rispondono solo a lui
+        // si attende di piu' e, se la prima lettura restituisce una copia inutilizzabile
+        // (pagina di blocco o risultato vecchio), si riprova con un indirizzo nuovo.
+        var TEXT_PROXY_TIMEOUT = 40000;
+        var TEXT_PROXY_RETRIES = 2;
+        var TEXT_PROXY_RETRY_BUDGET = 75000;
+
+        function hasUsableMeta(meta) {
+            if (!meta) return false;
+            if (meta.title || meta.price) return true;
+            // Un'immagine "blob:" o interna alla pagina non e' il prodotto: non basta.
+            return !!(meta.image && /^https?:\/\//i.test(meta.image) && !isJunkImage(meta.image, ''));
+        }
+
+        // Solo per i negozi di cui si sa leggere la pagina alternativa.
+        function canRefreshRead(url) {
+            return isAliExpressUrl(url) && !!aliexpressItemId(url);
+        }
+
+        function buildMetaSources(url, originalUrl) {
+            var sources = [];
+            var canRefresh = canRefreshRead(originalUrl);
+            var firstTimeout = canRefresh ? TEXT_PROXY_TIMEOUT : METADATA_TIMEOUT;
+
+            HTML_PROXIES.forEach(function (p) {
+                sources.push(async function () {
+                    var res = await fetchWithTimeout(p.build(url), METADATA_TIMEOUT);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    var text = await res.text();
+                    if (p.json) {
+                        try { text = JSON.parse(text)[p.json] || ''; } catch (e) { text = ''; }
+                    }
+                    if (!text || text.indexOf('<') === -1) throw new Error('Risposta non valida');
+                    return extractLinkMeta(text, url);
+                });
+            });
+
+            TEXT_PROXIES.forEach(function (p) {
+                sources.push(async function () {
+                    // Per i negozi "refresh" il primo tentativo usa gia' un indirizzo
+                    // nuovo: la copia in cache del lettore e' spesso quella vecchia, e
+                    // ogni tentativo in piu' consuma tempo e richieste a vuoto.
+                    var attempts = canRefresh ? TEXT_PROXY_RETRIES + 1 : 1;
+                    var start = Date.now();
+                    var meta = null;
+                    for (var attempt = 0; attempt < attempts; attempt++) {
+                        if (attempt && Date.now() - start > TEXT_PROXY_RETRY_BUDGET) break;
+                        try {
+                            var target = (attempt === 0 && !canRefresh) ? url : crawlerUrl(originalUrl, true);
+                            var left = TEXT_PROXY_RETRY_BUDGET - (Date.now() - start);
+                            var timeout = Math.max(8000, Math.min(firstTimeout, left));
+                            var res = await fetchWithTimeout(p.build(target), timeout);
+                            if (!res.ok) continue;
+                            var candidate = extractMetaFromMarkdown(await res.text(), url);
+                            if (hasUsableMeta(candidate)) return candidate;
+                            if (!meta) meta = candidate;
+                        } catch (e) { }
+                    }
+                    return meta;
+                });
+            });
+
+            META_APIS.forEach(function (p) {
+                sources.push(async function () {
+                    var res = await fetchWithTimeout(p.build(url), METADATA_TIMEOUT);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return extractMetaFromJson(await res.json(), url);
+                });
+            });
+
+            return sources;
+        }
+
+        async function fetchLinkMeta(url) {
+            var merged = { title: '', description: '', image: '', price: '', currency: '' };
+            var bestDescScore = -1;
+            // Per alcuni negozi si legge una variante della pagina piu' accessibile
+            // ai lettori automatici; il link salvato resta quello dell'utente.
+            var fetchUrl = crawlerUrl(url, false);
+            var slowRead = canRefreshRead(url);
+            var sources = buildMetaSources(fetchUrl, url);
+            var asin = amazonAsin(url);
+            if (!sources.length) {
+                if (asin) merged.image = amazonAsinImage(asin);
+                return merged;
+            }
+
+            return new Promise(function (resolve) {
+                var pending = sources.length;
+                var settled = false;
+                var budget = (slowRead ? TEXT_PROXY_RETRY_BUDGET : METADATA_TIMEOUT) + 2000;
+                var timer = setTimeout(finish, budget);
+
+                function finish() {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    // Ultima risorsa per Amazon: immagine ufficiale ricavata dall'ASIN,
+                    // utile quando il link e' pieno di parametri di tracciamento.
+                    if ((!merged.image || isJunkImage(merged.image, '')) && asin) merged.image = amazonAsinImage(asin);
+                    resolve(merged);
+                }
+
+                sources.forEach(function (task) {
+                    Promise.resolve()
+                        .then(task)
+                        .then(function (meta) {
+                            if (!meta) return;
+                            // La descrizione non e' "la prima che arriva": si tiene quella
+                            // piu' informativa, scartando i doppioni del titolo.
+                            if (meta.description) {
+                                var score = descriptionScore(meta.description, merged.title || meta.title || '');
+                                if (score > bestDescScore) {
+                                    bestDescScore = Math.max(score, 0);
+                                    merged.description = score > 0 ? meta.description : '';
+                                }
+                                meta.description = '';
+                            }
+                            mergeMeta(merged, meta);
+                        })
+                        .catch(function () { })
+                        .then(function () {
+                            pending--;
+                            // Sui siti che non espongono il prezzo non ha senso aspettare
+                            // oltre: titolo e immagine sono tutto quello che si puo' avere.
+                            if (merged.title && merged.image && (merged.price || slowRead)) finish();
+                            else if (pending === 0) finish();
+                        });
+                });
+            });
+        }
+
+        function hidePriceHint() {
+            var el = $('priceHint');
+            if (!el) return;
+            el.classList.add('hidden');
+            el.innerHTML = '';
+        }
+
+        // Alcuni negozi (AliExpress) mostrano il prezzo solo nella sessione del
+        // browser dell'utente: se l'importazione non lo trova, si spiega cosa fare
+        // e si porta il cursore sul campo, invece di lasciare un campo vuoto.
+        function updatePriceHint(url, hasPrice) {
+            var el = $('priceHint');
+            if (!el) return;
+            if (hasPrice || $('fPrice').value.trim()) {
+                hidePriceHint();
+                return;
+            }
+            var target = safeUrl(url);
+            var open = target
+                ? '<a href="' + escapeHtml(target) + '" target="_blank" rel="noopener noreferrer">apri la pagina</a>'
+                : 'apri la pagina del prodotto';
+            el.innerHTML = isAliExpressUrl(url)
+                ? '💡 AliExpress mostra il prezzo solo nella tua sessione del browser, non ai lettori automatici: ' +
+                  open + ', copia il prezzo e incollalo qui (es. 23,09 €).'
+                : '💡 Questo sito non espone il prezzo: ' + open + ', copia il prezzo e incollalo qui (es. 49,90).';
+            el.classList.remove('hidden');
+            if ($('fTitle').value.trim()) $('fPrice').focus();
+        }
+
+        // Se dal link si incolla un pezzo di pagina (es. "EUR!46.11!20.29"),
+        // si tiene solo il primo importo: evita di salvare numeri inventati.
+        function cleanPriceInput() {
+            var input = $('fPrice');
+            if (!input) return;
+            var raw = input.value.trim();
+            if (!raw || input.disabled) return;
+            var matches = raw.match(/\d{1,3}(?:[.\s]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?/g);
+            if (!matches) return;
+            if (matches.length === 1 && matches[0] === raw) return;
+            var withDecimals = matches.filter(function (m) { return /[.,]\d{1,2}$/.test(m); });
+            var chosen = (withDecimals.length ? withDecimals[0] : matches[0]);
+            if (chosen === raw) return;
+            var sameValue = parsePriceNumber(raw) === parsePriceNumber(chosen);
+            input.value = chosen;
+            if (!sameValue) {
+                showToast('Prezzo inserito: ' + chosen + ' — controlla che sia corretto', { duration: 4200 });
+            }
+        }
+
+        async function autoFillFromLink() {
+            var url = safeUrl($('fLink').value.trim());
+            if (!url) {
+                playErrorSound();
+                showToast('Inserisci un link valido (https://...)', { variant: 'error' });
+                $('fLink').focus();
+                return;
+            }
+            $('fLink').value = url;
+            var btn = $('autoFillBtn');
+            var original = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+            // Alcuni negozi rispondono solo dopo parecchi secondi: si avvisa che
+            // l'importazione e' in corso invece di lasciare l'utente nel dubbio.
+            var slowHint = setTimeout(function () {
+                showToast('Lettura della pagina in corso: alcuni siti richiedono piu\' tempo');
+            }, 6000);
+
+            try {
+                var meta = await fetchLinkMeta(url);
+                if (meta.title && !$('fTitle').value.trim()) $('fTitle').value = meta.title;
+                if (meta.description && !$('fDesc').value.trim()) $('fDesc').value = meta.description;
+                if (meta.price && !$('fPrice').value.trim()) $('fPrice').value = meta.price;
+                // La valuta dell'app e' sempre l'euro, anche quando il sito letto
+                // espone il prezzo in un'altra moneta.
+                $('fCurrency').value = 'EUR';
+                if (meta.image && !state.draftImage) {
+                    showToast('Scarico l\'immagine...');
+                    var data = await remoteImageToDataUrl(meta.image);
+                    setDraftImage(data || meta.image);
+                }
+                if (!meta.title && !$('fTitle').value.trim()) {
+                    try { $('fTitle').value = new URL(url).hostname.replace(/^www\./, ''); } catch (e) { }
+                }
+                if (meta.title || meta.price || meta.image || meta.description) {
+                    playSuccessSound();
+                    if (!meta.price && !$('fPrice').value.trim()) {
+                        if (isAliExpressUrl(url)) {
+                            showToast('Titolo e immagine importati. Il prezzo va inserito a mano.', { duration: 5200 });
+                        } else {
+                            showToast('Dati importati. Questo sito non espone il prezzo: inseriscilo a mano.');
+                        }
+                    } else {
+                        showToast('Dati importati dal link');
+                    }
+                } else {
+                    playErrorSound();
+                    if (isAliExpressUrl(url)) {
+                        showToast('AliExpress blocca la lettura automatica: compila i campi a mano, il link viene comunque salvato', { variant: 'error', duration: 5200 });
+                    } else {
+                        showToast('Nessun dato trovato: compila a mano', { variant: 'error' });
+                    }
+                }
+                updatePriceHint(url, !!meta.price);
+            } catch (e) {
+                playErrorSound();
+                showToast('Sito non raggiungibile: compila i campi a mano', { variant: 'error' });
+                updatePriceHint(url, false);
+            } finally {
+                clearTimeout(slowHint);
+                btn.disabled = false;
+                btn.textContent = original;
+            }
+        }
+
+        // ---------- SHARE ----------
+        function openShareModal() {
+            if (!state.ownListId) return;
+            playClickSound();
+            showModal('shareModal');
+        }
+        function closeShareModal() { hideModal('shareModal'); }
+
+        async function buildShareData(includeImages) {
+            var list = await Store.get('lists', state.ownListId);
+            var items = await Store.byIndex('items', 'listId', state.ownListId);
+            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+            return {
+                app: 'wishlismini',
+                version: 1,
+                type: 'wishlist',
+                exportedAt: new Date().toISOString(),
+                owner: (list && list.ownerName) || 'Utente',
+                wishlist: {
+                    name: (list && list.title) || 'La mia wishlist',
+                    items: items.map(function (it) {
+                        var image = it.image || '';
+                        if (!includeImages && !/^data:/i.test(image)) image = safeUrl(image);
+                        else if (!includeImages) image = '';
+                        return {
+                            title: it.title || '',
+                            desc: it.desc || '',
+                            price: it.price || '',
+                            currency: it.currency || '',
+                            link: it.link || '',
+                            image: image
+                        };
+                    })
+                }
+            };
+        }
+
+        function downloadBlob(filename, text) {
+            var blob = new Blob([text], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () {
+                a.remove();
+                URL.revokeObjectURL(url);
+            }, 4000);
+        }
+
+        async function downloadShare() {
+            if (!state.ownListId) return;
+            var includeImages = $('shareImages').checked;
+            var data = await buildShareData(includeImages);
+            if (!data.wishlist.items.length) {
+                playErrorSound();
+                showToast('La tua wishlist è vuota', { variant: 'error' });
+                return;
+            }
+            var filename = 'wishlismini-' + slugify(data.owner) + '-' + new Date().toISOString().slice(0, 10) + '.json';
+            downloadBlob(filename, JSON.stringify(data, null, 2));
+            closeShareModal();
+            playShareSound();
+            showToast('File scaricato: invialo a chi vuoi!');
+        }
+
+        // ---------- IMPORT ----------
+        function openImportModal() {
+            playClickSound();
+            showModal('importModal');
+        }
+        function closeImportModal() { hideModal('importModal'); }
+        function closeImportChoiceModal() {
+            hideModal('importChoiceModal');
+            state.pendingImport = null;
+        }
+
+        function readFileAsText(file) {
+            return new Promise(function (resolve, reject) {
+                if (file.text) { file.text().then(resolve, reject); return; }
+                var fr = new FileReader();
+                fr.onload = function () { resolve(String(fr.result)); };
+                fr.onerror = function () { reject(fr.error); };
+                fr.readAsText(file);
+            });
+        }
+
+        function validateImport(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            var wl = (raw.wishlist && typeof raw.wishlist === 'object') ? raw.wishlist : raw;
+            if (!Array.isArray(wl.items)) return null;
+            var owner = raw.owner || wl.owner || wl.ownerName || 'Amico';
+            var items = wl.items.filter(function (it) {
+                return it && typeof it === 'object' && (it.title || it.link || it.url);
+            }).map(function (it) {
+                var img = it.image ? String(it.image) : '';
+                if (img && !/^data:image\//i.test(img)) img = safeUrl(img);
+                return {
+                    title: String(it.title || '').slice(0, 140),
+                    desc: String(it.desc || it.description || '').slice(0, 600),
+                    price: it.price == null ? '' : String(it.price).slice(0, 24),
+                    currency: 'EUR',
+                    link: safeUrl(it.link || it.url || ''),
+                    image: img
+                };
+            });
+            return {
+                owner: String(owner).slice(0, 40),
+                name: String(wl.name || '').slice(0, 80),
+                items: items
+            };
+        }
+
+        function dedupeKey(item) {
+            return String(item.title || '').trim().toLowerCase() + '|' + String(item.link || '').trim().toLowerCase();
+        }
+
+        async function handleImportFile(file) {
+            if (!file) return;
+            try {
+                var text = await readFileAsText(file);
+                var parsed = JSON.parse(text);
+                var data = validateImport(parsed);
+                if (!data) {
+                    playErrorSound();
+                    showToast('File non valido', { variant: 'error' });
+                    return;
+                }
+                state.pendingImport = data;
+                closeImportModal();
+                $('importChoiceInfo').innerHTML = 'File di <b>' + escapeHtml(data.owner) + '</b> con <b>' +
+                    data.items.length + '</b> ' + (data.items.length === 1 ? 'desiderio' : 'desideri') + '.';
+                showModal('importChoiceModal');
+                playPopSound();
+            } catch (e) {
+                playErrorSound();
+                showToast('Impossibile leggere il file', { variant: 'error' });
+            }
+            $('importFile').value = '';
+        }
+
+        async function applyImport(mode) {
+            var data = state.pendingImport;
+            if (!data) return;
+
+            if (mode === 'own') {
+                if (!state.ownListId) { showToast('Nessun utente attivo', { variant: 'error' }); return; }
+                var existing = await Store.byIndex('items', 'listId', state.ownListId);
+                var keys = {};
+                existing.forEach(function (it) { keys[dedupeKey(it)] = true; });
+                var added = 0;
+                for (var i = 0; i < data.items.length; i++) {
+                    var it = data.items[i];
+                    var k = dedupeKey(it);
+                    if (keys[k]) continue;
+                    keys[k] = true;
+                    await Store.put('items', {
+                        id: uid('i'), listId: state.ownListId, createdAt: Date.now() + i,
+                        title: it.title, desc: it.desc, price: it.price,
+                        currency: it.currency, link: it.link, image: it.image, updatedAt: Date.now()
+                    });
+                    added++;
+                }
+                var list = await Store.get('lists', state.ownListId);
+                if (list) { list.updatedAt = Date.now(); await Store.put('lists', list); }
+                closeImportChoiceModal();
+                await renderAll();
+                playSuccessSound();
+                showToast(added
+                    ? ('Aggiunti ' + added + (added === 1 ? ' desiderio' : ' desideri') + ' alla tua wishlist')
+                    : 'Nessun nuovo desiderio (erano già presenti)');
+            } else {
+                var friendList = {
+                    id: uid('l'), ownerId: null, ownerName: data.owner,
+                    type: 'friend', viewerId: state.currentUserId,
+                    title: data.name || ('Wishlist di ' + data.owner),
+                    importedAt: Date.now(), updatedAt: Date.now()
+                };
+                await Store.put('lists', friendList);
+                for (var j = 0; j < data.items.length; j++) {
+                    var fi = data.items[j];
+                    await Store.put('items', {
+                        id: uid('i'), listId: friendList.id, createdAt: Date.now() + j,
+                        title: fi.title, desc: fi.desc, price: fi.price,
+                        currency: fi.currency, link: fi.link, image: fi.image, updatedAt: Date.now()
+                    });
+                }
+                closeImportChoiceModal();
+                await renderAll();
+                playShareSound();
+                showToast('Wishlist di ' + data.owner + ' caricata (sola lettura)');
+            }
+        }
+
+        // ---------- GLOBAL WIRING ----------
+        function wireEvents() {
+            var importFile = $('importFile');
+            importFile.addEventListener('change', function () { handleImportFile(importFile.files[0]); });
+
+            var dropZone = $('dropZone');
+            dropZone.addEventListener('click', function () { importFile.click(); });
+            ['dragenter', 'dragover'].forEach(function (evt) {
+                dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.add('over'); });
+            });
+            ['dragleave', 'drop'].forEach(function (evt) {
+                dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.remove('over'); });
+            });
+            dropZone.addEventListener('drop', function (e) {
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleImportFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            // impedisci al browser di aprire i file trascinati fuori dalla drop zone
+            ['dragover', 'drop'].forEach(function (evt) {
+                window.addEventListener(evt, function (e) { e.preventDefault(); });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape') return;
+                var open = ['imageModal', 'confirmModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal'];
+                for (var i = 0; i < open.length; i++) {
+                    if (!$(open[i]).classList.contains('hidden')) {
+                        closeModalById(open[i]);
+                        return;
+                    }
+                }
+            });
+        }
+
+        function closeModalById(id) {
+            switch (id) {
+                case 'imageModal': closeImageModal(); break;
+                case 'confirmModal': closeConfirm(); break;
+                case 'usersModal': closeUsersModal(); break;
+                case 'importChoiceModal': closeImportChoiceModal(); break;
+                case 'importModal': closeImportModal(); break;
+                case 'shareModal': closeShareModal(); break;
+                case 'itemModal': closeItemModal(); break;
+            }
+        }
+
+        function closeAllModals() {
+            ['imageModal', 'confirmModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal']
+                .forEach(closeModalById);
+        }
+
+        // ---------- INIT ----------
+        async function init() {
+            getAudioContext();
+            wireEvents();
+
+            await Store.init();
+            var theme = await Store.get('meta', 'theme');
+            state.theme = (theme === 'light') ? 'light' : 'dark';
+            applyTheme(state.theme);
+
+            await refreshGateUsers();
+
+            var currentId = await Store.get('meta', 'currentUserId');
+            var users = await loadUsers();
+            var known = currentId && users.filter(function (u) { return u.id === currentId; }).length > 0;
+            if (known) {
+                await enterApp(currentId);
+            } else {
+                setTimeout(function () { $('userNameInput').focus(); }, 250);
+            }
+        }
+
+        init();
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
