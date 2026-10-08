@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FileTransfer">
+<title>FileTransfer</title>
+<link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2785%27%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E">
+<style>
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* I controlli dei form non ereditano il colore del documento: senza questa
+           regola il testo dei pulsanti resta nero (ButtonText) anche in modalità notte. */
+        button, input, select, textarea {
+            color: inherit;
+        }
+
+        :root {
+            --bg-base-1: #0a0a14;
+            --bg-base-2: #05050a;
+            --bg-radial-1: #2a2a3e;
+            --bg-radial-2: #1a1a2e;
+            --blob-1: #3a3a5c;
+            --blob-2: #2c3e5c;
+            --blob-3: #3a2c4a;
+            --blob-opacity: 0.35;
+
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-bg-hover: rgba(255, 255, 255, 0.09);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-strong: rgba(255, 255, 255, 0.22);
+            --glass-highlight: rgba(255, 255, 255, 0.06);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            --glass-inner-top: rgba(255, 255, 255, 0.08);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.02);
+
+            --header-bg: rgba(10, 10, 20, 0.55);
+            --header-border: rgba(255, 255, 255, 0.08);
+
+            --text-primary: rgba(255, 255, 255, 0.92);
+            --text-secondary: rgba(255, 255, 255, 0.55);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+
+            --btn-primary-bg: rgba(255, 255, 255, 0.92);
+            --btn-primary-text: #0a0a14;
+            --btn-primary-hover: #ffffff;
+
+            --input-bg: rgba(255, 255, 255, 0.06);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-focus-bg: rgba(255, 255, 255, 0.1);
+            --input-focus-border: rgba(255, 255, 255, 0.3);
+            --input-focus-ring: rgba(255, 255, 255, 0.05);
+
+            --icon-btn-hover: rgba(255, 255, 255, 0.08);
+            --icon-btn-danger-hover: rgba(255, 80, 70, 0.1);
+            --icon-btn-danger-color: #ff6b6b;
+
+            --danger-bg: rgba(255, 80, 70, 0.9);
+            --danger-bg-hover: rgba(255, 80, 70, 1);
+            --danger-icon-bg: rgba(255, 80, 70, 0.12);
+            --danger-icon-border: rgba(255, 80, 70, 0.2);
+            --danger-icon-color: #ff6b6b;
+
+            --accent: #a78bfa;
+            --accent-2: #f0abfc;
+            --accent-soft: rgba(167, 139, 250, 0.16);
+            --accent-border: rgba(167, 139, 250, 0.35);
+
+            --modal-bg: rgba(20, 20, 30, 0.7);
+            --modal-border: rgba(255, 255, 255, 0.15);
+            --modal-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+
+            --toast-bg: rgba(20, 20, 30, 0.75);
+            --toast-border: rgba(255, 255, 255, 0.15);
+            --toast-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+
+            --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+
+            --sparkle-color: rgba(255, 255, 255, 0.9);
+            --sparkle-glow: rgba(255, 255, 255, 0.8);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.06);
+            --theme-toggle-border: rgba(255, 255, 255, 0.1);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.1);
+
+            --thumb-bg: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+        }
+
+        body.light {
+            --bg-base-1: #f0f2f5;
+            --bg-base-2: #e4e7ec;
+            --bg-radial-1: #dbeafe;
+            --bg-radial-2: #fce7f3;
+            --blob-1: #bfdbfe;
+            --blob-2: #fbcfe8;
+            --blob-3: #ddd6fe;
+            --blob-opacity: 0.55;
+
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg-hover: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-border-strong: rgba(255, 255, 255, 0.95);
+            --glass-highlight: rgba(255, 255, 255, 0.5);
+            --glass-highlight-strong: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --glass-inner-top: rgba(255, 255, 255, 0.9);
+            --glass-inner-bottom: rgba(255, 255, 255, 0.3);
+
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --header-border: rgba(0, 0, 0, 0.06);
+
+            --text-primary: rgba(15, 23, 42, 0.92);
+            --text-secondary: rgba(15, 23, 42, 0.55);
+            --text-tertiary: rgba(15, 23, 42, 0.4);
+
+            --btn-primary-bg: rgba(15, 23, 42, 0.9);
+            --btn-primary-text: #ffffff;
+            --btn-primary-hover: rgba(15, 23, 42, 1);
+
+            --input-bg: rgba(255, 255, 255, 0.5);
+            --input-border: rgba(15, 23, 42, 0.1);
+            --input-focus-bg: rgba(255, 255, 255, 0.8);
+            --input-focus-border: rgba(15, 23, 42, 0.25);
+            --input-focus-ring: rgba(15, 23, 42, 0.05);
+
+            --icon-btn-hover: rgba(15, 23, 42, 0.06);
+            --icon-btn-danger-hover: rgba(220, 38, 38, 0.08);
+            --icon-btn-danger-color: #dc2626;
+
+            --danger-bg: rgba(220, 38, 38, 0.9);
+            --danger-bg-hover: rgba(220, 38, 38, 1);
+            --danger-icon-bg: rgba(220, 38, 38, 0.08);
+            --danger-icon-border: rgba(220, 38, 38, 0.15);
+            --danger-icon-color: #dc2626;
+
+            --accent: #7c3aed;
+            --accent-2: #c026d3;
+            --accent-soft: rgba(124, 58, 237, 0.12);
+            --accent-border: rgba(124, 58, 237, 0.28);
+
+            --modal-bg: rgba(255, 255, 255, 0.75);
+            --modal-border: rgba(255, 255, 255, 0.9);
+            --modal-shadow: 0 25px 60px rgba(31, 38, 135, 0.15), 0 10px 20px rgba(0, 0, 0, 0.06);
+            --modal-overlay: rgba(15, 23, 42, 0.25);
+
+            --toast-bg: rgba(255, 255, 255, 0.85);
+            --toast-border: rgba(255, 255, 255, 0.9);
+            --toast-shadow: 0 10px 40px rgba(31, 38, 135, 0.12);
+
+            --scrollbar-thumb: rgba(15, 23, 42, 0.1);
+            --scrollbar-thumb-hover: rgba(15, 23, 42, 0.2);
+
+            --sparkle-color: rgba(124, 58, 237, 0.9);
+            --sparkle-glow: rgba(124, 58, 237, 0.5);
+
+            --theme-toggle-bg: rgba(255, 255, 255, 0.5);
+            --theme-toggle-border: rgba(255, 255, 255, 0.8);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.7);
+
+            --thumb-bg: linear-gradient(135deg, rgba(15,23,42,0.05), rgba(15,23,42,0.02));
+        }
+
+        html, body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-primary);
+        }
+
+        /* === BACKGROUND === */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                radial-gradient(ellipse at 20% 0%, var(--bg-radial-1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, var(--bg-radial-2) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-base-1) 0%, var(--bg-base-2) 100%);
+            transition: background 0.6s ease;
+        }
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: var(--blob-opacity);
+            z-index: -1;
+            transition: opacity 0.6s ease, background 0.6s ease;
+            animation: float 25s infinite ease-in-out;
+        }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--blob-1) 0%, transparent 70%); top: -200px; left: -150px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, var(--blob-2) 0%, transparent 70%); bottom: -150px; right: -100px; animation-delay: -8s; }
+        .blob-3 { width: 400px; height: 400px; background: radial-gradient(circle, var(--blob-3) 0%, transparent 70%); top: 40%; left: 50%; opacity: 0.25; animation-delay: -15s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.05); }
+            66% { transform: translate(-30px, 40px) scale(0.97); }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.04;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* === GLASS SYSTEM === */
+        .glass {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            box-shadow:
+                var(--glass-shadow),
+                inset 0 1px 0 0 var(--glass-inner-top),
+                inset 0 -1px 0 0 var(--glass-inner-bottom);
+            overflow: hidden;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, var(--glass-highlight) 0%, rgba(255,255,255,0.02) 40%, transparent 100%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        .glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+            opacity: 0.06;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none !important; }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--header-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-bottom: 0.5px solid var(--header-border);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        /* === ANIMATIONS === */
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .fade-out { animation: fadeOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .scale-in { animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.94); max-height: 0; padding: 0; margin: 0; }
+        }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes sparkle {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1); }
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* === THEME TOGGLE === */
+        .theme-toggle {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 60;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--theme-toggle-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid var(--theme-toggle-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-shadow);
+        }
+        .theme-toggle:hover { background: var(--theme-toggle-hover); transform: scale(1.05); }
+        .theme-toggle:active { transform: scale(0.95); }
+        .theme-toggle svg { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .theme-toggle.rotating svg { transform: rotate(360deg); }
+
+        /* === BUTTONS === */
+        .btn-primary {
+            background: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border: none;
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { background: var(--btn-primary-hover); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover { background: var(--glass-bg-hover); }
+        .btn-secondary:active { transform: scale(0.97); }
+
+        .btn-danger {
+            background: var(--danger-bg);
+            color: #fff;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-danger:hover { background: var(--danger-bg-hover); }
+        .btn-danger:active { transform: scale(0.97); }
+
+        .glass-btn {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 13px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        .glass-btn:hover { background: var(--glass-bg-hover); transform: translateY(-1px); border-color: var(--glass-border-strong); }
+        .glass-btn:active { transform: scale(0.97); }
+        .glass-btn.accent { background: var(--accent-soft); border-color: var(--accent-border); }
+        .glass-btn.accent:hover { background: var(--accent-soft); filter: brightness(1.15); }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover { color: var(--text-primary); background: var(--icon-btn-hover); }
+        .icon-btn.danger:hover { color: var(--icon-btn-danger-color); background: var(--icon-btn-danger-hover); }
+
+        .back-btn {
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .back-btn:hover { background: var(--glass-bg-hover); }
+
+        /* === INPUTS === */
+        .ios-input {
+            background: var(--input-bg);
+            border: 0.5px solid var(--input-border);
+            border-radius: 14px;
+            padding: 13px 16px;
+            color: var(--text-primary);
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .ios-input::placeholder { color: var(--text-tertiary); }
+        .ios-input:focus {
+            background: var(--input-focus-bg);
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+        textarea.ios-input { resize: vertical; min-height: 84px; line-height: 1.5; }
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 7px;
+        }
+        .field-hint {
+            margin-top: 10px;
+            padding: 10px 13px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            border-radius: 12px;
+        }
+        .field-hint a { color: var(--accent); font-weight: 600; }
+
+        /* === SECTION TITLES === */
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 26px 0 14px;
+        }
+        .section-title {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .section-title .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* === ITEM GRID === */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 14px;
+        }
+        @media (max-width: 560px) {
+            .item-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; }
+        }
+
+        .item-card {
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .item-card:hover {
+            background: var(--glass-bg-hover);
+            transform: translateY(-3px);
+            border-color: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow), 0 12px 40px rgba(0,0,0,0.18);
+        }
+        .item-inner { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
+
+        /* ---------- RIORDINO (drag & drop) ---------- */
+        .reorder-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            border-radius: 14px;
+            padding: 11px 14px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text-primary);
+        }
+        body.reordering .reorder-bar { display: flex; }
+
+        .drag-handle {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 4;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 18, 28, 0.5);
+            border: 0.5px solid var(--glass-border-strong);
+            color: #fff;
+            cursor: grab;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .drag-handle:hover { background: rgba(18, 18, 28, 0.72); }
+        .drag-handle:active { transform: scale(0.92); cursor: grabbing; }
+
+        body.reordering .item-card:hover { transform: none; }
+        body.reordering .item-card { cursor: grab; }
+
+        .item-card.reorder-dragging {
+            animation: none;
+            transition: none;
+            cursor: grabbing;
+            border-color: var(--accent-border);
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45);
+            transform: scale(1.03) rotate(-1deg);
+        }
+        .item-card.reorder-placeholder {
+            animation: none;
+            background: var(--accent-soft);
+            border: 1.5px dashed var(--accent-border);
+            box-shadow: none;
+        }
+
+        .thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            background: var(--thumb-bg);
+            overflow: hidden;
+            cursor: zoom-in;
+            flex-shrink: 0;
+        }
+        .thumb img {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .item-card:hover .thumb img { transform: scale(1.05); }
+        .thumb-ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            opacity: 0.45;
+        }
+        .thumb::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.35) 100%);
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.7;
+        }
+        .price-badge {
+            position: absolute;
+            z-index: 3;
+            bottom: 9px;
+            left: 9px;
+            background: rgba(10, 10, 20, 0.6);
+            color: #fff;
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border: 0.5px solid rgba(255,255,255,0.22);
+            padding: 5px 11px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .item-body { padding: 13px 14px 14px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+        .item-title {
+            font-size: 15.5px;
+            font-weight: 650;
+            letter-spacing: -0.2px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .item-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .item-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 4px;
+        }
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 7px 11px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            transition: all 0.2s;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .link-btn:hover { filter: brightness(1.2); }
+        .item-actions-right { display: flex; gap: 2px; flex-shrink: 0; }
+
+        .lock-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+        }
+
+        /* === FRIEND CARDS === */
+        .friend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .friend-card {
+            border-radius: 18px;
+            padding: 15px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .friend-card:hover { background: var(--glass-bg-hover); transform: translateY(-2px); border-color: var(--glass-border-strong); }
+        .friend-card:active { transform: scale(0.99); }
+        .avatar {
+            width: 42px; height: 42px;
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        /* === BADGE / CHIP === */
+        .badge {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 0.5px solid var(--glass-border);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 5px 14px 5px 5px;
+            cursor: pointer;
+            transition: all 0.25s;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            max-width: 230px;
+        }
+        .user-chip:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-strong); }
+        .user-chip .avatar { width: 30px; height: 30px; border-radius: 50%; font-size: 13px; }
+        .user-chip span {
+            font-size: 14px; font-weight: 600;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* === EMPTY STATE === */
+        .empty-icon { animation: floatIcon 4s ease-in-out infinite; filter: grayscale(0.25); }
+        .empty-state { text-align: center; padding: 70px 20px; }
+
+        /* === MODAL === */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 16px;
+            overflow-y: auto;
+            transition: background 0.4s ease;
+        }
+        @media (min-width: 640px) { .modal-overlay { align-items: center; } }
+
+        .modal-content {
+            background: var(--modal-bg);
+            backdrop-filter: blur(50px) saturate(200%);
+            -webkit-backdrop-filter: blur(50px) saturate(200%);
+            border: 0.5px solid var(--modal-border);
+            border-radius: 24px;
+            padding: 26px;
+            width: 100%;
+            max-width: 460px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: var(--modal-shadow), inset 0 1px 0 var(--glass-inner-top);
+            position: relative;
+            transition: all 0.4s ease;
+            margin: auto 0;
+        }
+        @media (min-width: 640px) { .modal-content { margin: auto; } }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 130px;
+            background: linear-gradient(180deg, var(--glass-highlight-strong), transparent);
+            pointer-events: none;
+        }
+        .modal-content.wide { max-width: 620px; }
+        .modal-body { position: relative; z-index: 1; }
+
+        .field { margin-bottom: 16px; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; min-width: 0; }
+
+        /* === IMAGE PICKER === */
+        .img-picker {
+            position: relative;
+            border-radius: 16px;
+            border: 1px dashed var(--glass-border-strong);
+            background: var(--glass-bg);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 132px;
+            aspect-ratio: 16 / 9;
+            transition: all 0.25s;
+        }
+        .img-picker img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .img-picker .ph { font-size: 13px; color: var(--text-tertiary); text-align: center; line-height: 1.5; }
+        .img-picker .ph b { display: block; font-size: 22px; font-weight: 400; margin-bottom: 6px; opacity: .8; }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--toast-border);
+            padding: 13px 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--toast-shadow);
+            z-index: 300;
+            animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: calc(100vw - 32px);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        .toast.leaving { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translate(-50%, 14px) scale(0.94); }
+        }
+
+        /* === MISC === */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+        .sparkle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            background: var(--sparkle-color);
+            box-shadow: 0 0 12px var(--sparkle-glow);
+            animation: sparkle 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .danger-icon-container {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--danger-icon-bg);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--danger-icon-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .spinner {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+
+        /* === GATE (login) === */
+        #gateView {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 18px;
+        }
+        .gate-card {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 28px;
+            padding: 34px 28px 28px;
+            text-align: center;
+        }
+        .gate-logo {
+            font-size: 52px;
+            line-height: 1;
+            margin-bottom: 14px;
+            display: inline-block;
+            animation: floatIcon 4s ease-in-out infinite;
+            filter: drop-shadow(0 8px 24px var(--accent-soft));
+        }
+        .gate-card h1 {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.9px;
+            margin-bottom: 6px;
+            background: linear-gradient(120deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gate-card p.sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+        .gate-body { position: relative; z-index: 1; }
+
+        .saved-users { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .saved-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: left;
+        }
+        .saved-user:hover { background: var(--glass-bg-hover); transform: translateY(-1px); }
+        .saved-user .avatar { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            margin: 20px 0 4px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 0.5px;
+            background: var(--glass-border);
+        }
+
+        .own-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+        }
+        .own-banner .avatar { width: 46px; height: 46px; border-radius: 15px; font-size: 19px; }
+
+        .price-inline { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+        
+
+        /* ---------- FileTransfer: componenti propri ---------- */
+        .ft-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 18px; }
+        .ft-card { padding: 20px; cursor: pointer; transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease; }
+        .ft-card:hover { transform: translateY(-3px); border-color: var(--glass-border-strong); background: var(--glass-bg-hover); }
+        .ft-card:active { transform: scale(0.985); }
+        .ft-icon { font-size: 30px; line-height: 1; margin-bottom: 10px; }
+        .ft-card h3 { font-size: 16.5px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 5px; }
+        .ft-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .ft-steps { margin-top: 4px; }
+        .ft-step { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; }
+        .ft-num { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; background: var(--accent-soft); border: 0.5px solid var(--accent-border); color: var(--accent); }
+        .ft-step-text { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+        .ft-step-text b { color: var(--text-primary); }
+        .ft-drop { border: 1.5px dashed var(--glass-border-strong); border-radius: 18px; padding: 22px 16px; text-align: center; cursor: pointer; background: var(--glass-bg); transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease; }
+        .ft-drop:hover { border-color: var(--accent-border); background: var(--glass-bg-hover); }
+        .ft-drop:active { transform: scale(0.985); }
+        .ft-drop.dragging { border-color: var(--accent); background: var(--accent-soft); }
+        .ft-files { display: flex; flex-direction: column; gap: 8px; }
+        .ft-file { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--glass-bg); border: 0.5px solid var(--glass-border); min-width: 0; }
+        .ft-file-emoji { font-size: 20px; line-height: 1; flex: 0 0 auto; }
+        .ft-file-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ft-file-meta { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; }
+        .ft-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text-primary); overflow-wrap: anywhere; }
+        .ft-status { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; margin: 12px 2px 0; }
+        .ft-status.ok { color: #4ade80; }
+        .ft-status.error { color: #ff6b6b; }
+        .ft-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
+        .ft-note { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin-top: 10px; }
+        .ft-active { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 14px; }
+        .ft-active-title { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+        .ft-active-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
+        .progress-track { height: 7px; border-radius: 999px; background: var(--glass-bg); border: 0.5px solid var(--glass-border); overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #7c3aed, #a78bfa); transition: width 0.25s ease; }
+        .ft-progress-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; font-size: 11.5px; color: var(--text-tertiary); }
+        @media (max-width: 420px) {
+            .ft-grid { grid-template-columns: 1fr; }
+            .ft-code { font-size: 12.5px; letter-spacing: 0.5px; }
+            .ft-file-name { font-size: 12.5px; }
+        }
+</style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-canvas"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambia tema">
+        <svg id="themeIcon" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+    </button>
+
+    <!-- ============ APP VIEW ============ -->
+    <div id="appView">
+        <header class="app-header">
+            <div class="wrap" style="padding-top:16px; padding-bottom:14px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:10px; min-width:0; margin-right:52px;">
+                        <span style="font-size:24px; line-height:1;">📦</span>
+                        <div style="min-width:0;">
+                            <h1 style="font-size:21px; font-weight:700; letter-spacing:-0.5px; line-height:1.15;">FileTransfer</h1>
+                            <p style="font-size:12px; color:var(--text-secondary);">Manda un file da un dispositivo all&#39;altro</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="wrap" style="padding-bottom:64px;">
+            <div id="activeCard" class="glass ft-active hidden">
+                <span id="activeIcon" class="ft-file-emoji">📡</span>
+                <div style="flex:1; min-width:0;">
+                    <div id="activeTitle" class="ft-active-title">Trasferimento in corso</div>
+                    <div id="activeText" class="ft-active-text"></div>
+                </div>
+                <button class="glass-btn" onclick="reopenActive()">Mostra</button>
+                <button class="icon-btn" title="Chiudi il trasferimento" onclick="closeActive()">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="ft-grid">
+                <div class="glass ft-card">
+                    <div class="ft-icon">📤</div>
+                    <div>
+                        <h3>Invia un file</h3>
+                        <p>Scegli un file dal telefono o dal computer: otterrai un codice da mandare a chi deve riceverlo.</p>
+                    </div>
+                    <button class="glass-btn accent" style="justify-content:center;" onclick="openSendModal()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
+                        Scegli un file
+                    </button>
+                </div>
+
+                <div class="glass ft-card">
+                    <div class="ft-icon">📥</div>
+                    <div>
+                        <h3>Ricevi un file</h3>
+                        <p>Hai ricevuto un codice? Inseriscilo qui: il file arriva nel browser e lo salvi dove vuoi.</p>
+                    </div>
+                    <button class="glass-btn accent" style="justify-content:center;" onclick="openReceiveModal()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
+                        Inserisci il codice
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass ft-card" style="margin-top:14px;">
+                <h3 style="font-size:15px;">Come funziona</h3>
+                <div class="ft-steps">
+                    <div class="ft-step"><span class="ft-num">1</span><span>Chi invia tocca <b>Scegli un file</b> e riceve un codice come <b>FTX-4K7QM-P2XTB-9HZRE</b>.</span></div>
+                    <div class="ft-step"><span class="ft-num">2</span><span>Il codice si passa con <b>WhatsApp, Telegram, SMS</b> o anche a voce.</span></div>
+                    <div class="ft-step"><span class="ft-num">3</span><span>Chi riceve tocca <b>Inserisci il codice</b>, aspetta qualche secondo e salva il file.</span></div>
+                </div>
+                <p style="font-size:12px; color:var(--text-tertiary); line-height:1.55;">I file viaggiano <b>direttamente</b> da un dispositivo all&#39;altro, cifrati: non passano da nessun server e non si fermano da nessuna parte. Il codice serve solo ai due dispositivi per trovarsi, non per trasportare i file. Funziona da telefono e da computer, senza account e senza installare nulla. Sui telefoni lasciate la pagina in primo piano fino alla fine: se il sistema la mette in pausa, il collegamento diretto si interrompe.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ SEND MODAL ============ -->
+    <div id="sendModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div id="sendPickPane">
+                    <div style="text-align:center; margin-bottom:16px;">
+                        <div style="font-size:40px; margin-bottom:8px;">📤</div>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Invia un file</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli cosa mandare. Alla fine otterrai un codice da passare all&#39;altra persona.</p>
+                    </div>
+
+                    <div class="ft-drop" id="ftDrop">
+                        <div style="font-size:30px; margin-bottom:6px;">📎</div>
+                        <div style="font-size:14px; font-weight:600;">Tocca qui per scegliere un file</div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">Da computer puoi anche trascinarlo dentro</div>
+                    </div>
+
+                    <div id="sendFileList" class="ft-files" style="margin-top:12px;"></div>
+
+                    <div style="margin-top:14px;">
+                        <label class="field-label" for="senderName">Il tuo nome (facoltativo)</label>
+                        <input id="senderName" class="ios-input" type="text" maxlength="24" placeholder="Es. Marco" autocomplete="name" spellcheck="false">
+                    </div>
+
+                    <p id="sendHint" class="ft-hint"></p>
+
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn-secondary" style="flex:1;" onclick="closeSendModal()">Annulla</button>
+                        <button class="btn-primary" style="flex:1;" id="sendStartBtn" onclick="startSend()">Genera codice</button>
+                    </div>
+                </div>
+
+                <div id="sendRunPane" class="hidden">
+                    <div style="text-align:center; margin-bottom:14px;">
+                        <div style="font-size:38px; margin-bottom:8px;">📡</div>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Codice di trasferimento</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all&#39;altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.</p>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
+                        <code id="sendCode" class="ft-code" style="flex:1; min-width:0;">—</code>
+                        <button class="icon-btn" title="Copia il codice" onclick="copySendCode()">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 8h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
+                        </button>
+                    </div>
+
+                    <p id="sendStatus" class="ft-status">Preparo l&#39;invio…</p>
+
+                    <div id="sendProgressBox" style="margin-top:10px;">
+                        <div class="progress-track"><div class="progress-fill" id="sendBar"></div></div>
+                        <div class="ft-progress-row">
+                            <span id="sendProgressLabel">Invio…</span>
+                            <span id="sendPct">0%</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;">
+                        <button class="btn-secondary" style="flex:1; min-width:100px;" onclick="closeSendModal()">Chiudi</button>
+                        <button class="btn-secondary hidden" id="sendSheetBtn" style="flex:1; min-width:100px;" onclick="shareCodeViaSheet()">Condividi…</button>
+                        <button class="btn-primary" style="flex:1; min-width:100px;" onclick="copySendInvite()">Copia invito</button>
+                    </div>
+
+                    <button class="btn-danger hidden" id="sendRetryBtn" style="width:100%; margin-top:10px;" onclick="startSend()">Riprova con un nuovo codice</button>
+
+                    <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Tieni questa schermata aperta finché l&#39;invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l&#39;altro dispositivo lo inserisce.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ RECEIVE MODAL ============ -->
+    <div id="receiveModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div id="recvPickPane">
+                    <div style="text-align:center; margin-bottom:16px;">
+                        <div style="font-size:38px; margin-bottom:8px;">📥</div>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Ricevi un file</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Inserisci il codice che ti hanno inviato. Se hai ricevuto un messaggio, va bene anche incollarlo tutto: il codice lo trovo io.</p>
+                    </div>
+
+                    <input id="recvCodeInput" class="ios-input" type="text" placeholder="FTX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           style="width:100%; font-size:15px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:1px; text-align:center;">
+
+                    <button class="glass-btn" style="width:100%; margin-top:10px; justify-content:center;" onclick="pasteRecvCode()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Incolla dagli appunti
+                    </button>
+
+                    <p id="recvPickStatus" class="ft-status"></p>
+
+                    <div style="display:flex; gap:10px; margin-top:14px;">
+                        <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Annulla</button>
+                        <button class="btn-primary" style="flex:1;" id="recvStartBtn" onclick="startReceive()">Scarica</button>
+                    </div>
+                </div>
+
+                <div id="recvRunPane" class="hidden">
+                    <div style="text-align:center; margin-bottom:14px;">
+                        <div style="font-size:38px; margin-bottom:8px;" id="recvIcon">📡</div>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;" id="recvTitle">Collegamento…</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;" id="recvSubtitle"></p>
+                    </div>
+
+                    <div id="recvProgressBox">
+                        <div class="progress-track"><div class="progress-fill" id="recvBar"></div></div>
+                        <div class="ft-progress-row">
+                            <span id="recvProgressLabel">Ricevo…</span>
+                            <span id="recvPct">0%</span>
+                        </div>
+                    </div>
+
+                    <p id="recvStatus" class="ft-status"></p>
+
+                    <div id="recvResults" class="ft-files" style="margin-top:6px;"></div>
+
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn-primary hidden" style="flex:1;" id="recvSaveAllBtn">Salva tutto</button>
+                        <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Chiudi</button>
+                    </div>
+
+                    <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Da telefono, se il file non si salva, usa <b>Condividi</b> (su iPhone) o <b>Apri</b> e salvalo dall&#39;anteprima.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="hidden" multiple>
+
+    <script>
+        // FileTransfer — trasferimento di file fra due dispositivi.
+        // I file viaggiano su un collegamento diretto (WebRTC / RTCDataChannel)
+        // fra i due dispositivi: nessun server li vede e nessun server li
+        // conserva. Un servizio esterno (ntfy.sh) fa solo da campanello: pubblica
+        // i dati di contatto cifrati (descrizione di sessione e indirizzi IP) che
+        // servono ai due dispositivi per trovarsi. Nome del canale e chiave AES
+        // nascono dal codice di 15 caratteri che i due si scambiano.
+
+        // ---------- HELPERS ----------
+        function $(id) { return document.getElementById(id); }
+        function sleep(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+        var LF = String.fromCharCode(10);   // a capo, senza sequenze di escape nel sorgente
+
+        function formatBytes(n) {
+            n = Number(n) || 0;
+            var units = ['B', 'KB', 'MB', 'GB'];
+            var i = 0, v = n;
+            while (v >= 1024 && i < units.length - 1) { v = v / 1024; i++; }
+            var text = (i === 0) ? String(Math.round(v)) : v.toFixed(v < 10 ? 1 : 0);
+            return text.split('.').join(',') + ' ' + units[i];
+        }
+
+        function fileExt(name) {
+            var parts = String(name || '').split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        function fileEmoji(name, type) {
+            var t = String(type || ''), ext = fileExt(name);
+            if (t.indexOf('image/') === 0) return '🖼️';
+            if (t.indexOf('video/') === 0) return '🎬';
+            if (t.indexOf('audio/') === 0) return '🎵';
+            if (ext === 'pdf') return '📕';
+            if (ext === 'zip' || ext === 'rar' || ext === '7z' || ext === 'tar' || ext === 'gz') return '🗜️';
+            if (ext === 'doc' || ext === 'docx' || ext === 'txt' || ext === 'rtf' || ext === 'odt') return '📄';
+            if (ext === 'xls' || ext === 'xlsx' || ext === 'csv' || ext === 'ods') return '📊';
+            if (ext === 'ppt' || ext === 'pptx' || ext === 'odp') return '📽️';
+            if (ext === 'apk') return '📲';
+            return '📦';
+        }
+
+        function isPreviewable(name, type) {
+            var t = String(type || ''), ext = fileExt(name);
+            if (t.indexOf('image/') === 0 || t.indexOf('video/') === 0 || t.indexOf('audio/') === 0 || t.indexOf('text/') === 0) return true;
+            return ext === 'pdf';
+        }
+
+        // ArrayBuffer() non esiste nei browser iOS più vecchi: il FileReader copre il resto.
+        function blobBytes(blob) {
+            if (blob.arrayBuffer) return blob.arrayBuffer().then(function (buf) { return new Uint8Array(buf); });
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function () { resolve(new Uint8Array(reader.result)); };
+                reader.onerror = function () { reject(new Error('read')); };
+                reader.readAsArrayBuffer(blob);
+            });
+        }
+
+        // ---------- AUDIO ----------
+        var audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                var Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return null;
+                audioCtx = new Ctx();
+            }
+            if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) { } }
+            return audioCtx;
+        }
+        function tone(freq, delay, dur, vol, type, endFreq) {
+            var ctx = getAudioContext();
+            if (!ctx) return;
+            try {
+                var now = ctx.currentTime + delay;
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = type || 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(vol, now + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + dur + 0.05);
+            } catch (e) { }
+        }
+
+        function playAddSound() { tone(880, 0, 0.16, 0.055, 'sine', 1240); }
+        function playClickSound() { tone(520, 0, 0.07, 0.032, 'sine', 700); }
+        function playSuccessSound() {
+            [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.075, 0.55, 0.075, 'sine'); });
+        }
+        function playPopSound() { tone(660, 0, 0.09, 0.05, 'sine', 990); }
+        function playOpenSound() { tone(420, 0, 0.18, 0.045, 'sine', 620); tone(840, 0.05, 0.22, 0.03, 'sine', 1180); }
+        function playDeleteSound() { tone(400, 0, 0.2, 0.05, 'triangle', 170); }
+        function playErrorSound() { tone(240, 0, 0.12, 0.05, 'square', 200); tone(200, 0.13, 0.16, 0.045, 'square', 150); }
+        function playShareSound() { tone(700, 0, 0.12, 0.05, 'sine', 1050); tone(1050, 0.1, 0.28, 0.055, 'sine', 1400); }
+
+        // ---------- THEME ----------
+        var THEME_KEY = 'ftx:theme';
+        var NAME_KEY = 'ftx:name';
+
+        function applyTheme(theme) {
+            if (theme === 'light') document.body.classList.add('light');
+            else document.body.classList.remove('light');
+            updateThemeIcon(theme);
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f0f2f5' : '#0a0a14');
+        }
+
+        function updateThemeIcon(theme) {
+            var icon = $('themeIcon');
+            if (!icon) return;
+            if (theme === 'light') {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+            }
+        }
+
+        function toggleTheme() {
+            var btn = $('themeToggle');
+            btn.classList.add('rotating');
+            setTimeout(function () { btn.classList.remove('rotating'); }, 500);
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(state.theme);
+            playPopSound();
+            try { localStorage.setItem(THEME_KEY, state.theme); } catch (e) { }
+        }
+
+        // ---------- TOAST ----------
+        function showToast(message, opts) {
+            opts = opts || {};
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast';
+            var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.setAttribute('width', '18');
+            icon.setAttribute('height', '18');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', opts.variant === 'error' ? 'var(--danger-icon-color)' : 'var(--text-secondary)');
+            icon.setAttribute('stroke-width', '1.9');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            icon.innerHTML = opts.variant === 'error'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+            var span = document.createElement('span');
+            span.style.cssText = 'font-size:13.5px; font-weight:500; color:var(--text-primary); line-height:1.4;';
+            span.textContent = message;
+            toast.appendChild(icon);
+            toast.appendChild(span);
+            document.body.appendChild(toast);
+            setTimeout(function () {
+                toast.classList.add('leaving');
+                setTimeout(function () { toast.remove(); }, 300);
+            }, opts.duration || 3200);
+        }
+
+        // ---------- SPARKLES ----------
+        function createSparkles(element, count, colorized) {
+            if (!element || !element.getBoundingClientRect) return;
+            var rect = element.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
+            var n = count || 8;
+            for (var i = 0; i < n; i++) {
+                var sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                var angle = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+                var distance = 25 + Math.random() * 45;
+                sparkle.style.left = cx + 'px';
+                sparkle.style.top = cy + 'px';
+                sparkle.style.setProperty('--tx', (Math.cos(angle) * distance).toFixed(1) + 'px');
+                sparkle.style.setProperty('--ty', (Math.sin(angle) * distance).toFixed(1) + 'px');
+                var size = 3 + Math.random() * 4;
+                sparkle.style.width = size + 'px';
+                sparkle.style.height = size + 'px';
+                if (colorized) {
+                    var hue = 250 + Math.random() * 90;
+                    sparkle.style.background = 'hsla(' + hue + ', 90%, 72%, 0.95)';
+                    sparkle.style.boxShadow = '0 0 14px hsla(' + hue + ', 90%, 70%, 0.9)';
+                }
+                document.body.appendChild(sparkle);
+                (function (el) { setTimeout(function () { el.remove(); }, 800); })(sparkle);
+            }
+        }
+
+        function showModal(id) { var el = $(id); if (el) el.classList.remove('hidden'); }
+        function hideModal(id) { var el = $(id); if (el) el.classList.add('hidden'); }
+
+        // ---------- CLIPBOARD ----------
+        function legacyCopy(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            ta.remove();
+            return ok;
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacyCopy(text); });
+            }
+            return Promise.resolve(legacyCopy(text));
+        }
+
+        // ---------- PONTE DI SEGNALAZIONE (ntfy.sh) ----------
+        // Dal ponte passano SOLO i dati di contatto cifrati (poche centinaia di byte).
+        // I file non lo toccano mai: viaggiano in diretta fra i due dispositivi.
+        var RELAY = 'https://ntfy.sh';
+        var TAG = 'FTX1:';
+        var ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
+        var CODE_LENGTH = 15;
+        var WAIT_SIGNAL_MS = 600000;      // quanto si aspetta l'altro dispositivo
+        var WAIT_ACK_MS = 180000;         // conferma di ricezione, via collegamento diretto
+        var LINK_TIMEOUT_MS = 18000;      // attesa massima per il collegamento diretto
+        var POLL_MS = 5000;               // ogni quanto si chiede al ponte se ci sono novità
+        var POLL_MIN_MS = 400;            // i primi controlli sono ravvicinati, poi si dirada
+        var ANSWER_POLL_MS = 1500;        // attesa della risposta: qui conviene insistere
+        var LOCAL_POLL_MS = 200;          // attesa locale del collegamento, senza toccare il ponte
+        var OFFER_MISSES = 10;            // quante volte si può non trovare l'invio prima di arrendersi
+        var ICE_WAIT_MS = 2500;           // raccolta dei candidati di rete da spedire
+        var STUN_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
+        var SEND_CHUNK = 262144;          // tetto per messaggio: si adatta a quello che regge il browser
+        var MIN_CHUNK = 16384;            // sotto questo si perde tempo in overhead
+        var MAX_LANES = 4;                // quante corsie parallele al massimo (una per data channel)
+        var MAX_BUFFERED = 8 * 1024 * 1024;   // coda massima complessiva, divisa fra le corsie
+        var PROGRESS_MS = 120;            // le barre si ridisegnano al massimo ogni tanto
+        var STALL_MS = 60000;             // se per un minuto non arriva nulla, il flusso è morto
+        var BIG_TOTAL = 512 * 1024 * 1024;   // oltre mezzo giga la memoria del telefono soffre
+
+        // Chiedere subito, poi diradare: il contatto di solito arriva in un paio
+        // di secondi, e chi aspetta a lungo non tempesta il ponte di richieste.
+        function pollDelay(prev, cap) { return Math.min(cap || POLL_MS, Math.max(POLL_MIN_MS, prev * 2)); }
+
+        function bytesToBase64Url(bytes) {
+            var bin = '';
+            for (var i = 0; i < bytes.length; i += 0x8000) {
+                bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            }
+            return btoa(bin).split('+').join('-').split('/').join('_').split('=').join('');
+        }
+
+        function base64UrlToBytes(str) {
+            var b64 = String(str).split('-').join('+').split('_').join('/');
+            while (b64.length % 4) b64 += '=';
+            var bin = atob(b64);
+            var out = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+
+        function base32FromBytes(bytes) {
+            var out = '', value = 0, bits = 0;
+            for (var i = 0; i < bytes.length; i++) {
+                value = ((value << 8) | bytes[i]) & 0xffff;
+                bits += 8;
+                while (bits >= 5) {
+                    out += ALPHABET.charAt((value >>> (bits - 5)) & 31);
+                    bits -= 5;
+                }
+                value &= (1 << bits) - 1;
+            }
+            if (bits > 0) out += ALPHABET.charAt((value << (5 - bits)) & 31);
+            return out;
+        }
+
+        // Codice pensato per essere dettato al telefono: niente lettere ambigue.
+        function newTransferCode() {
+            var bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH));
+            var chars = '';
+            for (var i = 0; i < bytes.length; i++) chars += ALPHABET.charAt(bytes[i] % ALPHABET.length);
+            return formatCode(chars);
+        }
+
+        function formatCode(chars) {
+            return 'FTX-' + chars.slice(0, 5) + '-' + chars.slice(5, 10) + '-' + chars.slice(10, 15);
+        }
+
+        // Accetta sia il codice da solo sia un intero messaggio che lo contiene.
+        function normalizeCode(text) {
+            var raw = String(text || '').toUpperCase(), flat = '';
+            for (var i = 0; i < raw.length; i++) {
+                var c = raw.charAt(i);
+                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')) flat += c;
+            }
+            var at = flat.indexOf('FTX');
+            if (at === -1) return '';
+            var rest = flat.slice(at + 3), chars = '';
+            for (var j = 0; j < rest.length && chars.length < CODE_LENGTH; j++) {
+                if (ALPHABET.indexOf(rest.charAt(j)) !== -1) chars += rest.charAt(j);
+            }
+            if (chars.length !== CODE_LENGTH) return '';
+            return formatCode(chars);
+        }
+
+        // Dal codice nascono il nome del canale (pubblico) e la chiave (segreta).
+        async function transferChannel(code) {
+            var normalized = normalizeCode(code);
+            if (!normalized) return null;
+            var compact = normalized.split('-').join('');
+            var encoder = new TextEncoder();
+            var topicHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode('ftx/topic/1|' + compact)));
+            var keyHash = await crypto.subtle.digest('SHA-256', encoder.encode('ftx/key/1|' + compact));
+            var key = await crypto.subtle.importKey('raw', keyHash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+            return { code: normalized, topic: 'ftx1-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(), key: key };
+        }
+
+        async function sealBytes(key, bytes) {
+            var iv = crypto.getRandomValues(new Uint8Array(12));
+            var sealedOut = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, bytes));
+            var out = new Uint8Array(iv.length + sealedOut.length);
+            out.set(iv, 0);
+            out.set(sealedOut, iv.length);
+            return out;
+        }
+
+        function sealText(key, text) { return sealBytes(key, new TextEncoder().encode(text)); }
+
+        async function openBytes(key, bytes) {
+            var plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.subarray(0, 12) }, key, bytes.subarray(12));
+            return new Uint8Array(plain);
+        }
+
+        async function openText(key, bytes) { return new TextDecoder().decode(await openBytes(key, bytes)); }
+
+        function relayError(status) {
+            var err = new Error('relay ' + status);
+            err.code = status;
+            return err;
+        }
+
+        async function relayPublish(channel, text) {
+            var body = TAG + bytesToBase64Url(await sealText(channel.key, text));
+            var res = await fetch(RELAY + '/' + channel.topic, { method: 'POST', body: body });
+            if (!res.ok) throw relayError(res.status);
+            return true;
+        }
+
+        // Nel flusso JSON del ponte il testo del messaggio arriva nel campo
+        // "message" (non "body"): si legge quello, con "body" come ripiego.
+        function relayBody(msg) {
+            return String((msg && (msg.message || msg.body)) || '');
+        }
+
+        async function relayList(channel) {
+            var res = await fetch(RELAY + '/' + channel.topic + '/json?poll=1&since=all', { cache: 'no-store' });
+            if (!res.ok) throw relayError(res.status);
+            var text = await res.text();
+            var messages = [];
+            text.split(LF).forEach(function (line) {
+                line = line.trim();
+                if (!line) return;
+                var msg;
+                try { msg = JSON.parse(line); } catch (e) { return; }
+                if (msg && msg.event === 'message' && (msg.message || msg.attachment)) messages.push(msg);
+            });
+            messages.sort(function (a, b) { return (a.time || 0) - (b.time || 0); });
+            return messages;
+        }
+
+        // I messaggi leggibili appartengono al nostro codice; "sealed" conta anche
+        // quelli che non si aprono, per distinguere "codice sbagliato" da "in attesa".
+        async function readPayloads(channel, messages) {
+            var list = [], sealed = 0;
+            for (var i = 0; i < messages.length; i++) {
+                var body = relayBody(messages[i]);
+                if (body.indexOf(TAG) !== 0) continue;
+                sealed++;
+                var payload = null;
+                try { payload = JSON.parse(await openText(channel.key, base64UrlToBytes(body.slice(TAG.length)))); }
+                catch (e) { payload = null; }
+                if (payload) list.push({ payload: payload, msg: messages[i] });
+            }
+            return { list: list, sealed: sealed };
+        }
+
+        // ---------- STATO ----------
+        var state = {
+            theme: 'dark',
+            name: '',
+            files: [],
+            sendToken: 0,
+            sendAlive: false,
+            recvToken: 0,
+            results: [],
+            transfer: null,
+            session: null,
+            sawOffer: false
+        };
+
+        function myName() { return (state.name || '').trim() || 'Un dispositivo'; }
+
+        // Sul telefono lo schermo deve restare acceso: se il sistema mette la
+        // pagina in pausa, i timer si fermano e il collegamento diretto cade.
+        var wakeLock = null;
+        function keepAwake() {
+            try {
+                if (!navigator.wakeLock || wakeLock) return;
+                navigator.wakeLock.request('screen').then(function (lock) {
+                    wakeLock = lock;
+                    lock.addEventListener('release', function () { wakeLock = null; });
+                }, function () { });
+            } catch (e) { }
+        }
+
+        function allowSleep() {
+            try { if (wakeLock) { var lock = wakeLock; wakeLock = null; lock.release(); } } catch (e) { }
+        }
+
+        // ---------- PANNELLO TRASFERIMENTO ATTIVO ----------
+        function updateActive() {
+            var card = $('activeCard'), t = state.transfer;
+            if (!t) { card.classList.add('hidden'); return; }
+            card.classList.remove('hidden');
+            $('activeIcon').textContent = t.icon || '📡';
+            $('activeTitle').textContent = t.title || 'Trasferimento';
+            $('activeText').textContent = t.text || '';
+            $('activeText').style.color = t.variant === 'error' ? '#ff6b6b' : '';
+        }
+
+        function setActiveText(text, variant) {
+            if (!state.transfer) return;
+            state.transfer.text = text;
+            state.transfer.variant = variant;
+            updateActive();
+        }
+
+        function setActiveTitle(title, icon) {
+            if (!state.transfer) return;
+            if (title) state.transfer.title = title;
+            if (icon) state.transfer.icon = icon;
+            updateActive();
+        }
+
+        function closeActive() {
+            playClickSound();
+            if (state.transfer && state.transfer.kind === 'send') {
+                state.sendToken++;
+                state.sendAlive = false;
+            } else {
+                state.recvToken++;
+                recvRunning = false;
+                $('recvStartBtn').disabled = false;
+                releaseResults();
+            }
+            if (state.session) { state.session.close(); state.session = null; }
+            state.transfer = null;
+            updateActive();
+        }
+
+        function reopenActive() {
+            playClickSound();
+            if (!state.transfer) return;
+            if (state.transfer.kind === 'send') {
+                $('sendPickPane').classList.add('hidden');
+                $('sendRunPane').classList.remove('hidden');
+                showModal('sendModal');
+            } else {
+                $('recvPickPane').classList.add('hidden');
+                $('recvRunPane').classList.remove('hidden');
+                showModal('receiveModal');
+            }
+        }
+
+        // ---------- SCELTA DEI FILE ----------
+        function openSendModal() {
+            playClickSound();
+            if (state.sendAlive) {
+                $('sendPickPane').classList.add('hidden');
+                $('sendRunPane').classList.remove('hidden');
+                showModal('sendModal');
+                return;
+            }
+            $('sendRunPane').classList.add('hidden');
+            $('sendPickPane').classList.remove('hidden');
+            $('sendRetryBtn').classList.add('hidden');
+            $('sendStartBtn').disabled = false;
+            $('sendStartBtn').textContent = 'Genera codice';
+            $('senderName').value = state.name;
+            renderFileList();
+            showModal('sendModal');
+        }
+
+        function closeSendModal() { hideModal('sendModal'); }
+
+        function openFilePicker() { $('fileInput').click(); }
+
+        function addFiles(list) {
+            if (!list || !list.length) return;
+            for (var i = 0; i < list.length; i++) state.files.push(list[i]);
+            playAddSound();
+            renderFileList();
+        }
+
+        function totalBytes() {
+            var total = 0;
+            state.files.forEach(function (f) { total += (f.size || 0); });
+            return total;
+        }
+
+        function fileRow(f, onRemove) {
+            var row = document.createElement('div');
+            row.className = 'ft-file';
+            var emoji = document.createElement('span');
+            emoji.className = 'ft-file-emoji';
+            emoji.textContent = fileEmoji(f.name, f.type);
+            var body = document.createElement('div');
+            body.style.cssText = 'flex:1; min-width:0;';
+            var name = document.createElement('div');
+            name.className = 'ft-file-name';
+            name.textContent = f.name || 'file';
+            var meta = document.createElement('div');
+            meta.className = 'ft-file-meta';
+            meta.textContent = formatBytes(f.size || 0);
+            body.appendChild(name);
+            body.appendChild(meta);
+            row.appendChild(emoji);
+            row.appendChild(body);
+            if (onRemove) {
+                var btn = document.createElement('button');
+                btn.className = 'icon-btn danger';
+                btn.title = 'Togli dalla lista';
+                btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+                btn.onclick = onRemove;
+                row.appendChild(btn);
+            }
+            return row;
+        }
+
+        function renderFileList() {
+            var box = $('sendFileList');
+            box.innerHTML = '';
+            state.files.forEach(function (f, index) {
+                box.appendChild(fileRow(f, function () {
+                    state.files.splice(index, 1);
+                    playDeleteSound();
+                    renderFileList();
+                }));
+            });
+            var hint = $('sendHint');
+            if (!state.files.length) { hint.textContent = ''; return; }
+            var total = totalBytes();
+            var text = (state.files.length === 1 ? '1 file · ' : (state.files.length + ' file · ')) + formatBytes(total);
+            if (total > BIG_TOTAL) text += ' — è molto grande: tieni la schermata aperta fino alla fine.';
+            else if (total > 50 * 1024 * 1024) text += ' — non bloccare lo schermo durante l’invio.';
+            hint.textContent = text;
+            hint.style.color = '';
+        }
+
+        // ---------- COLLEGAMENTO DIRETTO (WebRTC) ----------
+        // Il ponte serve solo a far conoscere i due dispositivi: dopo lo scambio
+        // dei dati di contatto i file vanno da browser a browser, cifrati da DTLS
+        // e senza passare da nessun server.
+        function linkFailureMessage(err) {
+            var name = err && err.message;
+            if (name === 'cancelled') return 'Operazione annullata.';
+            if (name === 'no-webrtc') return 'Questo browser non sa fare il collegamento diretto fra dispositivi.';
+            if (name === 'stream-stall') return 'Il collegamento diretto si è interrotto durante il trasferimento. Riprova tenendo entrambe le schermate aperte.';
+            if (name === 'direct-lost' || name === 'direct-closed' || name === 'direct-failed') return 'Il collegamento diretto si è chiuso. Riprova.';
+            if (name === 'no-manifest') return 'Non mi è arrivato l’elenco dei file. Riprova.';
+            if (name === 'no-link') return 'Nessuno si è collegato con il codice. Riprova e manda il codice all’altra persona.';
+            if (err && err.code === 429) return 'Il servizio di contatto è occupato. Aspetta qualche secondo e riprova.';
+            if (err && err.code === 404) return 'I dati di contatto non sono più disponibili: chiedi di rifare l’invio.';
+            return 'Connessione non riuscita. Controlla di essere online e riprova.';
+        }
+
+        function linkBlockedMessage() {
+            return 'Non sono riuscito ad aprire il collegamento diretto: la rete (Wi‑Fi o dati) lo blocca. Riprovate da un’altra rete, oppure mettete i due dispositivi sulla stessa Wi‑Fi.';
+        }
+
+        function noOfferMessage() {
+            return 'Non trovo nessun invio con questo codice. Controlla di averlo scritto giusto, oppure chiedi di generarne uno nuovo.';
+        }
+
+        function createPeer() {
+            if (!window.RTCPeerConnection) return null;
+            try { return new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] }); }
+            catch (e) { return null; }
+        }
+
+        // Canale di controllo più una corsia per file: così più file viaggiano
+        // insieme invece di mettersi in fila.
+        var CONTROL_LABEL = 'ftx-ctl';
+
+        function newSession(pc) {
+            var session = {
+                pc: pc,
+                dc: null,             // canale di controllo: elenco dei file e conferma
+                workers: [],          // canali che portano i byte
+                channels: [],
+                connected: null,
+                onWorker: null,
+                peerName: '',
+                queueLimit: MAX_BUFFERED,
+                isOpen: function () { return !!(session.dc && session.dc.readyState === 'open'); },
+                close: function () {
+                    session.channels.forEach(function (ch) { try { ch.close(); } catch (e) { } });
+                    try { pc.close(); } catch (e) { }
+                },
+                add: function (channel, isControl) {
+                    channel.binaryType = 'arraybuffer';
+                    session.channels.push(channel);
+                    if (!isControl) session.workers.push(channel);
+                    if (isControl && !session.dc) {
+                        session.dc = channel;
+                        session.connected = new Promise(function (resolve, reject) {
+                            channel.onopen = function () { resolve(channel); };
+                            channel.onerror = function () { reject(new Error('direct-failed')); };
+                            channel.onclose = function () { reject(new Error('direct-closed')); };
+                        });
+                        session.connected.catch(function () { });
+                    }
+                    if (session.onChannel) session.onChannel(channel, !!isControl);
+                }
+            };
+            return session;
+        }
+
+        // Aspetta la fine della raccolta dei candidati di rete, o un tetto di tempo.
+        function waitIce(pc, ms) {
+            return new Promise(function (resolve) {
+                if (pc.iceGatheringState === 'complete') { resolve(); return; }
+                var done = false;
+                function finish() {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    pc.removeEventListener('icegatheringstatechange', onChange);
+                    resolve();
+                }
+                function onChange() { if (pc.iceGatheringState === 'complete') finish(); }
+                pc.addEventListener('icegatheringstatechange', onChange);
+                var timer = setTimeout(finish, ms);
+            });
+        }
+
+        // Descrizione e candidati in un unico messaggio: così sul ponte finisce
+        // una sola pubblicazione per tentativo, e i file non ci passano mai.
+        async function buildOffer(pc) {
+            var candidates = [];
+            pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
+            await pc.setLocalDescription(await pc.createOffer());
+            await waitIce(pc, ICE_WAIT_MS);
+            return JSON.stringify({ v: 2, t: 'link', r: 'offer', n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+        }
+
+        async function buildAnswer(pc) {
+            var candidates = [];
+            pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
+            await pc.setLocalDescription(await pc.createAnswer());
+            await waitIce(pc, ICE_WAIT_MS);
+            return JSON.stringify({ v: 2, t: 'link', r: 'answer', n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+        }
+
+        async function applyRemote(pc, link) {
+            if (pc.signalingState === 'closed') return;
+            await pc.setRemoteDescription({ type: link.r === 'offer' ? 'offer' : 'answer', sdp: link.sdp });
+            var list = link.ice || [];
+            for (var i = 0; i < list.length; i++) {
+                try { await pc.addIceCandidate(list[i]); } catch (e) { }
+            }
+        }
+
+        async function readLinks(channel) {
+            var messages = null;
+            try { messages = await relayList(channel); } catch (e) { return null; }
+            var payloads = (await readPayloads(channel, messages)).list;
+            var out = [];
+            for (var i = 0; i < payloads.length; i++) {
+                var p = payloads[i].payload;
+                if (!p || p.t !== 'link' || !p.sdp) continue;
+                out.push({ id: payloads[i].msg.id, time: payloads[i].msg.time || 0, role: p.r, payload: p });
+            }
+            return out;
+        }
+
+        function newestOf(list, role) {
+            var best = null;
+            for (var i = 0; i < (list || []).length; i++) {
+                if (list[i].role !== role) continue;
+                if (!best || list[i].time >= best.time) best = list[i];
+            }
+            return best;
+        }
+
+        // Vero appena il canale è aperto e pronto. Il canale però può arrivare
+        // un attimo dopo (lo apre chi invia), quindi si aspetta anche quello.
+        function settledConnection(session, ms) {
+            return new Promise(function (resolve) {
+                var done = false;
+                function finish(value) {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    resolve(value);
+                }
+                var timer = setTimeout(function () { finish(session.isOpen()); }, ms);
+                (function watch() {
+                    if (done) return;
+                    if (session.connected) {
+                        session.connected.then(function () { finish(true); }, function () { finish(false); });
+                        return;
+                    }
+                    setTimeout(watch, 150);
+                })();
+            });
+        }
+
+        // Manda un pezzo rispettando la coda del data channel, così la memoria
+        // del telefono non esplode con i file grandi.
+        async function dcSend(dc, data, limit) {
+            if (!dc || dc.readyState !== 'open') throw new Error('direct-lost');
+            limit = limit || MAX_BUFFERED;
+            if (dc.bufferedAmount > limit) {
+                await new Promise(function (resolve) {
+                    var timer = setTimeout(resolve, 4000);
+                    dc.onbufferedamountlow = function () {
+                        clearTimeout(timer);
+                        dc.onbufferedamountlow = null;
+                        resolve();
+                    };
+                });
+            }
+            if (dc.readyState !== 'open') throw new Error('direct-lost');
+            dc.send(data);
+        }
+
+        // Ogni browser dichiara quanto regge per singolo messaggio: su Safari è
+        // piccolo, su Chrome è grande. Ci si adatta; se il dato non c'è si resta
+        // al valore che tutti reggono.
+        function chunkSizeFor(pc) {
+            var max = pc && pc.sctp && pc.sctp.maxMessageSize;
+            if (!max || !isFinite(max)) return MIN_CHUNK * 2;
+            return Math.max(MIN_CHUNK, Math.min(SEND_CHUNK, max));
+        }
+
+        // Lista dei file consegnata all'altro dispositivo all'inizio del canale.
+        function buildManifest(entries, name) {
+            return {
+                v: 3,
+                t: 'f',
+                n: String(name || '').slice(0, 24),
+                sz: entries.reduce(function (a, e) { return a + (e.size || 0); }, 0),
+                fi: entries.map(function (e) { return { n: e.name, y: e.type, s: e.size }; })
+            };
+        }
+
+        // ---------- INVIO ----------
+
+        var sendPaintAt = 0, recvPaintAt = 0;
+
+        // Le barre si ridisegnano a intervalli: con pezzi grandi e corsie
+        // parallele gli aggiornamenti sarebbero altrimenti centinaia al secondo.
+        function paintDue(slot, force) {
+            var now = Date.now();
+            if (!force && now - (slot === 'send' ? sendPaintAt : recvPaintAt) < PROGRESS_MS) return false;
+            if (slot === 'send') sendPaintAt = now; else recvPaintAt = now;
+            return true;
+        }
+
+        function setSendProgress(done, total) {
+            if (!paintDue('send', total <= 0 || done >= total)) return;
+            var pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 100;
+            $('sendBar').style.width = pct + '%';
+            $('sendPct').textContent = pct + '%';
+            $('sendProgressLabel').textContent = total > 0 ? (formatBytes(done) + ' di ' + formatBytes(total)) : 'Invio…';
+        }
+
+        function setSendStatus(text, variant) {
+            var el = $('sendStatus');
+            el.textContent = text;
+            el.className = 'ft-status' + (variant ? ' ' + variant : '');
+            setActiveText(text, variant);
+        }
+
+        // Quante corsie servono: una per file, senza esagerare.
+        function laneCount(count) {
+            return Math.max(1, Math.min(count || 1, MAX_LANES));
+        }
+
+        // Divide i file fra le corsie a giro, così anche con dimensioni molto
+        // diverse il lavoro resta bilanciato.
+        function laneJobs(count, lanes) {
+            var out = [];
+            for (var k = 0; k < lanes; k++) out.push([]);
+            for (var i = 0; i < count; i++) out[i % lanes].push(i);
+            return out;
+        }
+
+        // Un tentativo: pubblica un'offerta fresca e aspetta la risposta
+        // dell'altro dispositivo. Se non riesce, il chiamante riprova.
+        async function attemptSenderLink(channel, count, token) {
+            var pc = createPeer();
+            if (!pc) throw new Error('no-webrtc');
+            var session = newSession(pc);
+            try { session.add(pc.createDataChannel(CONTROL_LABEL, { ordered: true }), true); } catch (e) { throw new Error('no-webrtc'); }
+            var lanes = laneCount(count);
+            for (var k = 0; k < lanes; k++) {
+                try { session.add(pc.createDataChannel('ftx-' + k, { ordered: true }), false); } catch (e) { }
+            }
+            // La coda si divide fra le corsie: la memoria totale resta la stessa.
+            session.queueLimit = Math.max(1 << 20, Math.floor(MAX_BUFFERED / Math.max(1, session.workers.length)));
+            session.workers.forEach(function (ch) { ch.bufferedAmountLowThreshold = Math.floor(session.queueLimit / 2); });
+
+            var publishedAt = Date.now();
+            try { await relayPublish(channel, await buildOffer(pc)); } catch (e) { }
+            var answered = false;
+            var wait = POLL_MIN_MS;
+            var deadline = Date.now() + LINK_TIMEOUT_MS;
+            while (Date.now() < deadline && token === state.sendToken) {
+                if (session.isOpen()) break;
+                if (answered) {
+                    // La risposta è già arrivata: da qui in poi non si chiede più
+                    // nulla al ponte, si aspetta solo che il collegamento si apra.
+                    await sleep(LOCAL_POLL_MS);
+                    continue;
+                }
+                var answer = newestOf(await readLinks(channel), 'answer');
+                if (answer && answer.time * 1000 >= publishedAt - 10000) {
+                    answered = true;
+                    if (answer.payload.n) session.peerName = String(answer.payload.n).slice(0, 24);
+                    try { await applyRemote(pc, answer.payload); } catch (e) { }
+                    continue;
+                }
+                await sleep(wait);
+                wait = pollDelay(wait, ANSWER_POLL_MS);
+            }
+            return session;
+        }
+
+        // Un file su una corsia: prima l'intestazione con il numero del file,
+        // poi i byte. Chi riceve sa così a quale file appartiene ogni pezzo.
+        async function sendEntry(session, lane, index, token, onBytes) {
+            await dcSend(lane, JSON.stringify({ t: 'part', i: index }), session.queueLimit);
+            var file = session.entries[index].file, size = file.size || 0, offset = 0;
+            while (offset < size) {
+                if (token !== state.sendToken) throw new Error('cancelled');
+                var end = Math.min(size, offset + session.chunkSize);
+                var bytes = await blobBytes(file.slice(offset, end));
+                await dcSend(lane, bytes, session.queueLimit);
+                onBytes(bytes.length);
+                offset = end;
+            }
+            session.sent[index] = true;
+        }
+
+        // Una corsia lavora sui file che le sono toccati, uno dopo l'altro.
+        async function sendLane(session, lane, jobs, token, onBytes) {
+            for (var i = 0; i < jobs.length; i++) {
+                if (token !== state.sendToken) throw new Error('cancelled');
+                await sendEntry(session, lane, jobs[i], token, onBytes);
+                if (session.entries.length > 1) {
+                    var done = session.sent.filter(function (v) { return v; }).length;
+                    setSendStatus('Invio in parallelo: ' + done + ' di ' + session.entries.length + ' file completati.');
+                }
+            }
+        }
+
+        // La conferma arriva dall'altro dispositivo lungo il collegamento diretto.
+        function waitForDirectAck(session, token) {
+            return new Promise(function (resolve) {
+                var dc = session.dc, done = false;
+                function finish(value) {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    dc.onmessage = null;
+                    resolve(value);
+                }
+                var timer = setTimeout(function () { finish(null); }, WAIT_ACK_MS);
+                dc.onmessage = function (e) {
+                    if (typeof e.data !== 'string') return;
+                    var msg = null;
+                    try { msg = JSON.parse(e.data); } catch (err) { msg = null; }
+                    if (msg && msg.t === 'ack') finish(msg);
+                };
+            });
+        }
+
+        async function deliverFiles(session, entries, manifest, total, token) {
+            setActiveTitle('Collegato', '🔗');
+            setSendStatus('Collegato in diretta. Invio i file…', 'ok');
+            setActiveText('Collegamento diretto attivo: i file non passano da nessun server.');
+            playSuccessSound();
+            createSparkles($('sendCode'), 10, true);
+
+            session.entries = entries;
+            session.sent = entries.map(function () { return false; });
+            session.chunkSize = chunkSizeFor(session.pc);
+
+            var ackPromise = waitForDirectAck(session, token);
+            await dcSend(session.dc, JSON.stringify(manifest), session.queueLimit);
+
+            var sent = 0;
+            function onBytes(n) {
+                sent += n;
+                setSendProgress(sent, total);
+            }
+
+            var lanes = session.workers.length ? session.workers : [session.dc];
+            var jobs = laneJobs(entries.length, lanes.length);
+            var running = [];
+            for (var k = 0; k < lanes.length; k++) {
+                if (jobs[k].length) running.push(sendLane(session, lanes[k], jobs[k], token, onBytes));
+            }
+            if (entries.length > 1) {
+                setSendStatus('Invio ' + entries.length + ' file in parallelo su ' + running.length + ' corsie…');
+            }
+            await Promise.all(running);
+            if (token !== state.sendToken) return;
+            await dcSend(session.dc, JSON.stringify({ t: 'done' }), session.queueLimit);
+            setSendProgress(total, total);
+            setSendStatus('✅ Inviati: aspetto la conferma…', 'ok');
+            setActiveTitle('Invio completato', '📡');
+
+            var ack = await ackPromise;
+            if (token !== state.sendToken) { session.close(); return; }
+            var who = String((ack && ack.n) || session.peerName || 'L’altra persona').slice(0, 24);
+            var got = (ack && Number(ack.g)) || total;
+            if (ack) {
+                setSendStatus('🎉 ' + who + ' ha ricevuto i file (' + formatBytes(got) + '). Puoi chiudere.', 'ok');
+                setActiveTitle('Consegnato', '🎉');
+                setActiveText(who + ' ha ricevuto ' + formatBytes(got) + '.');
+                playSuccessSound();
+                createSparkles($('sendCode'), 14, true);
+            } else {
+                setSendStatus('File inviati. Se l’altro dispositivo non li vede, riprova.', 'ok');
+            }
+            state.sendAlive = false;
+            state.session = null;
+            session.close();
+            allowSleep();
+        }
+
+        async function runSendLink(channel, entries, manifest, total, token) {
+            var deadline = Date.now() + WAIT_SIGNAL_MS;
+            while (Date.now() < deadline && token === state.sendToken) {
+                setSendStatus('Aspetto che l’altro dispositivo inserisca il codice…');
+                setActiveText('Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
+                var session = await attemptSenderLink(channel, entries.length, token);
+                if (token !== state.sendToken) { if (session) session.close(); return; }
+                if (session.isOpen()) {
+                    state.session = session;
+                    await deliverFiles(session, entries, manifest, total, token);
+                    return;
+                }
+                session.close();
+                if (token === state.sendToken) setSendStatus('Collegamento diretto non riuscito: riprovo…');
+                await sleep(1000);
+            }
+            if (token !== state.sendToken) return;
+            throw new Error('no-link');
+        }
+
+        async function startSend() {
+            if (state.sendAlive) return;
+            var files = state.files.slice();
+            if (!files.length) { playErrorSound(); showToast('Scegli almeno un file', { variant: 'error' }); return; }
+            if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
+
+            state.name = ($('senderName').value || '').trim().slice(0, 24);
+            try { localStorage.setItem(NAME_KEY, state.name); } catch (e) { }
+
+            $('sendStartBtn').disabled = true;
+            $('sendStartBtn').textContent = 'Genera codice';
+            $('sendRetryBtn').classList.add('hidden');
+            $('sendProgressBox').classList.remove('hidden');
+            $('sendPickPane').classList.add('hidden');
+            $('sendRunPane').classList.remove('hidden');
+            $('sendSheetBtn').classList.toggle('hidden', !navigator.share);
+            $('sendBar').style.width = '0%';
+
+            var token = state.sendToken + 1;
+            state.sendToken = token;
+            state.sendAlive = true;
+            keepAwake();
+
+            var total = totalBytes();
+            var code = newTransferCode();
+            $('sendCode').textContent = code;
+            state.transfer = { kind: 'send', icon: '📡', title: 'In attesa del collegamento', text: 'Manda il codice a chi deve ricevere i file.', code: code };
+            updateActive();
+            setSendProgress(0, total);
+            setSendStatus('Codice pronto: manda il codice a chi deve ricevere i file.');
+
+            try {
+                var channel = await transferChannel(code);
+                state.transfer.channel = channel;
+                var entries = files.map(function (f, i) {
+                    return {
+                        index: i,
+                        file: f,
+                        name: f.name || ('file-' + (i + 1)),
+                        type: f.type || 'application/octet-stream',
+                        size: f.size || 0
+                    };
+                });
+                await runSendLink(channel, entries, buildManifest(entries, state.name), total, token);
+            } catch (err) {
+                if (token !== state.sendToken) return;
+                sendFail(linkFailureMessage(err));
+            }
+        }
+
+        function sendFail(message) {
+            state.sendAlive = false;
+            allowSleep();
+            if (state.session) { state.session.close(); state.session = null; }
+            playErrorSound();
+            setSendStatus(message, 'error');
+            $('sendRetryBtn').classList.remove('hidden');
+            $('sendStartBtn').disabled = false;
+            setActiveTitle('Invio interrotto', '⚠️');
+            setActiveText(message, 'error');
+        }
+
+        // ---------- CODICE / INVITO ----------
+        function currentSendCode() {
+            return ($('sendCode').textContent || '').trim();
+        }
+
+        function inviteText() {
+            var code = currentSendCode();
+            var what = 'un file';
+            if (state.files.length === 1) what = 'il file ' + state.files[0].name;
+            else if (state.files.length > 1) what = state.files.length + ' file';
+            return 'Ti mando ' + what + ' con FileTransfer.' + LF + LF
+                + 'Apri l’app e incolla questo codice in "Ricevi un file":' + LF
+                + code + LF + LF
+                + 'Il file passa direttamente fra i nostri due dispositivi, cifrato: non si ferma su nessun server.';
+        }
+
+        function copySendCode() {
+            var code = currentSendCode();
+            if (code.length < 10) return;
+            copyToClipboard(code).then(function (ok) {
+                if (ok) { playPopSound(); createSparkles($('sendCode'), 8, true); showToast('Codice copiato'); }
+                else showToast('Copia non riuscita: selezionalo a mano', { variant: 'error' });
+            });
+        }
+
+        function copySendInvite() {
+            if (currentSendCode().length < 10) return;
+            copyToClipboard(inviteText()).then(function (ok) {
+                if (ok) { playShareSound(); showToast('Invito copiato: incollalo dove vuoi'); }
+                else showToast('Copia non riuscita', { variant: 'error' });
+            });
+        }
+
+        function shareCodeViaSheet() {
+            if (!navigator.share) { copySendInvite(); return; }
+            playShareSound();
+            navigator.share({ title: 'FileTransfer', text: inviteText() }).then(function () {
+                showToast('Invito condiviso');
+            }, function () { });
+        }
+
+        // ---------- RICEZIONE ----------
+        var recvRunning = false;
+
+        function openReceiveModal() {
+            playClickSound();
+            if (recvRunning) {
+                $('recvPickPane').classList.add('hidden');
+                $('recvRunPane').classList.remove('hidden');
+                showModal('receiveModal');
+                return;
+            }
+            $('recvRunPane').classList.add('hidden');
+            $('recvPickPane').classList.remove('hidden');
+            $('recvPickStatus').textContent = '';
+            $('recvStartBtn').disabled = false;
+            showModal('receiveModal');
+            setTimeout(function () { try { $('recvCodeInput').focus(); } catch (e) { } }, 280);
+        }
+
+        function closeReceiveModal() { hideModal('receiveModal'); }
+
+        function pasteRecvCode() {
+            playClickSound();
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                showToast('Tieni premuto nel campo e scegli "Incolla"');
+                return;
+            }
+            navigator.clipboard.readText().then(function (text) {
+                $('recvCodeInput').value = text || '';
+                checkRecvCode(true);
+            }, function () {
+                showToast('Il browser non dà accesso agli appunti: incolla a mano', { variant: 'error' });
+            });
+        }
+
+        function checkRecvCode(fromPaste) {
+            var raw = ($('recvCodeInput').value || '').trim();
+            var el = $('recvPickStatus');
+            if (!raw) { el.textContent = ''; el.className = 'ft-status'; return false; }
+            var code = normalizeCode(raw);
+            if (!code) {
+                el.textContent = 'Non sembra un codice FileTransfer (FTX-XXXXX-XXXXX-XXXXX).';
+                el.className = 'ft-status error';
+                return false;
+            }
+            el.textContent = 'Codice riconosciuto: ' + code;
+            el.className = 'ft-status ok';
+            if (fromPaste) { playPopSound(); createSparkles($('recvCodeInput'), 8, true); }
+            return true;
+        }
+
+        function setRecvProgress(done, total) {
+            if (!paintDue('recv', total <= 0 || done >= total)) return;
+            var pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+            $('recvBar').style.width = pct + '%';
+            $('recvPct').textContent = pct + '%';
+            $('recvProgressLabel').textContent = total > 0 ? (formatBytes(done) + ' di ' + formatBytes(total)) : 'In attesa…';
+        }
+
+        function setRecvStatus(text, variant) {
+            var el = $('recvStatus');
+            el.textContent = text;
+            el.className = 'ft-status' + (variant ? ' ' + variant : '');
+            setActiveText(text, variant);
+        }
+
+        function setRecvHead(icon, title, subtitle) {
+            $('recvIcon').textContent = icon;
+            $('recvTitle').textContent = title;
+            $('recvSubtitle').textContent = subtitle || '';
+            if (state.transfer) {
+                state.transfer.icon = icon;
+                state.transfer.title = title;
+                updateActive();
+            }
+        }
+
+        function recvFail(message) {
+            recvRunning = false;
+            allowSleep();
+            $('recvStartBtn').disabled = false;
+            playErrorSound();
+            setRecvHead('⚠️', 'Non riuscito', '');
+            setRecvStatus(message, 'error');
+            setActiveTitle('Ricezione non riuscita', '⚠️');
+            setActiveText(message, 'error');
+            if (!state.results.length) {
+                $('recvPickStatus').textContent = message;
+                $('recvPickStatus').className = 'ft-status error';
+            }
+        }
+
+        // Aspetta l'offerta di chi invia, risponde e resta agganciato al
+        // collegamento diretto. Se un tentativo non riesce, riprova con la
+        // prossima offerta.
+        async function waitForOffer(channel, token) {
+            var deadline = Date.now() + WAIT_SIGNAL_MS;
+            var seen = '', session = null, misses = 0, wait = POLL_MIN_MS;
+            state.sawOffer = false;
+            while (Date.now() < deadline && token === state.recvToken) {
+                var offer = newestOf(await readLinks(channel), 'offer');
+                if (!offer) {
+                    misses++;
+                    if (misses > OFFER_MISSES) { if (session) session.close(); return null; }
+                    setRecvStatus('Cerco chi ha inviato i file con questo codice…');
+                } else {
+                    misses = 0;
+                    state.sawOffer = true;
+                }
+                // Se chi invia ha pubblicato una offerta nuova, si riparte da lì.
+                if (session && (!offer || offer.id !== seen)) { session.close(); session = null; }
+                if (!session && offer) {
+                    seen = offer.id;
+                    setRecvHead('🔗', 'Collegamento diretto…', 'Sto raggiungendo l’altro dispositivo.');
+                    setRecvStatus('Provo a collegarmi in diretta…');
+                    session = await respondToOffer(channel, offer.payload);
+                }
+                if (session && await settledConnection(session, 8000)) return session;
+                if (!offer) { await sleep(wait); wait = pollDelay(wait); }
+            }
+            if (session) session.close();
+            return null;
+        }
+
+        async function respondToOffer(channel, link) {
+            var pc = createPeer();
+            if (!pc) throw new Error('no-webrtc');
+            var session = newSession(pc);
+            // Chi riceve deve essere pronto a raccogliere i byte appena i canali
+            // si aprono: se aspettasse la fine dell'aggancio, i primi pezzi
+            // andrebbero persi.
+            session.sink = createReceiver();
+            session.onChannel = function (ch, isControl) {
+                if (isControl) session.sink.onControl(ch);
+                else session.sink.onWorker(ch);
+            };
+            pc.ondatachannel = function (e) { session.add(e.channel, e.channel.label === CONTROL_LABEL); };
+            if (link.n) session.peerName = String(link.n).slice(0, 24);
+            try {
+                await applyRemote(pc, link);
+                // La risposta parte subito: senza di essa chi invia non può
+                // chiudere il collegamento, e il canale non si aprirebbe mai.
+                await relayPublish(channel, await buildAnswer(pc));
+            } catch (e) {
+                session.close();
+                return null;
+            }
+            return session;
+        }
+
+        // Chi riceve tiene insieme i pezzi che arrivano dalle varie corsie.
+        // L'elenco dei file viaggia sul canale di controllo; sui canali dei file
+        // un'intestazione dice a quale file appartengono i byte che seguono.
+        function createReceiver() {
+            var R = {
+                manifest: null, files: [], totals: [], got: [], chunks: [],
+                bytes: 0, totalBytes: 0, done: false, settled: false,
+                lanes: [], timer: null, lastPing: 0, resolve: null, reject: null
+            };
+            R.promise = new Promise(function (resolve, reject) { R.resolve = resolve; R.reject = reject; });
+            R.promise.catch(function () { });
+
+            R.timer = setTimeout(function () { R.fail('stream-stall'); }, STALL_MS);
+            R.ping = function () {
+                var now = Date.now();
+                if (now - R.lastPing < 5000) return;
+                R.lastPing = now;
+                clearTimeout(R.timer);
+                R.timer = setTimeout(function () { R.fail('stream-stall'); }, STALL_MS);
+            };
+            R.fail = function (message) {
+                if (R.settled) return;
+                R.settled = true;
+                clearTimeout(R.timer);
+                R.reject(new Error(message));
+            };
+            R.finish = function () {
+                if (R.settled) return;
+                R.settled = true;
+                clearTimeout(R.timer);
+                R.resolve({
+                    manifest: R.manifest, files: R.files, totals: R.totals, got: R.got,
+                    chunks: R.chunks, bytes: R.bytes, totalBytes: R.totalBytes
+                });
+            };
+            R.maybeFinish = function () {
+                if (!R.manifest || !R.done || R.settled) return;
+                for (var i = 0; i < R.totals.length; i++) if (R.got[i] < R.totals[i]) return;
+                R.finish();
+            };
+            R.onControl = function (dc) {
+                dc.onmessage = function (e) {
+                    if (typeof e.data !== 'string') return;
+                    R.ping();
+                    var msg = null;
+                    try { msg = JSON.parse(e.data); } catch (err) { msg = null; }
+                    if (!msg) return;
+                    if (msg.t === 'f' && !R.manifest) {
+                        R.manifest = msg;
+                        R.files = msg.fi || [];
+                        R.totals = R.files.map(function (f) { return Number(f.s) || 0; });
+                        R.got = R.files.map(function () { return 0; });
+                        R.chunks = R.files.map(function () { return []; });
+                        R.totalBytes = Number(msg.sz) || R.totals.reduce(function (a, b) { return a + b; }, 0);
+                        setRecvHead('📥', R.files.length === 1 ? 'Ricevo 1 file' : ('Ricevo ' + R.files.length + ' file'),
+                            R.files.map(function (f) { return f.n; }).join(', ').slice(0, 90));
+                        setRecvProgress(0, R.totalBytes);
+                        R.replay();
+                        return;
+                    }
+                    if (msg.t === 'done') { R.done = true; R.maybeFinish(); }
+                };
+                dc.onclose = function () { R.maybeFinish(); };
+                dc.onerror = function () { R.fail('direct-failed'); };
+            };
+            R.onWorker = function (dc) {
+                var lane = { dc: dc, file: -1, queue: [] };
+                R.lanes.push(lane);
+                dc.onmessage = function (e) {
+                    R.ping();
+                    // Se l'elenco dei file non è ancora arrivato, i pezzi si
+                    // mettono da parte: l'ordine dentro la corsia è garantito.
+                    if (R.manifest) R.read(lane, e.data);
+                    else lane.queue.push(e.data);
+                };
+                dc.onclose = function () { R.maybeFinish(); };
+                dc.onerror = function () { R.fail('direct-failed'); };
+            };
+            R.replay = function () {
+                R.lanes.forEach(function (lane) {
+                    if (!lane.queue.length) return;
+                    var queue = lane.queue;
+                    lane.queue = [];
+                    queue.forEach(function (data) { R.read(lane, data); });
+                });
+            };
+            R.read = function (lane, data) {
+                if (typeof data === 'string') {
+                    var msg = null;
+                    try { msg = JSON.parse(data); } catch (err) { msg = null; }
+                    if (msg && msg.t === 'part') lane.file = Number(msg.i) || 0;
+                    return;
+                }
+                var index = lane.file;
+                if (index < 0 || index >= R.totals.length) return;
+                var space = R.totals[index] - R.got[index];
+                if (space <= 0) return;
+                var view = new Uint8Array(data);
+                var piece = view.length > space ? view.subarray(0, space) : view;
+                R.chunks[index].push(piece);
+                R.got[index] += piece.length;
+                R.bytes += piece.length;
+                setRecvProgress(R.bytes, R.totalBytes);
+                R.maybeFinish();
+            };
+            return R;
+        }
+
+        // Aspetta che tutte le corsie abbiano finito e il mittente dica "fine".
+        function waitForFiles(session) {
+            if (!session.sink) return Promise.reject(new Error('no-manifest'));
+            return session.sink.promise;
+        }
+
+        async function startReceive() {
+            if (recvRunning) return;
+            var code = normalizeCode($('recvCodeInput').value || '');
+            if (!code) {
+                playErrorSound();
+                $('recvPickStatus').textContent = 'Inserisci il codice di 15 caratteri che ti hanno mandato.';
+                $('recvPickStatus').className = 'ft-status error';
+                return;
+            }
+            if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
+
+            var token = state.recvToken + 1;
+            state.recvToken = token;
+            recvRunning = true;
+            keepAwake();
+            releaseResults();
+            $('recvStartBtn').disabled = true;
+            $('recvPickPane').classList.add('hidden');
+            $('recvRunPane').classList.remove('hidden');
+            $('recvBar').style.width = '0%';
+            setRecvProgress(0, 0);
+            setRecvHead('📡', 'Collegamento…', 'Cerco chi ha inviato i file.');
+            state.transfer = { kind: 'receive', icon: '📡', title: 'Ricezione in corso', text: 'Collegamento…', code: code };
+            updateActive();
+            setRecvStatus('Cerco chi ha inviato i file…');
+
+            var session = null;
+            try {
+                var channel = await transferChannel(code);
+                session = await waitForOffer(channel, token);
+                if (token !== state.recvToken) { if (session) session.close(); return; }
+                if (!session) { recvFail(state.sawOffer ? linkBlockedMessage() : noOfferMessage()); return; }
+                state.session = session;
+                state.transfer.channel = channel;
+
+                setActiveTitle('Collegato', '🔗');
+                setRecvHead('🔗', 'Collegato', 'Sto ricevendo i file in diretta.');
+                setRecvStatus('Collegato in diretta: i file stanno arrivando.');
+                playSuccessSound();
+                createSparkles($('recvTitle'), 10, true);
+
+                var stream = await waitForFiles(session);
+                if (token !== state.recvToken) { session.close(); return; }
+                if (!stream.manifest || !stream.files.length) {
+                    session.close();
+                    recvFail('Non mi è arrivato l’elenco dei file. Riprova.');
+                    return;
+                }
+
+                var missing = [];
+                stream.files.forEach(function (f, i) {
+                    if (stream.got[i] < stream.totals[i]) missing.push(f.n || ('file ' + (i + 1)));
+                });
+                if (missing.length) {
+                    session.close();
+                    recvFail('Trasferimento incompleto: manca ' + missing.join(', ') + '. Riprovate.');
+                    return;
+                }
+
+                releaseResults();
+                var results = [];
+                stream.files.forEach(function (f, i) {
+                    var type = f.y || 'application/octet-stream';
+                    var blob = new Blob(stream.chunks[i], { type: type });
+                    results.push({ name: f.n || ('file-' + (i + 1)), type: type, blob: blob, size: blob.size, url: URL.createObjectURL(blob) });
+                });
+                state.results = results;
+                renderResults();
+                recvRunning = false;
+                allowSleep();
+                $('recvStartBtn').disabled = false;
+                setRecvProgress(stream.bytes, stream.totalBytes > 0 ? stream.totalBytes : stream.bytes);
+                setRecvHead('✅', 'File ricevuti', results.length === 1 ? results[0].name : (results.length + ' file'));
+                setRecvStatus('🎉 Pronti: tocca Salva per metterli nella cartella dei download.', 'ok');
+                setActiveTitle('File ricevuti', '✅');
+                setActiveText('Ricevuti in diretta dall’altro dispositivo: ' + formatBytes(stream.bytes) + '.');
+                playSuccessSound();
+                createSparkles($('recvTitle'), 12, true);
+
+                // Conferma a chi ha inviato, lungo lo stesso collegamento diretto.
+                try { session.dc.send(JSON.stringify({ t: 'ack', n: myName(), c: results.length, g: stream.bytes })); } catch (e) { }
+                var closing = session;
+                setTimeout(function () { if (closing.isOpen() || closing.dc) closing.close(); }, 1500);
+                state.session = null;
+            } catch (err) {
+                if (session) session.close();
+                state.session = null;
+                if (token !== state.recvToken) return;
+                recvFail(linkFailureMessage(err));
+            }
+        }
+
+
+        // ---------- FILE RICEVUTI ----------
+        function canShareFile(item) {
+            if (!navigator.canShare) return false;
+            try { return !!navigator.canShare({ files: [new File([item.blob], item.name, { type: item.type })] }); }
+            catch (e) { return false; }
+        }
+
+        function renderResults() {
+            var box = $('recvResults');
+            box.innerHTML = '';
+            state.results.forEach(function (item) {
+                var row = document.createElement('div');
+                row.className = 'ft-file';
+                var emoji = document.createElement('span');
+                emoji.className = 'ft-file-emoji';
+                emoji.textContent = fileEmoji(item.name, item.type);
+                var body = document.createElement('div');
+                body.style.cssText = 'flex:1; min-width:0;';
+                var nameEl = document.createElement('div');
+                nameEl.className = 'ft-file-name';
+                nameEl.textContent = item.name;
+                var meta = document.createElement('div');
+                meta.className = 'ft-file-meta';
+                meta.textContent = formatBytes(item.size);
+                body.appendChild(nameEl);
+                body.appendChild(meta);
+
+                var actions = document.createElement('div');
+                actions.style.cssText = 'display:flex; gap:6px; flex:0 0 auto;';
+                var saveBtn = document.createElement('button');
+                saveBtn.className = 'glass-btn accent';
+                saveBtn.style.whiteSpace = 'nowrap';
+                saveBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg> Salva';
+                saveBtn.onclick = function () { saveResult(item, saveBtn); };
+                actions.appendChild(saveBtn);
+
+                if (canShareFile(item)) {
+                    var shareBtn = document.createElement('button');
+                    shareBtn.className = 'glass-btn';
+                    shareBtn.style.whiteSpace = 'nowrap';
+                    shareBtn.textContent = 'Condividi';
+                    shareBtn.onclick = function () { shareResult(item); };
+                    actions.appendChild(shareBtn);
+                } else if (isPreviewable(item.name, item.type)) {
+                    var openBtn = document.createElement('button');
+                    openBtn.className = 'glass-btn';
+                    openBtn.style.whiteSpace = 'nowrap';
+                    openBtn.textContent = 'Apri';
+                    openBtn.onclick = function () { playClickSound(); openInNewTab(item); };
+                    actions.appendChild(openBtn);
+                }
+
+                row.appendChild(emoji);
+                row.appendChild(body);
+                row.appendChild(actions);
+                box.appendChild(row);
+            });
+
+            var saveAll = $('recvSaveAllBtn');
+            if (saveAll) saveAll.classList.toggle('hidden', state.results.length < 2);
+        }
+
+        function saveResult(item, btn) {
+            playClickSound();
+            if (downloadItem(item)) {
+                if (btn) createSparkles(btn, 8, true);
+                showToast('Salvato: ' + item.name);
+            } else {
+                openInNewTab(item);
+            }
+        }
+
+        function downloadItem(item) {
+            try {
+                var a = document.createElement('a');
+                a.href = item.url;
+                a.download = item.name || 'file';
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () { a.remove(); }, 1500);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Sul telefono è comodo avere un tasto solo per tutta la cartella:
+        // i download partono uno dietro l'altro perché i browser li accettano
+        // solo se restano nello stesso gesto dell'utente.
+        function saveAllResults(btn) {
+            if (!state.results.length) return;
+            playClickSound();
+            if (btn) createSparkles(btn, 10, true);
+            var items = state.results.slice();
+            items.forEach(function (item, i) {
+                setTimeout(function () { downloadItem(item); }, i * 350);
+            });
+            showToast(items.length === 1 ? 'Salvato: ' + items[0].name : 'Salvo ' + items.length + ' file…');
+        }
+
+        function shareResult(item) {
+            playShareSound();
+            try {
+                var file = new File([item.blob], item.name, { type: item.type });
+                navigator.share({ files: [file], title: item.name }).then(function () {
+                    showToast('File condiviso');
+                }, function () { });
+            } catch (e) {
+                openInNewTab(item);
+            }
+        }
+
+        function openInNewTab(item) {
+            var win = window.open(item.url, '_blank');
+            if (!win) showToast('Apri non riuscito: usa Salva', { variant: 'error' });
+        }
+
+        function releaseResults() {
+            state.results.forEach(function (item) { try { URL.revokeObjectURL(item.url); } catch (e) { } });
+            state.results = [];
+            var box = $('recvResults');
+            if (box) box.innerHTML = '';
+            var saveAll = $('recvSaveAllBtn');
+            if (saveAll) saveAll.classList.add('hidden');
+        }
+
+        // ---------- AVVIO ----------
+        function wireEvents() {
+            // Il pulsante del tema ha già onclick nel markup: qui non si registra
+            // un secondo gestore, altrimenti il tema si cambierebbe due volte.
+            $('fileInput').addEventListener('change', function (e) {
+                addFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            var drop = $('ftDrop');
+            drop.addEventListener('click', function () { playClickSound(); openFilePicker(); });
+            drop.addEventListener('dragenter', function (e) { e.preventDefault(); drop.classList.add('dragging'); });
+            drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('dragging'); });
+            drop.addEventListener('dragleave', function (e) { e.preventDefault(); drop.classList.remove('dragging'); });
+            drop.addEventListener('drop', function (e) {
+                e.preventDefault();
+                drop.classList.remove('dragging');
+                if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+            });
+
+            $('senderName').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); $('senderName').blur(); }
+            });
+
+            $('recvCodeInput').addEventListener('input', function () { checkRecvCode(false); });
+            $('recvCodeInput').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); startReceive(); }
+            });
+
+            $('recvSaveAllBtn').addEventListener('click', function () { saveAllResults($('recvSaveAllBtn')); });
+
+            if (navigator.share) $('sendSheetBtn').classList.remove('hidden');
+
+            ['sendModal', 'receiveModal'].forEach(function (id) {
+                var overlay = $(id);
+                overlay.addEventListener('click', function (e) {
+                    if (e.target !== overlay) return;
+                    if (id === 'sendModal') closeSendModal();
+                    else closeReceiveModal();
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape') return;
+                if (!$('sendModal').classList.contains('hidden')) closeSendModal();
+                if (!$('receiveModal').classList.contains('hidden')) closeReceiveModal();
+            });
+
+            window.addEventListener('beforeunload', function (e) {
+                if (!state.sendAlive && !state.session && !recvRunning) return;
+                e.preventDefault();
+                e.returnValue = '';
+            });
+
+            // Tornando sulla pagina il sistema ha già liberato il blocco dello
+            // schermo: lo richiedo se un trasferimento è ancora in corso.
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden && (state.sendAlive || recvRunning)) keepAwake();
+            });
+        }
+
+        function checkCrypto() {
+            if (!(window.crypto && window.crypto.subtle && window.crypto.getRandomValues)) {
+                $('sendStartBtn').disabled = true;
+                $('recvStartBtn').disabled = true;
+                showToast('Questo browser non supporta la cifratura necessaria. Aprila con Chrome, Safari o Firefox aggiornati.', { variant: 'error', duration: 9000 });
+                return false;
+            }
+            if (!window.RTCPeerConnection) {
+                $('sendStartBtn').disabled = true;
+                $('recvStartBtn').disabled = true;
+                showToast('Questo browser non sa fare il collegamento diretto fra dispositivi. Aprila con Chrome, Safari o Firefox aggiornati.', { variant: 'error', duration: 9000 });
+                return false;
+            }
+            return true;
+        }
+
+        function init() {
+            try {
+                var saved = localStorage.getItem(THEME_KEY);
+                if (saved) state.theme = saved === 'light' ? 'light' : 'dark';
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) state.theme = 'light';
+                state.name = localStorage.getItem(NAME_KEY) || '';
+            } catch (e) { }
+            $('senderName').value = state.name;
+            applyTheme(state.theme);
+            updateActive();
+            wireEvents();
+            checkCrypto();
+        }
+
+        init();
+    </script>
+
+
+</body>
+</html>
