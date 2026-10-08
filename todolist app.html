@@ -741,6 +741,67 @@
 
         .hidden { display: none !important; }
 
+        /* === P2P SHARE === */
+        .share-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+        .share-code {
+            background: var(--input-bg);
+            border: 1px dashed var(--glass-border-strong);
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--text-primary);
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            cursor: pointer;
+            user-select: all;
+            -webkit-user-select: all;
+            transition: all 0.2s;
+        }
+        .share-code:hover { background: var(--glass-bg-hover); }
+
+        .share-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            min-height: 18px;
+            margin-top: 14px;
+        }
+        .share-status.ok { color: var(--text-primary); font-weight: 500; }
+        .share-status.error { color: var(--danger-icon-color); }
+
+        .share-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--text-primary);
+            animation: sharePulse 1.4s ease-in-out infinite;
+        }
+        @keyframes sharePulse {
+            0%, 100% { opacity: 0.25; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin: 18px 0 8px;
+        }
+
         .back-btn {
             background: var(--glass-bg);
             border: 0.5px solid var(--glass-border);
@@ -805,6 +866,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
                     Nuovo Progetto
+                </button>
+
+                <button onclick="openReceiveModal()" class="glass" style="width: 100%; border-radius: 18px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-secondary); cursor: pointer; transition: all 0.3s; margin-bottom: 16px; font-size: 14px; font-weight: 500; letter-spacing: 0.2px;">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                    </svg>
+                    Ricevi progetto
                 </button>
 
                 <div id="projectsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
@@ -879,6 +947,61 @@
             <div style="display: flex; gap: 10px;">
                 <button onclick="hideDeleteModal()" class="btn-secondary" style="flex: 1;">Annulla</button>
                 <button onclick="confirmDeleteProject()" class="btn-danger" style="flex: 1;">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal (P2P) -->
+    <div id="shareModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px;">Condividi progetto</h3>
+            <p id="shareProjectName" style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;"></p>
+            <p class="share-hint">Invia questo codice all'altro dispositivo (basta un messaggio). Il progetto passa direttamente da dispositivo a dispositivo: lascia questa schermata aperta finché non è stato inviato.</p>
+            <div class="share-code" id="shareCode" onclick="copyShareCode()" title="Tocca per copiare">······</div>
+            <div class="share-status" id="shareStatus"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="hideShareModal()" class="btn-secondary" style="flex: 1;">Chiudi</button>
+                <button onclick="copyShareCode()" class="btn-secondary" style="flex: 1;">Copia codice</button>
+            </div>
+            <button id="shareSendBtn" class="btn-primary hidden" style="width: 100%; margin-top: 10px;" onclick="shareCodeViaSheet()">Invia con un'app…</button>
+        </div>
+    </div>
+
+    <!-- Receive Modal (P2P) -->
+    <div id="receiveModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px;">Ricevi progetto</h3>
+            <p class="share-hint">Inserisci il codice che ti ha inviato l'altro dispositivo. Serve che tenga aperta la schermata di condivisione.</p>
+            <input id="receiveCodeInput" type="text" class="ios-input" placeholder="Es. K7M-2QX"
+                autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12"
+                onkeydown="if(event.key==='Enter') connectToProject()">
+            <div class="share-status" id="receiveStatus"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="hideReceiveModal()" class="btn-secondary" style="flex: 1;">Annulla</button>
+                <button id="receiveConnectBtn" onclick="connectToProject()" class="btn-primary" style="flex: 1;">Connetti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Conflict Modal -->
+    <div id="conflictModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div style="text-align: center; margin-bottom: 6px;">
+                <div class="danger-icon-container">
+                    <svg width="26" height="26" fill="none" stroke="var(--danger-icon-color)" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h6m4-16h2a2 2 0 012 2v6M15 4v4a1 1 0 001 1h4M12 15l6 6m0-6l-6 6"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.2px;">Progetto già presente</h3>
+                <p id="conflictText" style="color: var(--text-secondary); font-size: 14px; line-height: 1.45;"></p>
+            </div>
+            <label class="field-label" for="conflictNameInput">Salva con un altro nome</label>
+            <input id="conflictNameInput" type="text" class="ios-input" maxlength="60"
+                onkeydown="if(event.key==='Enter') saveReceivedWithNewName()">
+            <button onclick="saveReceivedWithNewName()" class="btn-primary" style="width: 100%; margin-top: 14px;">Salva con questo nome</button>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="cancelReceivedImport()" class="btn-secondary" style="flex: 1;">Annulla</button>
+                <button onclick="overwriteReceivedProject()" class="btn-danger" style="flex: 1;">Sovrascrivi</button>
             </div>
         </div>
     </div>
@@ -958,6 +1081,471 @@
             } catch(e) {}
         }
 
+        // === P2P: CONDIVISIONE DI UN PROGETTO TRA DISPOSITIVI ===
+        // Il progetto viaggia su un canale dati WebRTC: i due dispositivi si parlano
+        // direttamente tra loro. Il server pubblico serve solo per l'incontro iniziale
+        // (lo scambio del codice), poi i dati non passano da nessuna parte.
+        const P2P_ID_PREFIX = 'todolist-mini-';
+        const P2P_CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+        const P2P_CODE_LENGTH = 6;
+        const P2P_LIB_URL = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
+        const P2P_PAYLOAD_TYPE = 'todolist-mini/project';
+        const P2P_WAIT_TIMEOUT = 60000;
+        const P2P_MAX_TASKS = 500;
+        const P2P_MAX_NAME = 60;
+        const P2P_MAX_TASK_TEXT = 300;
+
+        let peerLibPromise = null;
+        let p2pTimer = null;
+        let shareTargetId = null;
+        let sharePeer = null;
+        let shareConn = null;
+        let shareDone = false;
+        let receiveToken = 0;
+        let receivePeer = null;
+        let receiveConn = null;
+        let incomingProject = null;
+        let conflictProjectId = null;
+
+        function loadPeerLib() {
+            if (window.Peer) return Promise.resolve(window.Peer);
+            if (!peerLibPromise) {
+                peerLibPromise = new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = P2P_LIB_URL;
+                    script.onload = () => window.Peer ? resolve(window.Peer) : reject(new Error('Libreria P2P non disponibile'));
+                    script.onerror = () => { peerLibPromise = null; reject(new Error('Libreria P2P non scaricabile')); };
+                    document.head.appendChild(script);
+                });
+            }
+            return peerLibPromise;
+        }
+
+        function startTimer(callback, ms) {
+            stopTimer();
+            p2pTimer = setTimeout(() => { p2pTimer = null; callback(); }, ms || P2P_WAIT_TIMEOUT);
+        }
+        function stopTimer() {
+            if (p2pTimer) { clearTimeout(p2pTimer); p2pTimer = null; }
+        }
+
+        function generateShareCode() {
+            const bytes = new Uint8Array(P2P_CODE_LENGTH);
+            if (window.crypto && crypto.getRandomValues) {
+                crypto.getRandomValues(bytes);
+            } else {
+                for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+            }
+            return Array.from(bytes).map(b => P2P_CODE_ALPHABET[b % P2P_CODE_ALPHABET.length]).join('');
+        }
+        function normalizeShareCode(value) {
+            return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, P2P_CODE_LENGTH);
+        }
+        function formatShareCode(code) {
+            return code.replace(/(.{3})(?=.)/g, '$1-').toUpperCase();
+        }
+        function isShareCodeReady() {
+            return /^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(document.getElementById('shareCode').textContent.trim());
+        }
+
+        function messageForP2PError(err) {
+            const type = (err && err.type) || '';
+            if (type === 'peer-unavailable') return 'Codice non valido o condivisione non più attiva.';
+            if (type === 'browser-incompatible') return 'Questo browser non supporta il collegamento diretto.';
+            if (type === 'network' || type === 'socket-error' || type === 'server-error') return 'Server di collegamento non raggiungibile. Controlla la connessione e riprova.';
+            return 'Collegamento non riuscito. Riprova.';
+        }
+
+        function attachPeerRecovery(peer) {
+            peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
+        }
+
+        function renderP2PStatus(el, message, variant) {
+            el.className = 'share-status' + (variant ? ` ${variant}` : '');
+            el.innerHTML = '';
+            if (variant === 'pending') {
+                const dot = document.createElement('span');
+                dot.className = 'share-pulse';
+                el.appendChild(dot);
+            }
+            const text = document.createElement('span');
+            text.textContent = message;
+            el.appendChild(text);
+        }
+        function setShareStatus(message, variant) { renderP2PStatus(document.getElementById('shareStatus'), message, variant); }
+        function setReceiveStatus(message, variant) { renderP2PStatus(document.getElementById('receiveStatus'), message, variant); }
+
+        function showToast(message, variant) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const text = document.createElement('span');
+            text.style.fontSize = '13px';
+            text.style.fontWeight = '500';
+            text.style.color = variant === 'error' ? 'var(--danger-icon-color)' : 'var(--text-primary)';
+            text.textContent = message;
+            toast.appendChild(text);
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3400);
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text).then(() => true, () => legacyCopyText(text));
+            }
+            return Promise.resolve(legacyCopyText(text));
+        }
+        function legacyCopyText(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            ta.remove();
+            return ok;
+        }
+
+        // --- LATO MITTENTE ---
+        function resetShareSession() {
+            stopTimer();
+            const conn = shareConn, peer = sharePeer;
+            shareConn = null;
+            sharePeer = null;
+            shareDone = false;
+            if (conn) { try { conn.close(); } catch (e) {} }
+            if (peer) { try { peer.destroy(); } catch (e) {} }
+        }
+
+        async function openShareModal(projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            resetShareSession();
+            shareTargetId = projectId;
+            const count = project.tasks.length;
+            document.getElementById('shareProjectName').textContent = `${project.name} · ${count} attiv${count === 1 ? 'à' : 'à'}`;
+            document.getElementById('shareCode').textContent = '······';
+            document.getElementById('shareSendBtn').classList.toggle('hidden', !navigator.share);
+            document.getElementById('shareModal').classList.remove('hidden');
+            setShareStatus('Preparazione del collegamento...', 'pending');
+            playAddSound();
+
+            let Peer;
+            try {
+                Peer = await loadPeerLib();
+            } catch (e) {
+                setShareStatus('Collegamento diretto non disponibile: serve una connessione a internet.', 'error');
+                return;
+            }
+            if (shareTargetId !== projectId || document.getElementById('shareModal').classList.contains('hidden')) return;
+            startShareSession(Peer, projectId, 0);
+        }
+
+        function startShareSession(Peer, projectId, attempt) {
+            const code = generateShareCode();
+            const peer = new Peer(P2P_ID_PREFIX + code, { debug: 1 });
+            sharePeer = peer;
+            attachPeerRecovery(peer);
+
+            peer.on('open', () => {
+                if (sharePeer !== peer) return;
+                document.getElementById('shareCode').textContent = formatShareCode(code);
+                setShareStatus('In attesa che l\'altro dispositivo inserisca il codice...', 'pending');
+                startTimer(() => {
+                    if (sharePeer !== peer) return;
+                    setShareStatus('Nessuno si è collegato. Chiudi e riapri la condivisione per avere un codice nuovo.', 'error');
+                });
+            });
+
+            peer.on('connection', conn => {
+                if (sharePeer !== peer) { try { conn.close(); } catch (e) {} return; }
+                if (shareConn) { try { conn.close(); } catch (e) {} return; }
+                shareConn = conn;
+                conn.on('open', () => {
+                    if (shareConn !== conn) return;
+                    stopTimer();
+                    setShareStatus('Dispositivo collegato: invio in corso...', 'pending');
+                    sendProject(conn, projectId);
+                });
+                conn.on('error', () => {
+                    if (shareConn !== conn) return;
+                    setShareStatus('Collegamento interrotto durante l\'invio. Riprova.', 'error');
+                });
+                conn.on('close', () => {
+                    // Libera lo slot così un altro dispositivo può ricevere lo stesso progetto
+                    if (shareConn === conn) shareConn = null;
+                });
+            });
+
+            peer.on('error', err => {
+                if (sharePeer !== peer) return;
+                if (shareDone) return;
+                if ((err && err.type) === 'unavailable-id' && attempt < 3) {
+                    sharePeer = null;
+                    try { peer.destroy(); } catch (e) {}
+                    startShareSession(Peer, projectId, attempt + 1);
+                    return;
+                }
+                setShareStatus(messageForP2PError(err), 'error');
+            });
+        }
+
+        function sendProject(conn, projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            const payload = {
+                type: P2P_PAYLOAD_TYPE,
+                version: 1,
+                project: {
+                    name: project.name,
+                    tasks: project.tasks.map(t => ({ text: t.text, createdAt: t.createdAt || Date.now() }))
+                }
+            };
+            try {
+                conn.send(JSON.stringify(payload));
+            } catch (e) {
+                setShareStatus('Invio non riuscito. Riprova.', 'error');
+                return;
+            }
+            stopTimer();
+            shareDone = true;
+            setShareStatus('Progetto inviato ✓ Puoi chiudere.', 'ok');
+            playCompleteSound();
+            setTimeout(() => { if (shareConn === conn) { try { conn.close(); } catch (e) {} } }, 1500);
+        }
+
+        function hideShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+            hideConflictModal();
+            resetShareSession();
+            shareTargetId = null;
+        }
+
+        function currentShareCode() {
+            if (!isShareCodeReady()) return '';
+            return document.getElementById('shareCode').textContent.trim();
+        }
+
+        function shareMessageForCode(code) {
+            const project = state.projects.find(p => p.id === shareTargetId);
+            const name = project ? project.name : 'Progetto condiviso';
+            return `📋 Progetto «${name}» su Todo List\nApri l'app, tocca «Ricevi progetto» e inserisci questo codice:\n\n${code}`;
+        }
+
+        async function copyShareCode() {
+            const code = currentShareCode();
+            if (!code) return;
+            const ok = await copyText(code);
+            if (ok) {
+                showToast('Codice copiato: incollalo in un messaggio');
+                playAddSound();
+            } else {
+                showToast('Copia il codice a mano', 'error');
+            }
+        }
+
+        async function shareCodeViaSheet() {
+            const code = currentShareCode();
+            if (!code) return;
+            if (!navigator.share) { copyShareCode(); return; }
+            try {
+                await navigator.share({ text: shareMessageForCode(code) });
+            } catch (e) { /* condivisione annullata */ }
+        }
+
+        // --- LATO RICEVENTE ---
+        function resetReceiveSession() {
+            receiveToken++;
+            stopTimer();
+            const conn = receiveConn, peer = receivePeer;
+            receiveConn = null;
+            receivePeer = null;
+            if (conn) { try { conn.close(); } catch (e) {} }
+            if (peer) { try { peer.destroy(); } catch (e) {} }
+        }
+
+        function openReceiveModal() {
+            resetReceiveSession();
+            const input = document.getElementById('receiveCodeInput');
+            input.value = '';
+            document.getElementById('receiveConnectBtn').disabled = false;
+            setReceiveStatus('', '');
+            document.getElementById('receiveModal').classList.remove('hidden');
+            playAddSound();
+            setTimeout(() => input.focus(), 150);
+        }
+
+        function hideReceiveModal() {
+            document.getElementById('receiveModal').classList.add('hidden');
+            hideConflictModal();
+            resetReceiveSession();
+        }
+
+        function failReceive(token, message) {
+            if (token !== receiveToken) return;
+            resetReceiveSession();
+            document.getElementById('receiveConnectBtn').disabled = false;
+            setReceiveStatus(message, 'error');
+        }
+
+        async function connectToProject() {
+            const code = normalizeShareCode(document.getElementById('receiveCodeInput').value);
+            if (code.length !== P2P_CODE_LENGTH) {
+                setReceiveStatus('Il codice è di 6 caratteri (es. K7M-2QX).', 'error');
+                return;
+            }
+
+            resetReceiveSession();
+            const token = receiveToken;
+            const btn = document.getElementById('receiveConnectBtn');
+            btn.disabled = true;
+            setReceiveStatus('Collegamento in corso...', 'pending');
+
+            let Peer;
+            try {
+                Peer = await loadPeerLib();
+            } catch (e) {
+                if (token !== receiveToken) return;
+                btn.disabled = false;
+                setReceiveStatus('Collegamento diretto non disponibile: serve una connessione a internet.', 'error');
+                return;
+            }
+            if (token !== receiveToken) return;
+
+            const peer = new Peer({ debug: 1 });
+            receivePeer = peer;
+            attachPeerRecovery(peer);
+
+            peer.on('open', () => {
+                if (token !== receiveToken) return;
+                const conn = peer.connect(P2P_ID_PREFIX + code, { reliable: true });
+                receiveConn = conn;
+                conn.on('open', () => {
+                    if (token !== receiveToken) return;
+                    setReceiveStatus('Collegato: attendo il progetto...', 'pending');
+                    startTimer(() => failReceive(token, 'Il progetto non è arrivato. Riprova.'), 30000);
+                });
+                conn.on('data', data => handleIncomingProject(token, data));
+                conn.on('close', () => failReceive(token, 'L\'altro dispositivo si è disconnesso.'));
+                conn.on('error', () => failReceive(token, 'Collegamento interrotto. Riprova.'));
+            });
+
+            peer.on('error', err => failReceive(token, messageForP2PError(err)));
+
+            startTimer(() => failReceive(token, 'Nessuna risposta: controlla il codice e riprova.'), 45000);
+        }
+
+        function decodeIncomingData(data) {
+            if (typeof data === 'string') return data;
+            if (data instanceof ArrayBuffer) {
+                try { return new TextDecoder().decode(new Uint8Array(data)); } catch (e) { return ''; }
+            }
+            return '';
+        }
+
+        function sanitizeIncomingProject(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const name = String(raw.name || '').replace(/\s+/g, ' ').trim().slice(0, P2P_MAX_NAME) || 'Progetto condiviso';
+            const tasks = Array.isArray(raw.tasks) ? raw.tasks.slice(0, P2P_MAX_TASKS).map(item => {
+                const text = String((item && item.text) || '').replace(/\s+/g, ' ').trim().slice(0, P2P_MAX_TASK_TEXT);
+                if (!text) return null;
+                const createdAt = Number(item && item.createdAt);
+                return { id: generateId(), text, createdAt: Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now() };
+            }).filter(Boolean) : [];
+            return { name, tasks };
+        }
+
+        function handleIncomingProject(token, data) {
+            if (token !== receiveToken) return;
+
+            let payload = null;
+            try { payload = JSON.parse(decodeIncomingData(data)); } catch (e) { payload = null; }
+            const project = payload && payload.type === P2P_PAYLOAD_TYPE ? sanitizeIncomingProject(payload.project) : null;
+            if (!project) { failReceive(token, 'Dati ricevuti non validi.'); return; }
+
+            incomingProject = project;
+            resetReceiveSession();
+            document.getElementById('receiveModal').classList.add('hidden');
+            document.getElementById('receiveConnectBtn').disabled = false;
+            playAddSound();
+            resolveIncomingName();
+        }
+
+        function findProjectByName(name) {
+            const target = String(name).trim().toLowerCase();
+            return state.projects.find(p => p.name.trim().toLowerCase() === target) || null;
+        }
+
+        function suggestProjectName(name) {
+            let n = 2;
+            let candidate = `${name} (${n})`;
+            while (findProjectByName(candidate)) { n++; candidate = `${name} (${n})`; }
+            return candidate;
+        }
+
+        function resolveIncomingName() {
+            if (!incomingProject) return;
+            const existing = findProjectByName(incomingProject.name);
+            if (!existing) { importProject(incomingProject.name, incomingProject.tasks); return; }
+
+            conflictProjectId = existing.id;
+            document.getElementById('conflictText').textContent =
+                `Esiste già un progetto chiamato «${existing.name}». Salvalo con un altro nome oppure sovrascrivi quello esistente.`;
+            const input = document.getElementById('conflictNameInput');
+            input.value = suggestProjectName(incomingProject.name);
+            document.getElementById('conflictModal').classList.remove('hidden');
+            setTimeout(() => { input.focus(); input.select(); }, 150);
+        }
+
+        function hideConflictModal() {
+            document.getElementById('conflictModal').classList.add('hidden');
+            incomingProject = null;
+            conflictProjectId = null;
+        }
+
+        function importProject(name, tasks) {
+            state.projects.push({ id: generateId(), name, tasks });
+            saveState();
+            renderProjects();
+            hideConflictModal();
+            playCompleteSound();
+            showToast(`Progetto «${name}» ricevuto`);
+        }
+
+        function saveReceivedWithNewName() {
+            if (!incomingProject) return;
+            const input = document.getElementById('conflictNameInput');
+            const name = input.value.replace(/\s+/g, ' ').trim().slice(0, P2P_MAX_NAME);
+            if (!name) { showToast('Inserisci un nome per il progetto', 'error'); return; }
+            if (findProjectByName(name)) { showToast('Esiste già un progetto con questo nome', 'error'); return; }
+            importProject(name, incomingProject.tasks);
+        }
+
+        function overwriteReceivedProject() {
+            const target = state.projects.find(p => p.id === conflictProjectId);
+            if (!incomingProject || !target) { hideConflictModal(); return; }
+            target.tasks = incomingProject.tasks;
+            saveState();
+            renderProjects();
+            if (state.currentProjectId === target.id) renderTasks();
+            const name = target.name;
+            hideConflictModal();
+            playCompleteSound();
+            showToast(`Progetto «${name}» sovrascritto`);
+        }
+
+        function cancelReceivedImport() {
+            hideConflictModal();
+            showToast('Ricezione annullata');
+        }
+
+        window.addEventListener('beforeunload', () => { resetShareSession(); resetReceiveSession(); });
+
         // === STATE ===
         function loadState() {
             const saved = localStorage.getItem('todoAppState_v4');
@@ -1011,13 +1599,22 @@
                                     ${taskCount === 0 ? '<span style="color: var(--text-tertiary);">nessun task</span>' : `${taskCount} attiv${taskCount === 1 ? 'à' : 'à'}`}
                                 </p>
                             </div>
-                            <button onclick="event.stopPropagation(); ${canDelete ? `showDeleteModal('${project.id}')` : `showCannotDeleteToast()`}" 
-                                class="icon-btn ${canDelete ? 'danger' : 'disabled'}"
-                                title="${canDelete ? 'Elimina' : 'Non eliminabile'}">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 2px;">
+                                <button onclick="event.stopPropagation(); openShareModal('${project.id}')"
+                                    class="icon-btn"
+                                    title="Condividi con un altro dispositivo">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15V3m0 0L8 7m4-4l4 4M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4"/>
+                                    </svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); ${canDelete ? `showDeleteModal('${project.id}')` : `showCannotDeleteToast()`}" 
+                                    class="icon-btn ${canDelete ? 'danger' : 'disabled'}"
+                                    title="${canDelete ? 'Elimina' : 'Non eliminabile'}">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
