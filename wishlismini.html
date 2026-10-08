@@ -498,6 +498,65 @@
         }
         .item-inner { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
 
+        /* ---------- RIORDINO (drag & drop) ---------- */
+        .reorder-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent-soft);
+            border: 0.5px solid var(--accent-border);
+            border-radius: 14px;
+            padding: 11px 14px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text-primary);
+        }
+        body.reordering .reorder-bar { display: flex; }
+
+        .drag-handle {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 4;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 18, 28, 0.5);
+            border: 0.5px solid var(--glass-border-strong);
+            color: #fff;
+            cursor: grab;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .drag-handle:hover { background: rgba(18, 18, 28, 0.72); }
+        .drag-handle:active { transform: scale(0.92); cursor: grabbing; }
+
+        body.reordering .item-card:hover { transform: none; }
+        body.reordering .item-card { cursor: grab; }
+
+        .item-card.reorder-dragging {
+            animation: none;
+            transition: none;
+            cursor: grabbing;
+            border-color: var(--accent-border);
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45);
+            transform: scale(1.03) rotate(-1deg);
+        }
+        .item-card.reorder-placeholder {
+            animation: none;
+            background: var(--accent-soft);
+            border: 1.5px dashed var(--accent-border);
+            box-shadow: none;
+        }
+
         .thumb {
             position: relative;
             aspect-ratio: 4 / 3;
@@ -880,21 +939,6 @@
             background: var(--glass-border);
         }
 
-        /* === DROP ZONE === */
-        .drop-zone {
-            border: 1.5px dashed var(--glass-border-strong);
-            border-radius: 18px;
-            padding: 32px 20px;
-            text-align: center;
-            cursor: pointer;
-            background: var(--glass-bg);
-            transition: all 0.25s;
-        }
-        .drop-zone:hover, .drop-zone.over {
-            background: var(--accent-soft);
-            border-color: var(--accent-border);
-        }
-
         .own-banner {
             display: flex;
             align-items: center;
@@ -970,6 +1014,14 @@
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         Aggiungi desiderio
                     </button>
+                    <button class="glass-btn" id="reorderBtn" onclick="toggleReorderMode()">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+                        Ordina
+                    </button>
+                    <button class="glass-btn accent hidden" id="reorderDoneBtn" onclick="toggleReorderMode(false)">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Fine
+                    </button>
                     <button class="glass-btn" onclick="openShareModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
                         Condividi
@@ -988,12 +1040,17 @@
                 <span class="badge" id="ownCount">0</span>
             </div>
 
+            <div class="reorder-bar" id="reorderBar">
+                <span style="font-size:18px;">✋</span>
+                <span style="flex:1;">Modalità ordine: trascina le card dalla maniglia in alto a sinistra. L'ordine viene salvato automaticamente.</span>
+            </div>
+
             <div id="ownGrid" class="item-grid"></div>
 
             <div id="ownEmpty" class="empty-state hidden">
                 <div class="empty-icon" style="font-size:56px; margin-bottom:18px; opacity:0.7;">✨</div>
                 <h3 style="font-size:18px; font-weight:600; margin-bottom:6px;">La tua wishlist è vuota</h3>
-                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:20px;">Aggiungi il tuo primo desiderio, oppure carica una wishlist da un file.</p>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:20px;">Aggiungi il tuo primo desiderio, oppure incolla la wishlist che ti hanno inviato.</p>
                 <button class="glass-btn accent" onclick="openItemModal(null)" style="padding:12px 20px;">+ Aggiungi desiderio</button>
             </div>
 
@@ -1058,8 +1115,9 @@
                     </div>
                     <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:7px; line-height:1.5;">
                         Il recupero automatico passa da un servizio esterno: se non funziona, compila i campi a mano.
-                        Il prezzo dipende dall'offerta e dalla spedizione, e non tutti i negozi lo rendono leggibile
-                        (AliExpress, per esempio): controllalo prima di salvare.
+                        Il prezzo dipende dall'offerta e dalla spedizione, e non tutti i negozi lo rendono leggibile:
+                        su AliExpress arriva con i link aperti da PC, mentre quelli condivisi dal telefono spesso
+                        non lo contengono. Controllalo prima di salvare.
                     </p>
                 </div>
 
@@ -1111,26 +1169,38 @@
     <div id="shareModal" class="modal-overlay hidden">
         <div class="modal-content scale-in">
             <div class="modal-body">
-                <div style="text-align:center; margin-bottom:18px;">
+                <div style="text-align:center; margin-bottom:14px;">
                     <div style="font-size:40px; margin-bottom:8px;">📤</div>
                     <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
-                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Viene scaricato un file <b>.json</b> che puoi inviare a chi vuoi (WhatsApp, email...).</p>
+                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Carica wishlist</b> e lo inserisce.</p>
                 </div>
 
-                <div style="background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
+                    <code id="shareCodeText" style="flex:1; min-width:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:16.5px; font-weight:700; letter-spacing:0.5px; word-break:break-all; user-select:all;">—</code>
+                    <button class="icon-btn" title="Copia il codice" onclick="copyShareCode()">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 8h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
+                    </button>
+                </div>
+
+                <p id="shareStatus" style="font-size:12.5px; color:var(--text-secondary); margin:12px 2px 0; line-height:1.5; min-height:18px;">Preparo la condivisione…</p>
+
+                <div style="background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin:14px 0 18px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                         <div>
                             <div style="font-size:14px; font-weight:600;">Includi le immagini</div>
-                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">File più grande, ma funziona offline</div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Trasferimento un po' più lungo, ma la lista arriva già completa</div>
                         </div>
                         <input type="checkbox" id="shareImages" checked style="width:20px; height:20px; accent-color:var(--accent); cursor:pointer;">
                     </div>
                 </div>
 
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-secondary" style="flex:1;" onclick="closeShareModal()">Annulla</button>
-                    <button class="btn-primary" style="flex:1;" onclick="downloadShare()">Scarica file</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn-secondary" style="flex:1; min-width:100px;" onclick="closeShareModal()">Chiudi</button>
+                    <button class="btn-secondary hidden" id="shareSheetBtn" style="flex:1; min-width:100px;" onclick="shareInviteViaSheet()">Condividi…</button>
+                    <button class="btn-primary" style="flex:1; min-width:100px;" onclick="copyShareInvite()">Copia invito</button>
                 </div>
+
+                <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">La lista viaggia cifrata da un browser all'altro: chi gestisce il ponte non può leggerla. Il codice resta valido qualche ora.</p>
             </div>
         </div>
     </div>
@@ -1139,18 +1209,26 @@
     <div id="importModal" class="modal-overlay hidden">
         <div class="modal-content scale-in">
             <div class="modal-body">
-                <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:4px;">Carica una wishlist</h3>
-                <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:18px;">Seleziona un file <b>.json</b> esportato da Wishlismini.</p>
-
-                <div class="drop-zone" id="dropZone">
-                    <div style="font-size:32px; margin-bottom:8px;">📥</div>
-                    <div style="font-size:14px; font-weight:600; margin-bottom:4px;">Trascina qui il file</div>
-                    <div style="font-size:12.5px; color:var(--text-secondary);">oppure tocca per sceglierlo</div>
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div style="font-size:38px; margin-bottom:8px;">📥</div>
+                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Carica una wishlist</h3>
+                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Inserisci il codice che ti hanno inviato. Se hai ricevuto un messaggio, va bene anche incollarlo tutto: il codice lo trovo io.</p>
                 </div>
-                <input id="importFile" type="file" accept=".json,.txt,application/json" class="hidden">
 
-                <div style="display:flex; gap:10px; margin-top:18px;">
-                    <button class="btn-secondary" style="flex:1;" onclick="closeImportModal()">Chiudi</button>
+                <input id="importCodeInput" class="ios-input" type="text" placeholder="WLM-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                       style="width:100%; font-size:15px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:1px; text-align:center;"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault(); joinShare();}">
+
+                <button class="glass-btn" style="width:100%; margin-top:10px; justify-content:center;" onclick="pasteShareCode()">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Incolla dagli appunti
+                </button>
+
+                <p id="importStatus" style="font-size:12.5px; color:var(--text-secondary); margin:12px 2px 0; line-height:1.5; min-height:18px;"></p>
+
+                <div style="display:flex; gap:10px; margin-top:14px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="closeImportModal()">Annulla</button>
+                    <button class="btn-primary" style="flex:1;" id="importContinueBtn" onclick="joinShare()">Continua</button>
                 </div>
             </div>
         </div>
@@ -1269,7 +1347,10 @@
             draftImage: '',
             pendingImport: null,
             confirmAction: null,
-            storageMode: 'idb'
+            storageMode: 'idb',
+            shareCode: '',
+            shareWatch: 0,
+            importToken: 0
         };
 
         // ---------- SMALL HELPERS ----------
@@ -1306,10 +1387,6 @@
         function initialOf(name) {
             var n = String(name || '?').trim();
             return n ? n[0].toUpperCase() : '?';
-        }
-        function slugify(name) {
-            return String(name || 'wishlist').toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'wishlist';
         }
         function formatDate(ts) {
             try {
@@ -1706,6 +1783,8 @@
             var own = await ensureOwnList(user);
             state.ownListId = own.id;
             state.viewingFriendListId = null;
+            endReorderDrag();
+            setReorderMode(false);
 
             $('headerUserName').textContent = user.name;
             $('headerAvatar').textContent = initialOf(user.name);
@@ -1722,6 +1801,8 @@
             state.currentUserId = null;
             state.ownListId = null;
             state.viewingFriendListId = null;
+            endReorderDrag();
+            setReorderMode(false);
             await Store.put('meta', null, 'currentUserId');
             $('appView').classList.add('hidden');
             $('friendView').classList.add('hidden');
@@ -1815,7 +1896,13 @@
         }
 
         // ---------- ITEM CARD ----------
-        function itemCardHtml(item, readOnly) {
+        function dragHandleHtml() {
+            return '<button class="drag-handle" type="button" aria-label="Trascina per riordinare" title="Trascina per riordinare">' +
+                '<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>' +
+            '</button>';
+        }
+
+        function itemCardHtml(item, readOnly, reorderable) {
             var img = safeImgSrc(item.image);
             var price = formatPrice(item);
             var link = safeUrl(item.link);
@@ -1846,6 +1933,7 @@
 
             return '<article class="item-card glass fade-in" id="item-' + item.id + '">' +
                 '<div class="item-inner">' +
+                    (reorderable ? dragHandleHtml() : '') +
                     '<div class="thumb" onclick="openImageViewer(\'' + item.id + '\')">' + thumbInner + '</div>' +
                     '<div class="item-body">' +
                         '<h3 class="item-title">' + escapeHtml(title) + '</h3>' +
@@ -1868,7 +1956,7 @@
         async function renderOwnList() {
             if (!state.ownListId) return;
             var items = await Store.byIndex('items', 'listId', state.ownListId);
-            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+            items.sort(ownSort);
 
             $('ownCount').textContent = items.length + (items.length === 1 ? ' desiderio' : ' desideri');
             var grid = $('ownGrid');
@@ -1877,12 +1965,158 @@
             if (!items.length) {
                 grid.innerHTML = '';
                 empty.classList.remove('hidden');
+                setReorderMode(false);
+                $('reorderBtn').classList.add('hidden');
                 return;
             }
             empty.classList.add('hidden');
+            $('reorderBtn').classList.toggle('hidden', reorderState.active);
             grid.innerHTML = items.map(function (it, i) {
-                return itemCardHtml(it, false).replace('fade-in', 'fade-in' + delayStyle(i));
+                var html = itemCardHtml(it, false, reorderState.active);
+                return html.replace('fade-in', 'fade-in' + delayStyle(i));
             }).join('');
+        }
+
+        // ---------- ORDINE PERSONALIZZATO (drag & drop) ----------
+        var reorderState = { active: false, card: null, placeholder: null, pointerId: null, offsetX: 0, offsetY: 0, style: '', moved: false };
+
+        // I desideri riordinati a mano hanno un valore `order` esplicito; quelli
+        // senza restano in cima, dal più recente.
+        function ownSort(a, b) {
+            var ao = (typeof a.order === 'number') ? a.order : null;
+            var bo = (typeof b.order === 'number') ? b.order : null;
+            if (ao !== null && bo !== null) return ao - bo;
+            if (ao !== null) return 1;
+            if (bo !== null) return -1;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+        }
+
+        function setReorderMode(active) {
+            if (reorderState.active === active) return;
+            reorderState.active = active;
+            document.body.classList.toggle('reordering', active);
+            $('reorderDoneBtn').classList.toggle('hidden', !active);
+            $('reorderBtn').classList.toggle('hidden', active);
+        }
+
+        async function toggleReorderMode(force) {
+            var next = (typeof force === 'boolean') ? force : !reorderState.active;
+            if (next) {
+                var items = await Store.byIndex('items', 'listId', state.ownListId);
+                if (!items.length) {
+                    showToast('Aggiungi prima qualche desiderio', { variant: 'error' });
+                    return;
+                }
+                playClickSound();
+            }
+            endReorderDrag();
+            setReorderMode(next);
+            await renderOwnList();
+            if (next) showToast('Trascina le card per riordinarle');
+        }
+
+        function onReorderPointerDown(e) {
+            if (!reorderState.active || reorderState.card) return;
+            if (e.button !== undefined && e.button > 0) return;
+            var handle = e.target && e.target.closest ? e.target.closest('.drag-handle') : null;
+            if (!handle) return;
+            var card = handle.closest('.item-card');
+            if (!card) return;
+
+            e.preventDefault();
+            var rect = card.getBoundingClientRect();
+            var ph = document.createElement('div');
+            ph.className = 'item-card glass reorder-placeholder';
+            ph.style.width = rect.width + 'px';
+            ph.style.height = rect.height + 'px';
+            card.parentNode.insertBefore(ph, card);
+
+            reorderState.card = card;
+            reorderState.placeholder = ph;
+            reorderState.pointerId = e.pointerId;
+            reorderState.offsetX = e.clientX - rect.left;
+            reorderState.offsetY = e.clientY - rect.top;
+            reorderState.style = card.getAttribute('style') || '';
+            reorderState.moved = false;
+
+            card.classList.add('reorder-dragging');
+            card.style.position = 'fixed';
+            card.style.margin = '0';
+            card.style.left = rect.left + 'px';
+            card.style.top = rect.top + 'px';
+            card.style.width = rect.width + 'px';
+            card.style.height = rect.height + 'px';
+            card.style.pointerEvents = 'none';
+
+            document.addEventListener('pointermove', onReorderPointerMove, { passive: false });
+            document.addEventListener('pointerup', onReorderPointerUp);
+            document.addEventListener('pointercancel', onReorderPointerUp);
+        }
+
+        function onReorderPointerMove(e) {
+            var st = reorderState;
+            if (!st.card || e.pointerId !== st.pointerId) return;
+            e.preventDefault();
+            st.moved = true;
+            st.card.style.left = (e.clientX - st.offsetX) + 'px';
+            st.card.style.top = (e.clientY - st.offsetY) + 'px';
+
+            var over = document.elementFromPoint(e.clientX, e.clientY);
+            over = (over && over.closest) ? over.closest('#ownGrid .item-card') : null;
+            if (!over || over === st.card || over.classList.contains('reorder-placeholder')) return;
+
+            var r = over.getBoundingClientRect();
+            var after;
+            if (r.bottom - e.clientY < r.height * 0.3) after = true;
+            else if (e.clientY - r.top < r.height * 0.3) after = false;
+            else after = (e.clientX > r.left + r.width / 2);
+            over.parentNode.insertBefore(st.placeholder, after ? over.nextSibling : over);
+        }
+
+        function onReorderPointerUp(e) {
+            var st = reorderState;
+            if (!st.card || (e && e.pointerId !== undefined && e.pointerId !== st.pointerId)) return;
+            var moved = st.moved;
+            endReorderDrag();
+            if (moved) saveOwnOrder();
+        }
+
+        function endReorderDrag() {
+            var st = reorderState;
+            document.removeEventListener('pointermove', onReorderPointerMove, { passive: false });
+            document.removeEventListener('pointerup', onReorderPointerUp);
+            document.removeEventListener('pointercancel', onReorderPointerUp);
+            if (st.card) {
+                st.card.classList.remove('reorder-dragging');
+                if (st.style) st.card.setAttribute('style', st.style);
+                else st.card.removeAttribute('style');
+                if (st.placeholder && st.placeholder.parentNode === st.card.parentNode) {
+                    st.card.parentNode.insertBefore(st.card, st.placeholder);
+                }
+            }
+            if (st.placeholder && st.placeholder.parentNode) st.placeholder.parentNode.removeChild(st.placeholder);
+            st.card = null;
+            st.placeholder = null;
+            st.pointerId = null;
+            st.moved = false;
+        }
+
+        async function saveOwnOrder() {
+            var cards = document.querySelectorAll('#ownGrid .item-card');
+            for (var i = 0; i < cards.length; i++) {
+                var id = String(cards[i].id || '').replace(/^item-/, '');
+                if (!id) continue;
+                var it = await Store.get('items', id);
+                if (!it || it.listId !== state.ownListId) continue;
+                if (it.order !== i) {
+                    it.order = i;
+                    it.updatedAt = Date.now();
+                    await Store.put('items', it);
+                }
+            }
+            var list = await Store.get('lists', state.ownListId);
+            if (list) { list.updatedAt = Date.now(); await Store.put('lists', list); }
+            playPopSound();
         }
 
         async function renderFriendLists() {
@@ -2210,10 +2444,11 @@
         }
 
         // ---------- LINK SCRAPING ----------
-        function fetchWithTimeout(url, ms) {
+        function fetchWithTimeout(url, ms, headers) {
             var ctrl = ('AbortController' in window) ? new AbortController() : null;
             var timer = null;
             var opts = {};
+            if (headers) opts.headers = headers;
             if (ctrl) { opts.signal = ctrl.signal; }
             var promise = fetch(url, opts);
             if (ctrl) {
@@ -2229,10 +2464,10 @@
         }
 
         // Ogni sorgente e' indipendente: quella che risponde prima compila i campi ancora vuoti.
+        // corsproxy.io e' stato tolto: risponde 401 senza chiave a pagamento.
         var HTML_PROXIES = [
             { build: function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); } },
             { build: function (u) { return 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u); } },
-            { build: function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); } },
             { build: function (u) { return 'https://api.allorigins.win/get?url=' + encodeURIComponent(u); }, json: 'contents' }
         ];
 
@@ -2245,6 +2480,27 @@
         ];
 
         var METADATA_TIMEOUT = 9000;
+
+        // Il lettore r.jina.ai ha un header CORS aperto (a differenza dei proxy di
+        // redirect e delle API dei negozi) e puo' restituire la pagina cosi' com'e'
+        // oppure girare su un altro indirizzo: e' il ponte usato per i negozi.
+        var READER_BASE = 'https://r.jina.ai/';
+        var READER_HTML_HEADERS = { 'x-return-format': 'html' };
+
+        async function fetchThroughReader(target, headers, ms) {
+            var res = await fetchWithTimeout(READER_BASE + target, ms || METADATA_TIMEOUT, headers);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        }
+
+        // Il lettore antepone alcune righe di intestazione ("Title:", "URL Source:"):
+        // si isola il corpo JSON della risposta.
+        function readerJsonBody(text) {
+            var body = String(text == null ? '' : text);
+            var i = body.indexOf('{');
+            if (i === -1) return null;
+            try { return JSON.parse(body.slice(i)); } catch (e) { return null; }
+        }
 
         function metaContent(doc, names) {
             for (var i = 0; i < names.length; i++) {
@@ -2348,24 +2604,293 @@
             } catch (e) { return ''; }
         }
 
-        // Alcuni negozi servono una pagina illeggibile all'indirizzo principale ma
-        // una versione leggibile su un altro host: per il recupero si usa quella.
-        // Alcuni negozi servono una pagina illeggibile all'indirizzo principale ma
-        // una versione leggibile su un altro host: per il recupero si usa quella.
-        // AliExpress risponde sulla pagina mobile, ma il lettore automatico puo'
-        // conservare a lungo una copia della pagina di blocco: la variante "fresh"
-        // aggiunge un parametro sempre diverso per costringerlo a riscaricare.
-        function aliexpressReadUrl(id, fresh) {
-            return 'https://m.aliexpress.com/item/' + id + '.html' +
-                (fresh ? '?wlm=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) : '');
+        // I link condivisi dall'app del telefono passano da star.aliexpress.com e
+        // portano l'indirizzo del prodotto dentro un parametro, con la codifica
+        // percentuale: "redirectUrl=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F123...".
+        // Senza decodifica l'identificativo del prodotto resta invisibile, e la
+        // lettura finisce sulla pagina di condivisione, che non ha immagini.
+        function aliexpressAnyItemId(url) {
+            var direct = aliexpressItemId(url);
+            if (direct) return direct;
+            var s = String(url == null ? '' : url);
+            for (var pass = 0; pass < 3; pass++) {
+                var m = s.match(ALIEXPRESS_ITEM_RE);
+                if (m) return m[1];
+                var decoded = '';
+                try { decoded = decodeURIComponent(s); } catch (e) { break; }
+                if (decoded === s) break;
+                s = decoded;
+            }
+            return '';
         }
 
-        function crawlerUrl(url, fresh) {
+        // Alcuni negozi servono una pagina illeggibile all'indirizzo principale ma
+        // una versione leggibile su un altro host: per il recupero si usa quella.
+        // AliExpress risponde sulla pagina mobile, ma a rotazione blocca gli host con
+        // una pagina di verifica: si tengono piu' indirizzi alternativi e si ricorda
+        // quello che ha funzionato, cosi' i tentativi successivi partono da li'.
+        var ALIEXPRESS_READ_HOSTS = [
+            'https://m.aliexpress.com/item/',
+            'https://it.aliexpress.com/item/',
+            'https://www.aliexpress.us/item/',
+            'https://it.aliexpress.com/i/'
+        ];
+        var ALIEXPRESS_HOST_KEY = 'wlm.aliHost.v1';
+
+        function aliHostOrder() {
+            var last = '';
+            try { last = localStorage.getItem(ALIEXPRESS_HOST_KEY) || ''; } catch (e) { }
+            if (last && ALIEXPRESS_READ_HOSTS.indexOf(last) > 0) {
+                return [last].concat(ALIEXPRESS_READ_HOSTS.filter(function (h) { return h !== last; }));
+            }
+            return ALIEXPRESS_READ_HOSTS.slice();
+        }
+
+        function aliHostOf(url) {
+            for (var i = 0; i < ALIEXPRESS_READ_HOSTS.length; i++) {
+                if (String(url).indexOf(ALIEXPRESS_READ_HOSTS[i]) === 0) return ALIEXPRESS_READ_HOSTS[i];
+            }
+            return '';
+        }
+
+        function rememberAliHost(host) {
+            if (!host) return;
+            try { if (localStorage.getItem(ALIEXPRESS_HOST_KEY) !== host) localStorage.setItem(ALIEXPRESS_HOST_KEY, host); } catch (e) { }
+        }
+
+        function aliexpressReadUrl(id, attempt) {
+            var order = aliHostOrder();
+            var step = Number(attempt) || 0;
+            var url = order[step % order.length] + id + '.html';
+            // Il lettore automatico conserva a lungo la copia della pagina di blocco:
+            // un parametro sempre diverso lo costringe a riscaricare.
+            if (step) url += '?wlm=' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            return url;
+        }
+
+        function crawlerUrl(url, attempt) {
             if (isAliExpressUrl(url)) {
-                var id = aliexpressItemId(url);
-                if (id) return aliexpressReadUrl(id, fresh);
+                var id = aliexpressAnyItemId(url);
+                if (id) return aliexpressReadUrl(id, attempt);
             }
             return url;
+        }
+
+        // Il link copiato dalla pagina AliExpress si porta dietro i parametri del
+        // listino ("pdp_npi"), che contengono prezzo pieno e prezzo scontato: e' il
+        // prezzo che l'utente vedeva, e l'unico leggibile senza la sua sessione.
+        // I link condivisi dall'app del telefono non hanno questo parametro.
+        function aliexpressUrlPrice(url) {
+            if (!isAliExpressUrl(url)) return null;
+            var raw = '';
+            try { raw = new URL(url).searchParams.get('pdp_npi') || ''; }
+            catch (e) { return null; }
+            // Formato: "6@dis!EUR!21.02!10.09!!!154.22!74.03!@..." -> prezzo pieno,
+            // prezzo scontato, poi gli stessi valori in un'altra valuta.
+            var m = raw.match(/dis!([A-Za-z]{3})!(\d+(?:[.,]\d+)?)!(\d+(?:[.,]\d+)?)/);
+            if (!m) return null;
+            var list = normalizePriceNumber(m[2], url);
+            var sale = normalizePriceNumber(m[3], url);
+            if (!sale || !(parseFloat(sale) > 0)) return null;
+            // Lo sconto non puo' costare piu' del prezzo pieno: se succede il
+            // parametro e' in un altro formato e non e' affidabile.
+            if (list && parseFloat(sale) > parseFloat(list)) return null;
+            return { price: sale, currency: String(m[1]).toUpperCase() };
+        }
+
+        // --- Link brevi ---
+        // WhatsApp risolve i link brevi lato server: segue i redirect e legge i meta
+        // tag della pagina finale. Da un browser la stessa cosa si ottiene con due
+        // servizi pubblici, il cui risultato e' l'indirizzo definitivo del prodotto.
+        var SHORT_LINK_HOST_RE = /^(?:amzn\.(?:eu|to)|a\.co|a\.aliexpress\.com|s\.click\.aliexpress\.com|ali\.pub)$/i;
+
+        function isShortLink(url) {
+            try { return SHORT_LINK_HOST_RE.test(new URL(url).hostname.replace(/^www\./i, '')); }
+            catch (e) { return false; }
+        }
+
+        var RESOLVED_LINKS_KEY = 'wlm.resolvedLinks.v1';
+        var RESOLVED_LINKS_TTL = 30 * 24 * 60 * 60 * 1000;
+
+        function readResolvedLinks() {
+            try {
+                var map = JSON.parse(localStorage.getItem(RESOLVED_LINKS_KEY) || '{}');
+                return (map && typeof map === 'object') ? map : {};
+            } catch (e) { return {}; }
+        }
+
+        // Lo stesso link breve punta sempre allo stesso prodotto: la risoluzione si
+        // conserva per non ripetere le chiamate ai servizi esterni.
+        function rememberResolvedLink(url, target) {
+            var map = readResolvedLinks();
+            map[url] = { url: target, at: Date.now() };
+            var keys = Object.keys(map);
+            if (keys.length > 200) {
+                keys.sort(function (a, b) { return (map[a].at || 0) - (map[b].at || 0); });
+                for (var i = 0; i < keys.length - 200; i++) delete map[keys[i]];
+            }
+            try { localStorage.setItem(RESOLVED_LINKS_KEY, JSON.stringify(map)); } catch (e) { }
+        }
+
+        // La pagina breve contiene spesso l'indirizzo definitivo o l'identificativo
+        // del prodotto: si usa come ultima risorsa quando i servizi non rispondono.
+        function productUrlFromText(text) {
+            var s = String(text == null ? '' : text);
+            var a = s.match(/https?:\/\/[^\s"'<>)\]]*\/(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})/i);
+            if (a) {
+                var host = a[0].match(/^https?:\/\/([^/]+)/i);
+                if (host) {
+                    var asin = a[1].toUpperCase();
+                    return 'https://' + host[1] + '/gp/aw/d/' + asin;
+                }
+            }
+            var ali = s.match(/\/(?:item|i)\/(\d{6,})\.html/i);
+            if (ali) return 'https://it.aliexpress.com/item/' + ali[1] + '.html';
+            return '';
+        }
+
+        // Catena dei redirect letta tramite il lettore automatico: il servizio non
+        // espone l'intestazione CORS necessaria al browser, il lettore si'.
+        async function resolveThroughRedirectChain(url) {
+            var api = 'https://api.redirect-checker.net/?url=' + encodeURIComponent(url) + '&format=json';
+            var json = readerJsonBody(await fetchThroughReader(api, null, 20000));
+            var steps = (json && json.data) || [];
+            var last = '';
+            for (var i = 0; i < steps.length; i++) {
+                var step = steps[i] || {};
+                if (step.request && step.request.error) continue;
+                var info = step.response && step.response.info;
+                if (info && info.url) last = info.url;
+            }
+            return (last && last !== url) ? last : '';
+        }
+
+        async function resolveShortLink(url) {
+            var cached = readResolvedLinks()[url];
+            if (cached && cached.url && (Date.now() - (cached.at || 0)) < RESOLVED_LINKS_TTL) return cached.url;
+
+            var target = '';
+            try {
+                var res = await fetchWithTimeout('https://unshorten.me/json/' + encodeURIComponent(url), 12000);
+                if (res.ok) {
+                    var data = await res.json();
+                    if (data && data.success && data.resolved_url && data.resolved_url !== url) target = data.resolved_url;
+                }
+            } catch (e) { }
+
+            if (!target) {
+                try { target = await resolveThroughRedirectChain(url); } catch (e) { }
+            }
+
+            if (!target) {
+                try { target = productUrlFromText(await fetchThroughReader(url, null, 20000)); } catch (e) { }
+            }
+
+            if (target) rememberResolvedLink(url, target);
+            return target;
+        }
+
+        // --- Amazon ---
+        // La pagina desktop non e' leggibile al lettore automatico ("unexpected content
+        // type"), mentre la forma mobile /gp/aw/d/<ASIN> consegna la stessa offerta
+        // principale con prezzo e galleria immagini.
+        function amazonReadUrl(url) {
+            var asin = amazonAsin(url);
+            if (!asin) return '';
+            try { return 'https://' + new URL(url).hostname + '/gp/aw/d/' + asin; }
+            catch (e) { return ''; }
+        }
+
+        // Amazon pubblica la galleria in un attributo JSON: la voce piu' grande e'
+        // l'immagine principale del prodotto, e il suffisso di misura si puo' togliere.
+        function amazonFullSizeImage(raw) {
+            return String(raw == null ? '' : raw).replace(/\._[^./]+_?\.(jpe?g|png|webp)$/i, '.$1');
+        }
+
+        function amazonMainImage(html) {
+            var raw = String(html == null ? '' : html).replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+            if (!raw) return '';
+            var best = '', bestPx = 0;
+            var m = raw.match(/data-a-dynamic-image="([^"]+)"/);
+            if (m) {
+                var gallery = null;
+                try { gallery = JSON.parse(m[1]); } catch (e) { gallery = null; }
+                if (gallery) {
+                    Object.keys(gallery).forEach(function (key) {
+                        var size = gallery[key];
+                        var px = (size && size.length === 2) ? (size[0] * size[1]) : 0;
+                        if (px > bestPx) { bestPx = px; best = key; }
+                    });
+                }
+            }
+            if (!best) {
+                var hi = raw.match(/"hiRes"\s*:\s*"([^"]+)"/);
+                if (hi) best = hi[1].replace(/\\\//g, '/');
+            }
+            if (!best) {
+                var plain = raw.match(/https:\/\/m\.media-amazon\.com\/images\/I\/[A-Za-z0-9+%-]+\.(?:jpe?g|png|webp)/);
+                if (plain) best = plain[0];
+            }
+            return best ? amazonFullSizeImage(best) : '';
+        }
+
+        // Amazon tronca il titolo con "…" sia nel <title> sia in og:title; il testo
+        // intero resta solo nell'intestazione della scheda prodotto.
+        function amazonProductTitle(html) {
+            var raw = String(html == null ? '' : html);
+            if (!raw) return '';
+            var m = raw.match(/id="productTitle"[^>]*>([\s\S]{0,700}?)<\//i);
+            if (!m) return '';
+            var text = m[1].replace(/<[^>]*>/g, ' ')
+                .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ')
+                .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+            return cleanTitle(text);
+        }
+
+        // --- Steam ---
+        // La pagina di vetrina e' spesso dietro il filtro di eta' che blocca i lettori
+        // automatici, mentre la scheda ufficiale dell'applicazione espone titolo,
+        // immagine e prezzo (sconto compreso).
+        var STEAM_HOST_RE = /(^|\.)steampowered\.com$/i;
+        var STEAM_APP_RE = /\/app\/(\d{2,})/i;
+        var STEAM_COUNTRY = 'it';
+
+        function steamAppId(url) {
+            try {
+                var u = new URL(url);
+                if (!STEAM_HOST_RE.test(u.hostname)) return '';
+                var m = u.pathname.match(STEAM_APP_RE);
+                return m ? m[1] : '';
+            } catch (e) { return ''; }
+        }
+
+        function extractSteamMeta(json, appid) {
+            var out = { title: '', description: '', image: '', price: '', currency: '' };
+            var entry = json ? json[appid] : null;
+            if (!entry && json) {
+                var keys = Object.keys(json);
+                if (keys.length) entry = json[keys[0]];
+            }
+            var d = entry && entry.data;
+            if (!d) return out;
+
+            if (d.name) out.title = clipText(cleanTitle(d.name), 140);
+            if (d.header_image) out.image = String(d.header_image).replace(/\\\//g, '/');
+            if (d.short_description) {
+                out.description = clipText(String(d.short_description).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(), 400);
+            }
+            var po = d.price_overview;
+            if (po && po.final_formatted) {
+                var value = normalizePriceNumber(po.final_formatted, 'https://store.steampowered.com/');
+                if (value) {
+                    out.price = value;
+                    out.currency = /^[A-Z]{3}$/.test(String(po.currency || '')) ? String(po.currency).toUpperCase() : 'EUR';
+                }
+            } else if (d.is_free) {
+                out.price = '0';
+                out.currency = 'EUR';
+            }
+            return out;
         }
 
         // Il CDN di AliExpress mette la misura nel nome del file
@@ -2395,6 +2920,8 @@
         function cleanTitle(value) {
             return String(value == null ? '' : value)
                 .replace(/\s+/g, ' ')
+                .replace(/^Save \d+%\s+on\s+/i, '')
+                .replace(/\s+on\s+Steam$/i, '')
                 .replace(/\s*[|•]\s*(?:Amazon|eBay|Etsy|AliExpress|Temu|Shein)[^|]*$/i, '')
                 .replace(/\s*[-–—]\s*(?:Amazon|eBay|Etsy|AliExpress|Temu|Shein|Wish|Zalando)\b.*$/i, '')
                 .replace(/\s*[:|-]\s*Amazon\.[a-z.]{2,8}.*$/i, '')
@@ -2681,7 +3208,7 @@
 
         // Immagini di servizio (pixel di tracciamento, sprite, loghi, banner pubblicitari)
         // che non hanno niente a che vedere con il prodotto.
-        var JUNK_IMAGE_RE = /uedata=|grey-pixel|transparent-pixel|pixel\.gif|1x1|\/sprites?\/|sprite-|sash\/|social_share|amazon_logo|\/gno\/|aax-|al-eu-|\.svg(?:$|[?#])|\/\d{1,3}x\d{1,3}\.(?:png|gif|jpe?g)|XXXXXX|-tps-\d+-\d+\.|captcha/i;
+        var JUNK_IMAGE_RE = /uedata=|grey-pixel|transparent-pixel|pixel\.gif|1x1|\/sprites?\/|sprite-|sash\/|social_share|amazon_logo|\/gno\/|aax-|al-eu-|\/kf\/HTB[^\/]*\.png|\.svg(?:$|[?#])|\/\d{1,3}x\d{1,3}\.(?:png|gif|jpe?g)|XXXXXX|-tps-\d+-\d+\.|captcha/i;
         var JUNK_ALT_RE = /(?:logo|icon|sprite|banner|advert|sponsor|refurbished|offerte|deal|coupon|avatar|rating|stars?|all categories|search by image|download the|subscribe|flag|slider|verify)/i;
 
         function isJunkImage(url, alt) {
@@ -2719,7 +3246,7 @@
         var DESC_BOILER_RE = /(?:acquista|compra|buy now|buy the|shop now|scopri|best price|miglior prezzo|spedizione gratuita|free shipping|free delivery|sconto del|coupon|all rights reserved|diritti riservati|privacy policy|cookie|drag the slider|slide to verify|verify to ensure)/i;
         // Pagine di blocco, elenchi di link di piede pagina (Alibaba/AliExpress e simili)
         // e avvisi legali non sono descrizioni del prodotto.
-        var DESC_JUNK_RE = /(?:alibaba group|alimama|fliggy|taobao|tmall|dingtalk|juhuasuan|aliyun|1688\.com|all rights reserved|tutti i diritti riservati|informativa sulla privacy|cookie policy|sitemap|unusual traffic|we have detected|are you a human|verify you are human|captcha|slide to verify|drag the slider)/i;
+        var DESC_JUNK_RE = /(?:alibaba group|alimama|fliggy|taobao|tmall|dingtalk|juhuasuan|aliyun|1688\.com|all rights reserved|tutti i diritti riservati|informativa sulla privacy|cookie policy|sitemap|unusual traffic|we have detected|are you a human|verify you are human|captcha|slide to verify|drag the slider|stiamo lavorando al problema|we're working on the problem|we are working on the problem|riprova pi[uù] tardi|fai clic sul pulsante qui sotto|click the button below|enter the characters you see)/i;
 
         function descriptionScore(value, title) {
             var desc = String(value == null ? '' : value).trim();
@@ -2760,6 +3287,22 @@
         }
 
         // Usato quando il proxy restituisce il testo della pagina (formato markdown di r.jina.ai).
+        // Intestazioni di sezione ("Product gallery", "Dettagli prodotto") non sono
+        // il nome del prodotto: le API di terze parti le scambiano spesso per titoli.
+        var TITLE_HEADING_RE = /^(?:product gallery|gallery|product details|product information|product description|product overview|details|description|overview|reviews?|recensioni|dettagli(?: del prodotto)?|informazioni(?: sul prodotto)?|specifiche(?: tecniche)?|specifications?|shipping(?: & returns)?|spedizione(?: e resi)?|related products|prodotti correlati|you may also like|potrebbe interessarti|images?|immagini?|foto|photos?|videos?|video)$/i;
+
+        // Fra i titoli raccolti si tiene il piu' informativo, non il primo arrivato:
+        // un titolo tagliato o un'intestazione di pagina valgono meno di niente.
+        function titleScore(value, url) {
+            var t = String(value == null ? '' : value).trim();
+            if (!t) return -1;
+            if (isJunkTitle(t, url)) return -1;
+            if (TITLE_HEADING_RE.test(t)) return -1;
+            var score = Math.min(significantWords(t).length, 12);
+            if (/(?:…|\.\.\.)\s*$/.test(t)) score -= 2;
+            return score;
+        }
+
         function extractMetaFromMarkdown(md, baseUrl) {
             var out = { title: '', description: '', image: '', price: '', currency: '' };
             if (!md) return out;
@@ -2863,13 +3406,46 @@
 
         // Solo per i negozi di cui si sa leggere la pagina alternativa.
         function canRefreshRead(url) {
-            return isAliExpressUrl(url) && !!aliexpressItemId(url);
+            return isAliExpressUrl(url) && !!aliexpressAnyItemId(url);
+        }
+
+        // I negozi che rispondono solo al lettore automatico hanno bisogno di piu' tempo.
+        function isSlowReadStore(url) {
+            return canRefreshRead(url) || !!amazonReadUrl(url) || !!steamAppId(url);
         }
 
         function buildMetaSources(url, originalUrl) {
             var sources = [];
             var canRefresh = canRefreshRead(originalUrl);
-            var firstTimeout = canRefresh ? TEXT_PROXY_TIMEOUT : METADATA_TIMEOUT;
+            var firstTimeout = isSlowReadStore(originalUrl) ? TEXT_PROXY_TIMEOUT : METADATA_TIMEOUT;
+
+            // Amazon: si legge la forma mobile della scheda, che contiene l'offerta
+            // principale (prezzo) e la galleria immagini.
+            var amazonTarget = amazonReadUrl(originalUrl);
+            if (amazonTarget) {
+                sources.push(async function () {
+                    var html = await fetchThroughReader(amazonTarget, READER_HTML_HEADERS, TEXT_PROXY_TIMEOUT);
+                    var meta = extractLinkMeta(html, amazonTarget);
+                    var fullTitle = amazonProductTitle(html);
+                    if (fullTitle && fullTitle.length > String(meta.title || '').length) meta.title = clipText(fullTitle, 140);
+                    var buybox = amazonBuyboxPrice(html, amazonTarget);
+                    if (buybox) { meta.price = buybox.price; meta.currency = buybox.currency; }
+                    var img = amazonMainImage(html);
+                    if (img) meta.image = img;
+                    if (!meta.image) meta.image = amazonAsinImage(amazonAsin(originalUrl));
+                    return meta;
+                });
+            }
+
+            // Steam: scheda ufficiale dell'applicazione, in JSON e senza filtro di eta'.
+            var appid = steamAppId(originalUrl);
+            if (appid) {
+                sources.push(async function () {
+                    var api = 'https://store.steampowered.com/api/appdetails?appids=' + appid +
+                        '&cc=' + STEAM_COUNTRY + '&l=italian';
+                    return extractSteamMeta(readerJsonBody(await fetchThroughReader(api, null, TEXT_PROXY_TIMEOUT)), appid);
+                });
+            }
 
             HTML_PROXIES.forEach(function (p) {
                 sources.push(async function () {
@@ -2895,13 +3471,19 @@
                     for (var attempt = 0; attempt < attempts; attempt++) {
                         if (attempt && Date.now() - start > TEXT_PROXY_RETRY_BUDGET) break;
                         try {
-                            var target = (attempt === 0 && !canRefresh) ? url : crawlerUrl(originalUrl, true);
+                            var target = (attempt === 0 && !canRefresh) ? url : crawlerUrl(originalUrl, attempt);
                             var left = TEXT_PROXY_RETRY_BUDGET - (Date.now() - start);
                             var timeout = Math.max(8000, Math.min(firstTimeout, left));
                             var res = await fetchWithTimeout(p.build(target), timeout);
                             if (!res.ok) continue;
                             var candidate = extractMetaFromMarkdown(await res.text(), url);
-                            if (hasUsableMeta(candidate)) return candidate;
+                            // Un'immagine da sola puo' essere il segnaposto della pagina
+                            // di blocco: si accetta solo se c'e' anche un titolo o un
+                            // prezzo, altrimenti si prova l'indirizzo successivo.
+                            if (candidate.title || candidate.price) {
+                                if (isAliExpressUrl(originalUrl)) rememberAliHost(aliHostOf(target));
+                                return candidate;
+                            }
                             if (!meta) meta = candidate;
                         } catch (e) { }
                     }
@@ -2921,12 +3503,22 @@
         }
 
         async function fetchLinkMeta(url) {
+            // I link brevi vengono risolti prima della lettura: l'indirizzo salvato
+            // resta comunque quello incollato dall'utente.
+            if (isShortLink(url)) {
+                var resolved = await resolveShortLink(url);
+                if (resolved) url = resolved;
+            }
             var merged = { title: '', description: '', image: '', price: '', currency: '' };
             var bestDescScore = -1;
+            var bestTitleScore = -1;
             // Per alcuni negozi si legge una variante della pagina piu' accessibile
             // ai lettori automatici; il link salvato resta quello dell'utente.
-            var fetchUrl = crawlerUrl(url, false);
-            var slowRead = canRefreshRead(url);
+            var fetchUrl = crawlerUrl(url, 0);
+            var slowRead = isSlowReadStore(url);
+            // AliExpress mostra il prezzo solo nella sessione del browser: li' non ha
+            // senso aspettare oltre titolo e immagine, per gli altri negozi si'.
+            var priceOptional = canRefreshRead(url);
             var sources = buildMetaSources(fetchUrl, url);
             var asin = amazonAsin(url);
             if (!sources.length) {
@@ -2944,6 +3536,15 @@
                     if (settled) return;
                     settled = true;
                     clearTimeout(timer);
+                    // Il prezzo del listino arrivato insieme al link non richiede
+                    // rete: si usa solo se la pagina non ne ha dato uno.
+                    if (!merged.price) {
+                        var fromUrl = aliexpressUrlPrice(url);
+                        if (fromUrl) { merged.price = fromUrl.price; merged.currency = fromUrl.currency; }
+                    }
+                    // Amazon riduce le immagini all'occorrenza: la versione piena si
+                    // ottiene togliendo il suffisso di misura.
+                    if (merged.image) merged.image = amazonFullSizeImage(merged.image);
                     // Ultima risorsa per Amazon: immagine ufficiale ricavata dall'ASIN,
                     // utile quando il link e' pieno di parametri di tracciamento.
                     if ((!merged.image || isJunkImage(merged.image, '')) && asin) merged.image = amazonAsinImage(asin);
@@ -2955,6 +3556,17 @@
                         .then(task)
                         .then(function (meta) {
                             if (!meta) return;
+                            var hasContent = !!(meta.title || meta.price || meta.description);
+                            // Il titolo non e' "il primo che arriva": si tiene quello
+                            // piu' informativo.
+                            if (meta.title) {
+                                var tScore = titleScore(meta.title, url);
+                                if (tScore > bestTitleScore) {
+                                    bestTitleScore = tScore;
+                                    merged.title = tScore > 0 ? meta.title : '';
+                                }
+                                meta.title = '';
+                            }
                             // La descrizione non e' "la prima che arriva": si tiene quella
                             // piu' informativa, scartando i doppioni del titolo.
                             if (meta.description) {
@@ -2965,6 +3577,9 @@
                                 }
                                 meta.description = '';
                             }
+                            // Un'immagine senza titolo, prezzo ne' testo viene dalle
+                            // pagine di blocco (segnaposto del negozio): non e' il prodotto.
+                            if (meta.image && !hasContent) meta.image = '';
                             mergeMeta(merged, meta);
                         })
                         .catch(function () { })
@@ -2972,7 +3587,7 @@
                             pending--;
                             // Sui siti che non espongono il prezzo non ha senso aspettare
                             // oltre: titolo e immagine sono tutto quello che si puo' avere.
-                            if (merged.title && merged.image && (merged.price || slowRead)) finish();
+                            if (merged.title && merged.image && (merged.price || priceOptional)) finish();
                             else if (pending === 0) finish();
                         });
                 });
@@ -2986,9 +3601,9 @@
             el.innerHTML = '';
         }
 
-        // Alcuni negozi (AliExpress) mostrano il prezzo solo nella sessione del
-        // browser dell'utente: se l'importazione non lo trova, si spiega cosa fare
-        // e si porta il cursore sul campo, invece di lasciare un campo vuoto.
+        // I link AliExpress aperti da PC portano il prezzo nella URL: quando manca
+        // (tipico dei link condivisi dal telefono) si spiega cosa fare invece di
+        // lasciare il campo vuoto.
         function updatePriceHint(url, hasPrice) {
             var el = $('priceHint');
             if (!el) return;
@@ -3001,8 +3616,8 @@
                 ? '<a href="' + escapeHtml(target) + '" target="_blank" rel="noopener noreferrer">apri la pagina</a>'
                 : 'apri la pagina del prodotto';
             el.innerHTML = isAliExpressUrl(url)
-                ? '💡 AliExpress mostra il prezzo solo nella tua sessione del browser, non ai lettori automatici: ' +
-                  open + ', copia il prezzo e incollalo qui (es. 23,09 €).'
+                ? '💡 I link AliExpress condivisi dal telefono non contengono il prezzo: ' +
+                  open + ', copia il prezzo e incollalo qui (es. 23,09 €). Da PC il prezzo arriva da solo.'
                 : '💡 Questo sito non espone il prezzo: ' + open + ', copia il prezzo e incollalo qui (es. 49,90).';
             el.classList.remove('hidden');
             if ($('fTitle').value.trim()) $('fPrice').focus();
@@ -3067,7 +3682,7 @@
                     playSuccessSound();
                     if (!meta.price && !$('fPrice').value.trim()) {
                         if (isAliExpressUrl(url)) {
-                            showToast('Titolo e immagine importati. Il prezzo va inserito a mano.', { duration: 5200 });
+                            showToast('Titolo e immagine importati. Il prezzo non è nel link condiviso dal telefono: inseriscilo a mano.', { duration: 5600 });
                         } else {
                             showToast('Dati importati. Questo sito non espone il prezzo: inseriscilo a mano.');
                         }
@@ -3094,147 +3709,556 @@
             }
         }
 
-        // ---------- SHARE ----------
-        function openShareModal() {
-            if (!state.ownListId) return;
-            playClickSound();
-            showModal('shareModal');
-        }
-        function closeShareModal() { hideModal('shareModal'); }
+        // ---------- CONDIVISIONE P2P (codice breve + trasferimento cifrato) ----------
+        // Dal codice derivano il nome del canale e la chiave AES: i due browser si
+        // passano la wishlist da un browser all'altro, passando per un ponte pubblico
+        // (ntfy.sh) che vede solo dati cifrati. Niente file da scaricare e niente
+        // messaggi chilometrici da incollare: basta il codice.
+        var SHARE_RELAY = 'https://ntfy.sh';
+        var SHARE_TAG = 'WLM2:';
+        var SHARE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
+        var SHARE_CODE_LENGTH = 15;
+        var SHARE_INLINE_MAX = 2800;      // byte di lista che stanno in un singolo messaggio
+        var SHARE_PART_MAX = 1400000;     // byte per allegato (il ponte arriva a ~2 MB)
+        var IMPORT_WAIT_MS = 25000;       // attesa massima della wishlist dopo aver inserito il codice
 
-        async function buildShareData(includeImages) {
-            var list = await Store.get('lists', state.ownListId);
-            var items = await Store.byIndex('items', 'listId', state.ownListId);
-            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-            return {
-                app: 'wishlismini',
-                version: 1,
-                type: 'wishlist',
-                exportedAt: new Date().toISOString(),
-                owner: (list && list.ownerName) || 'Utente',
-                wishlist: {
-                    name: (list && list.title) || 'La mia wishlist',
-                    items: items.map(function (it) {
-                        var image = it.image || '';
-                        if (!includeImages && !/^data:/i.test(image)) image = safeUrl(image);
-                        else if (!includeImages) image = '';
-                        return {
-                            title: it.title || '',
-                            desc: it.desc || '',
-                            price: it.price || '',
-                            currency: it.currency || '',
-                            link: it.link || '',
-                            image: image
-                        };
-                    })
+        function bytesToBase64Url(bytes) {
+            var bin = '';
+            for (var i = 0; i < bytes.length; i += 0x8000) {
+                bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            }
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function base64UrlToBytes(str) {
+            var b64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            var bin = atob(b64);
+            var out = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+
+        function base32FromBytes(bytes) {
+            var out = '', value = 0, bits = 0;
+            for (var i = 0; i < bytes.length; i++) {
+                value = ((value << 8) | bytes[i]) & 0xffff;
+                bits += 8;
+                while (bits >= 5) {
+                    out += SHARE_CODE_ALPHABET.charAt((value >>> (bits - 5)) & 31);
+                    bits -= 5;
                 }
+                value &= (1 << bits) - 1;
+            }
+            if (bits > 0) out += SHARE_CODE_ALPHABET.charAt((value << (5 - bits)) & 31);
+            return out;
+        }
+
+        function formatShareCode(chars) {
+            return 'WLM-' + chars.slice(0, 5) + '-' + chars.slice(5, 10) + '-' + chars.slice(10, 15);
+        }
+
+        // Codice pensato per essere dettato al telefono: niente lettere ambigue.
+        function newShareCode() {
+            var bytes = crypto.getRandomValues(new Uint8Array(SHARE_CODE_LENGTH));
+            var chars = '';
+            for (var i = 0; i < bytes.length; i++) chars += SHARE_CODE_ALPHABET.charAt(bytes[i] % SHARE_CODE_ALPHABET.length);
+            return formatShareCode(chars);
+        }
+
+        // Accetta sia il codice da solo sia un intero messaggio che lo contiene.
+        function normalizeShareCode(text) {
+            var flat = String(text || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+            var at = flat.indexOf('WLM');
+            if (at === -1) return '';
+            var rest = flat.slice(at + 3);
+            var chars = '';
+            for (var i = 0; i < rest.length && chars.length < SHARE_CODE_LENGTH; i++) {
+                if (SHARE_CODE_ALPHABET.indexOf(rest.charAt(i)) !== -1) chars += rest.charAt(i);
+            }
+            if (chars.length !== SHARE_CODE_LENGTH) return '';
+            return formatShareCode(chars);
+        }
+
+        // Dal codice nascono il nome del canale (pubblico) e la chiave (segreta).
+        async function shareChannel(code) {
+            var normalized = normalizeShareCode(code);
+            if (!normalized) return null;
+            var compact = normalized.replace(/-/g, '');
+            var encoder = new TextEncoder();
+            var topicHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode('wlm/topic/2|' + compact)));
+            var keyHash = await crypto.subtle.digest('SHA-256', encoder.encode('wlm/key/2|' + compact));
+            var key = await crypto.subtle.importKey('raw', keyHash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+            return { code: normalized, topic: 'wlm2-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(), key: key };
+        }
+
+        async function sealBytes(key, bytes) {
+            var iv = crypto.getRandomValues(new Uint8Array(12));
+            var sealed = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, bytes));
+            var out = new Uint8Array(iv.length + sealed.length);
+            out.set(iv, 0);
+            out.set(sealed, iv.length);
+            return out;
+        }
+
+        function sealText(key, text) {
+            return sealBytes(key, new TextEncoder().encode(text));
+        }
+
+        async function openBytes(key, bytes) {
+            var plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.subarray(0, 12) }, key, bytes.subarray(12));
+            return new Uint8Array(plain);
+        }
+
+        async function openText(key, bytes) {
+            return new TextDecoder().decode(await openBytes(key, bytes));
+        }
+
+        async function relayPublish(channel, text) {
+            var body = SHARE_TAG + bytesToBase64Url(await sealText(channel.key, text));
+            var res = await fetch(SHARE_RELAY + '/' + channel.topic, { method: 'POST', body: body });
+            if (!res.ok) throw new Error('relay ' + res.status);
+            return true;
+        }
+
+        async function relayUpload(channel, bytes) {
+            var res = await fetch(SHARE_RELAY + '/' + channel.topic, { method: 'PUT', body: await sealBytes(channel.key, bytes) });
+            if (!res.ok) throw new Error('relay ' + res.status);
+            return res.json();
+        }
+
+        // Nel flusso JSON del ponte il testo del messaggio arriva nel campo
+        // "message" (non "body"): si legge quello, con "body" come ripiego.
+        function relayBody(msg) {
+            return String((msg && (msg.message || msg.body)) || '');
+        }
+
+        async function relayList(channel) {
+            var res = await fetch(SHARE_RELAY + '/' + channel.topic + '/json?poll=1&since=all', { cache: 'no-store' });
+            if (!res.ok) throw new Error('relay ' + res.status);
+            var text = await res.text();
+            var messages = [];
+            text.split('\n').forEach(function (line) {
+                line = line.trim();
+                if (!line) return;
+                var msg;
+                try { msg = JSON.parse(line); } catch (e) { return; }
+                if (msg && msg.event === 'message' && (msg.message || msg.attachment)) messages.push(msg);
+            });
+            messages.sort(function (a, b) { return (a.time || 0) - (b.time || 0); });
+            return messages;
+        }
+
+        // Le immagini della lista viaggiano a parte (riga per riga), cosi' il
+        // messaggio principale resta piccolo e leggibile.
+        function shareRows(items, includeImages) {
+            var rows = [], images = [];
+            items.forEach(function (it, idx) {
+                var image = it.image || '', rowImage = '';
+                if (/^data:/i.test(image)) {
+                    if (includeImages) images.push([idx, image]);
+                } else if (image) {
+                    rowImage = safeUrl(image) || '';
+                }
+                var row = [clipText(it.title, 140), clipText(it.price, 24), safeUrl(it.link) || '', rowImage, clipText(it.desc, 220)];
+                while (row.length && !row[row.length - 1]) row.pop();
+                rows.push(row);
+            });
+            return { rows: rows, images: images };
+        }
+
+        function shareItemsFromPayload(payload) {
+            var images = {};
+            (payload.img || []).forEach(function (pair) {
+                if (!Array.isArray(pair)) return;
+                var idx = Number(pair[0]);
+                var url = String(pair[1] || '');
+                if (isFinite(idx) && /^data:image\//i.test(url)) images[idx] = url;
+            });
+            return (payload.i || []).filter(function (row) { return Array.isArray(row); }).map(function (row, idx) {
+                var image = images[idx] || (row[3] ? String(row[3]) : '');
+                if (image && !/^data:image\//i.test(image)) image = safeUrl(image) || '';
+                return {
+                    title: String(row[0] || '').slice(0, 140),
+                    desc: String(row[4] || '').slice(0, 600),
+                    price: row[1] == null ? '' : String(row[1]).slice(0, 24),
+                    currency: 'EUR',
+                    link: safeUrl(row[2] || '') || '',
+                    image: image
+                };
+            }).filter(function (it) { return it.title || it.link; });
+        }
+
+        // Lista piccola: un solo messaggio. Lista grande (o con immagini): allegati
+        // numerati piu' un messaggio-manifesto che li elenca.
+        async function sendShare(channel, owner, name, items, includeImages, onStatus) {
+            var built = shareRows(items, includeImages);
+            var payload = { v: 2, a: clipText(owner, 40), n: clipText(name, 80), i: built.rows, img: built.images };
+            var bytes = new TextEncoder().encode(JSON.stringify(payload));
+            if (bytes.length <= SHARE_INLINE_MAX) {
+                await relayPublish(channel, new TextDecoder().decode(bytes));
+                return { parts: 1 };
+            }
+
+            var total = Math.ceil(bytes.length / SHARE_PART_MAX);
+            var ids = [];
+            for (var i = 0; i < total; i++) {
+                onStatus('Invio i dati ' + (i + 1) + '/' + total + '…');
+                var msg = await relayUpload(channel, bytes.subarray(i * SHARE_PART_MAX, Math.min(bytes.length, (i + 1) * SHARE_PART_MAX)));
+                if (!msg || !msg.id) throw new Error('relay upload');
+                ids.push(msg.id);
+            }
+            await relayPublish(channel, JSON.stringify({ v: 2, a: payload.a, n: payload.n, c: built.rows.length, k: total, ids: ids }));
+            return { parts: total };
+        }
+
+        function describeShare(payload) {
+            var items = shareItemsFromPayload(payload);
+            if (!items.length) return { error: 'empty' };
+            return {
+                owner: String(payload.a || 'Amico').slice(0, 40),
+                name: String(payload.n || '').slice(0, 80),
+                items: items
             };
         }
 
-        function downloadBlob(filename, text) {
-            var blob = new Blob([text], { type: 'application/json' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function () {
-                a.remove();
-                URL.revokeObjectURL(url);
-            }, 4000);
+        async function receiveShare(channel, onStatus) {
+            var report = onStatus || function () { };
+            report('Cerco la wishlist…');
+            var messages = await relayList(channel);
+            var candidates = [];
+            var sealed = 0;
+            var ours = false;
+            for (var i = 0; i < messages.length; i++) {
+                var body = relayBody(messages[i]);
+                if (body.indexOf(SHARE_TAG) !== 0) continue;
+                sealed++;
+                var payload = null;
+                try { payload = JSON.parse(await openText(channel.key, base64UrlToBytes(body.slice(SHARE_TAG.length)))); }
+                catch (e) { payload = null; }
+                if (!payload || payload.v !== 2) continue;
+                if (Array.isArray(payload.i) || Array.isArray(payload.ids)) {
+                    candidates.push({ msg: messages[i], payload: payload });
+                } else {
+                    // Messaggio nostro ma non una lista (per esempio la conferma di
+                    // ricezione): dice che la lista era qui e non c'è più.
+                    ours = true;
+                }
+            }
+            if (!candidates.length) return { error: ours ? 'expired' : (sealed ? 'code' : 'empty') };
+
+            var last = candidates[candidates.length - 1];
+            if (Array.isArray(last.payload.i)) return describeShare(last.payload);
+
+            var ids = last.payload.ids || [];
+            if (!ids.length) return { error: 'code' };
+            var pieces = [];
+            for (var j = 0; j < ids.length; j++) {
+                report('Recupero i dati ' + (j + 1) + '/' + ids.length + '…');
+                var url = '';
+                for (var k = 0; k < messages.length; k++) {
+                    if (messages[k].id === ids[j] && messages[k].attachment && messages[k].attachment.url) {
+                        url = messages[k].attachment.url;
+                        break;
+                    }
+                }
+                if (!url) return { error: 'expired' };
+                var res = await fetch(url, { cache: 'no-store' });
+                if (!res.ok) return { error: 'expired' };
+                var piece = null;
+                try { piece = await openBytes(channel.key, new Uint8Array(await res.arrayBuffer())); }
+                catch (e) { piece = null; }
+                if (!piece) return { error: 'code' };
+                pieces.push(piece);
+            }
+
+            var total = 0;
+            pieces.forEach(function (p) { total += p.length; });
+            var merged = new Uint8Array(total);
+            var at = 0;
+            pieces.forEach(function (p) { merged.set(p, at); at += p.length; });
+
+            var parsed = null;
+            try { parsed = JSON.parse(new TextDecoder().decode(merged)); } catch (e) { parsed = null; }
+            if (!parsed || !Array.isArray(parsed.i)) return { error: 'code' };
+            return describeShare(parsed);
         }
 
-        async function downloadShare() {
+        function shareInviteText(code) {
+            return '🎁 Wishlismini — codice wishlist: ' + code + '\n' +
+                'Apri Wishlismini, tocca "Carica wishlist" e inserisci questo codice.';
+        }
+
+        function setShareStatus(text, variant) {
+            var el = $('shareStatus');
+            if (!el) return;
+            el.textContent = text;
+            el.style.color = variant === 'ok' ? 'var(--accent)' : (variant === 'error' ? '#ff6b6b' : 'var(--text-secondary)');
+        }
+
+        function openShareModal() {
             if (!state.ownListId) return;
-            var includeImages = $('shareImages').checked;
-            var data = await buildShareData(includeImages);
-            if (!data.wishlist.items.length) {
+            playClickSound();
+            $('shareSheetBtn').classList.toggle('hidden', !navigator.share);
+            $('shareCodeText').textContent = '—';
+            state.shareCode = newShareCode();
+            showModal('shareModal');
+            publishShare();
+        }
+
+        function closeShareModal() {
+            state.shareWatch = 0;
+            hideModal('shareModal');
+        }
+
+        async function publishShare() {
+            var list = await Store.get('lists', state.ownListId);
+            var items = await Store.byIndex('items', 'listId', state.ownListId);
+            items.sort(ownSort);
+            if (!items.length) {
+                closeShareModal();
                 playErrorSound();
                 showToast('La tua wishlist è vuota', { variant: 'error' });
                 return;
             }
-            var filename = 'wishlismini-' + slugify(data.owner) + '-' + new Date().toISOString().slice(0, 10) + '.json';
-            downloadBlob(filename, JSON.stringify(data, null, 2));
-            closeShareModal();
-            playShareSound();
-            showToast('File scaricato: invialo a chi vuoi!');
+
+            var owner = (list && list.ownerName) || 'Utente';
+            var token = state.shareWatch + 1;
+            state.shareWatch = token;
+            var code = state.shareCode || newShareCode();
+            state.shareCode = code;
+            $('shareCodeText').textContent = code;
+            setShareStatus('Preparo la condivisione…');
+
+            try {
+                var channel = await shareChannel(code);
+                await sendShare(channel, owner, (list && list.title) || 'La mia wishlist', items, $('shareImages').checked, function (text) {
+                    if (state.shareWatch === token) setShareStatus(text);
+                });
+                if (state.shareWatch !== token) return;
+                setShareStatus('📡 Pronto. In attesa che l\'altro dispositivo si colleghi…');
+                watchShareAck(channel, token);
+            } catch (e) {
+                if (state.shareWatch !== token) return;
+                playErrorSound();
+                setShareStatus('Non riesco a inviare la lista: controlla la connessione e riprova.', 'error');
+            }
         }
 
-        // ---------- IMPORT ----------
+        // Quando l'altro dispositivo scarica la lista pubblica una conferma sul
+        // canale: il mittente la intercetta e sa che la wishlist è arrivata.
+        async function watchShareAck(channel, token) {
+            var deadline = Date.now() + 180000;
+            while (state.shareWatch === token && Date.now() < deadline) {
+                await new Promise(function (resolve) { setTimeout(resolve, 5000); });
+                if (state.shareWatch !== token) return;
+                var messages = null;
+                try { messages = await relayList(channel); } catch (e) { continue; }
+                for (var i = messages.length - 1; i >= 0; i--) {
+                    var body = relayBody(messages[i]);
+                    if (body.indexOf(SHARE_TAG) !== 0) continue;
+                    var payload = null;
+                    try { payload = JSON.parse(await openText(channel.key, base64UrlToBytes(body.slice(SHARE_TAG.length)))); }
+                    catch (e) { payload = null; }
+                    if (payload && payload.v === 2 && payload.t === 'ack') {
+                        if (state.shareWatch === token) {
+                            playSuccessSound();
+                            setShareStatus('✅ ' + (payload.n || 'L\'altro dispositivo') + ' ha ricevuto la wishlist', 'ok');
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        function legacyCopy(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            ta.remove();
+            return ok;
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacyCopy(text); });
+            }
+            return Promise.resolve(legacyCopy(text));
+        }
+
+        async function copyShareCode() {
+            var code = state.shareCode;
+            if (!normalizeShareCode(code)) return;
+            var ok = await copyToClipboard(code);
+            if (ok) {
+                playShareSound();
+                showToast('Codice copiato');
+            } else {
+                playErrorSound();
+                showToast('Copia il codice a mano', { variant: 'error' });
+            }
+        }
+
+        async function copyShareInvite() {
+            var code = state.shareCode;
+            if (!normalizeShareCode(code)) return;
+            var ok = await copyToClipboard(shareInviteText(code));
+            if (ok) {
+                playShareSound();
+                showToast('Invito copiato: incollalo in un messaggio');
+            } else {
+                playErrorSound();
+                showToast('Copia il codice a mano', { variant: 'error' });
+            }
+        }
+
+        async function shareInviteViaSheet() {
+            var code = state.shareCode;
+            if (!normalizeShareCode(code)) return;
+            if (!navigator.share) { copyShareInvite(); return; }
+            try {
+                await navigator.share({ text: shareInviteText(code) });
+                playShareSound();
+            } catch (e) { /* condivisione annullata */ }
+        }
+
+        // ---------- CARICAMENTO (codice ricevuto) ----------
         function openImportModal() {
             playClickSound();
+            $('importCodeInput').value = '';
+            setImportStatus('');
+            setImportBusy(false);
             showModal('importModal');
+            setTimeout(function () { $('importCodeInput').focus(); }, 150);
         }
-        function closeImportModal() { hideModal('importModal'); }
+
+        function closeImportModal() {
+            state.importToken = 0;
+            hideModal('importModal');
+        }
+
         function closeImportChoiceModal() {
             hideModal('importChoiceModal');
             state.pendingImport = null;
         }
 
-        function readFileAsText(file) {
-            return new Promise(function (resolve, reject) {
-                if (file.text) { file.text().then(resolve, reject); return; }
-                var fr = new FileReader();
-                fr.onload = function () { resolve(String(fr.result)); };
-                fr.onerror = function () { reject(fr.error); };
-                fr.readAsText(file);
-            });
+        function setImportStatus(text, variant) {
+            var el = $('importStatus');
+            if (!el) return;
+            el.textContent = text || '';
+            el.style.color = variant === 'error' ? '#ff6b6b' : 'var(--text-secondary)';
         }
 
-        function validateImport(raw) {
-            if (!raw || typeof raw !== 'object') return null;
-            var wl = (raw.wishlist && typeof raw.wishlist === 'object') ? raw.wishlist : raw;
-            if (!Array.isArray(wl.items)) return null;
-            var owner = raw.owner || wl.owner || wl.ownerName || 'Amico';
-            var items = wl.items.filter(function (it) {
-                return it && typeof it === 'object' && (it.title || it.link || it.url);
-            }).map(function (it) {
-                var img = it.image ? String(it.image) : '';
-                if (img && !/^data:image\//i.test(img)) img = safeUrl(img);
-                return {
-                    title: String(it.title || '').slice(0, 140),
-                    desc: String(it.desc || it.description || '').slice(0, 600),
-                    price: it.price == null ? '' : String(it.price).slice(0, 24),
-                    currency: 'EUR',
-                    link: safeUrl(it.link || it.url || ''),
-                    image: img
-                };
-            });
-            return {
-                owner: String(owner).slice(0, 40),
-                name: String(wl.name || '').slice(0, 80),
-                items: items
-            };
+        function setImportBusy(busy) {
+            var btn = $('importContinueBtn');
+            if (!btn) return;
+            btn.disabled = !!busy;
+            btn.textContent = busy ? 'Cerco…' : 'Continua';
         }
 
-        function dedupeKey(item) {
-            return String(item.title || '').trim().toLowerCase() + '|' + String(item.link || '').trim().toLowerCase();
-        }
-
-        async function handleImportFile(file) {
-            if (!file) return;
+        async function pasteShareCode() {
+            var input = $('importCodeInput');
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                input.focus();
+                showToast('Tieni premuto nel campo per incollare', { variant: 'error' });
+                return;
+            }
             try {
-                var text = await readFileAsText(file);
-                var parsed = JSON.parse(text);
-                var data = validateImport(parsed);
-                if (!data) {
-                    playErrorSound();
-                    showToast('File non valido', { variant: 'error' });
+                var text = await navigator.clipboard.readText();
+                var code = normalizeShareCode(text);
+                if (!code) {
+                    showToast('Negli appunti non trovo un codice', { variant: 'error' });
                     return;
                 }
+                input.value = code;
+                playPopSound();
+            } catch (e) {
+                input.focus();
+                showToast('Tieni premuto nel campo per incollare', { variant: 'error' });
+            }
+        }
+
+        // Il mittente pubblica la lista prima di mostrare il codice, quindi in genere
+        // è già in rete: si ritenta comunque per qualche secondo, per i casi in cui il
+        // suo telefono sta ancora caricando.
+        async function receiveShareWithRetry(channel, token) {
+            var deadline = Date.now() + (state.importWaitMs || IMPORT_WAIT_MS);
+            var last = null;
+            for (;;) {
+                if (state.importToken !== token) return null;
+                try {
+                    last = await receiveShare(channel, function (text) {
+                        if (state.importToken === token) setImportStatus(text);
+                    });
+                } catch (e) {
+                    last = { error: 'network' };
+                }
+                if (last && last.error !== 'empty' && last.error !== 'network') return last;
+                if (Date.now() > deadline) return last;
+                setImportStatus('Cerco la wishlist… l\'altro dispositivo deve averla già inviata.');
+                await new Promise(function (resolve) { setTimeout(resolve, 3000); });
+            }
+        }
+
+        async function joinShare() {
+            var code = normalizeShareCode($('importCodeInput').value);
+            if (!code) {
+                playErrorSound();
+                setImportStatus('Codice non valido: deve essere del tipo WLM-XXXXX-XXXXX-XXXXX.', 'error');
+                $('importCodeInput').focus();
+                return;
+            }
+            $('importCodeInput').value = code;
+
+            var token = state.importToken + 1;
+            state.importToken = token;
+            setImportBusy(true);
+            setImportStatus('Mi collego…');
+            try {
+                var channel = await shareChannel(code);
+                var data = await receiveShareWithRetry(channel, token);
+                if (state.importToken !== token || !data) return;
+                if (data.error) {
+                    playErrorSound();
+                    setImportStatus(data.error === 'expired'
+                        ? 'La lista è scaduta (resta in rete poche ore): chiedi di rimandartela.'
+                        : (data.error === 'empty'
+                            ? 'Con questo codice non c\'è ancora nessuna wishlist: chiedi di aprire "Condividi" e di rimandarti il codice.'
+                            : (data.error === 'network'
+                                ? 'Non riesco a collegarmi: controlla la connessione e riprova.'
+                                : 'Il codice non è corretto: controlla di aver scritto tutte le lettere.')), 'error');
+                    return;
+                }
+
+                // Conferma al mittente: cosi' anche lui vede che la lista è arrivata.
+                try {
+                    var list = state.ownListId ? await Store.get('lists', state.ownListId) : null;
+                    await relayPublish(channel, JSON.stringify({ v: 2, t: 'ack', n: (list && list.ownerName) || 'Utente' }));
+                } catch (e) { /* la conferma non è essenziale */ }
+
                 state.pendingImport = data;
                 closeImportModal();
-                $('importChoiceInfo').innerHTML = 'File di <b>' + escapeHtml(data.owner) + '</b> con <b>' +
+                $('importChoiceInfo').innerHTML = 'Wishlist di <b>' + escapeHtml(data.owner) + '</b> con <b>' +
                     data.items.length + '</b> ' + (data.items.length === 1 ? 'desiderio' : 'desideri') + '.';
                 showModal('importChoiceModal');
                 playPopSound();
             } catch (e) {
+                if (state.importToken !== token) return;
                 playErrorSound();
-                showToast('Impossibile leggere il file', { variant: 'error' });
+                setImportStatus('Non riesco a collegarmi: controlla la connessione e riprova.', 'error');
+            } finally {
+                if (state.importToken === token) setImportBusy(false);
             }
-            $('importFile').value = '';
+        }
+
+        function dedupeKey(item) {
+            return String(item.title || '').trim().toLowerCase() + '|' + String(item.link || '').trim().toLowerCase();
         }
 
         async function applyImport(mode) {
@@ -3253,7 +4277,8 @@
                     if (keys[k]) continue;
                     keys[k] = true;
                     await Store.put('items', {
-                        id: uid('i'), listId: state.ownListId, createdAt: Date.now() + i,
+                        // createdAt decrescente: la lista importata mantiene l'ordine originale
+                        id: uid('i'), listId: state.ownListId, createdAt: Date.now() - i,
                         title: it.title, desc: it.desc, price: it.price,
                         currency: it.currency, link: it.link, image: it.image, updatedAt: Date.now()
                     });
@@ -3278,7 +4303,8 @@
                 for (var j = 0; j < data.items.length; j++) {
                     var fi = data.items[j];
                     await Store.put('items', {
-                        id: uid('i'), listId: friendList.id, createdAt: Date.now() + j,
+                        // createdAt decrescente: la lista importata mantiene l'ordine originale
+                        id: uid('i'), listId: friendList.id, createdAt: Date.now() - j,
                         title: fi.title, desc: fi.desc, price: fi.price,
                         currency: fi.currency, link: fi.link, image: fi.image, updatedAt: Date.now()
                     });
@@ -3292,27 +4318,8 @@
 
         // ---------- GLOBAL WIRING ----------
         function wireEvents() {
-            var importFile = $('importFile');
-            importFile.addEventListener('change', function () { handleImportFile(importFile.files[0]); });
-
-            var dropZone = $('dropZone');
-            dropZone.addEventListener('click', function () { importFile.click(); });
-            ['dragenter', 'dragover'].forEach(function (evt) {
-                dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.add('over'); });
-            });
-            ['dragleave', 'drop'].forEach(function (evt) {
-                dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.remove('over'); });
-            });
-            dropZone.addEventListener('drop', function (e) {
-                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleImportFile(e.dataTransfer.files[0]);
-                }
-            });
-
-            // impedisci al browser di aprire i file trascinati fuori dalla drop zone
-            ['dragover', 'drop'].forEach(function (evt) {
-                window.addEventListener(evt, function (e) { e.preventDefault(); });
-            });
+            $('ownGrid').addEventListener('pointerdown', onReorderPointerDown);
+            $('shareImages').addEventListener('change', function () { publishShare(); });
 
             document.addEventListener('keydown', function (e) {
                 if (e.key !== 'Escape') return;
@@ -3323,6 +4330,7 @@
                         return;
                     }
                 }
+                if (reorderState.active) toggleReorderMode(false);
             });
         }
 
