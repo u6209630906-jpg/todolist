@@ -2173,7 +2173,7 @@
             $('friendAvatar').textContent = initialOf(list.ownerName);
 
             var items = await Store.byIndex('items', 'listId', listId);
-            items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+            items.sort(ownSort);
 
             if (!items.length) {
                 $('friendGrid').innerHTML = '';
@@ -3862,6 +3862,9 @@
                 }
                 var row = [clipText(it.title, 140), clipText(it.price, 24), safeUrl(it.link) || '', rowImage, clipText(it.desc, 220)];
                 while (row.length && !row[row.length - 1]) row.pop();
+                // La posizione viaggia dentro la riga: chi riceve ricostruisce l'ordine
+                // esatto del mittente senza doverlo dedurre dagli orari.
+                row.push(idx);
                 rows.push(row);
             });
             return { rows: rows, images: images };
@@ -3878,7 +3881,10 @@
             return (payload.i || []).filter(function (row) { return Array.isArray(row); }).map(function (row, idx) {
                 var image = images[idx] || (row[3] ? String(row[3]) : '');
                 if (image && !/^data:image\//i.test(image)) image = safeUrl(image) || '';
+                var pos = (row[5] == null) ? idx : Number(row[5]);
+                if (!isFinite(pos)) pos = idx;
                 return {
+                    o: pos,
                     title: String(row[0] || '').slice(0, 140),
                     desc: String(row[4] || '').slice(0, 600),
                     price: row[1] == null ? '' : String(row[1]).slice(0, 24),
@@ -3886,7 +3892,8 @@
                     link: safeUrl(row[2] || '') || '',
                     image: image
                 };
-            }).filter(function (it) { return it.title || it.link; });
+            }).filter(function (it) { return it.title || it.link; })
+                .sort(function (a, b) { return a.o - b.o; });
         }
 
         // Lista piccola: un solo messaggio. Lista grande (o con immagini): allegati
@@ -4261,58 +4268,93 @@
             return String(item.title || '').trim().toLowerCase() + '|' + String(item.link || '').trim().toLowerCase();
         }
 
+        function setImportChoiceBusy(busy) {
+            var btns = document.querySelectorAll('#importChoiceModal button');
+            for (var i = 0; i < btns.length; i++) btns[i].disabled = !!busy;
+        }
+
+        function importResultText(added, moved) {
+            var what = (added === 1) ? ' desiderio' : ' desideri';
+            if (added && !moved) return 'Aggiunti ' + added + what + ' alla tua wishlist';
+            if (added) return 'Aggiunti ' + added + what + ' · ordine aggiornato';
+            if (moved) return 'Già presenti: ordine allineato alla lista ricevuta';
+            return 'Nessun nuovo desiderio (erano già presenti)';
+        }
+
         async function applyImport(mode) {
             var data = state.pendingImport;
             if (!data) return;
+            // Un secondo tap (facilissimo sul telefono) non deve importare due volte.
+            state.pendingImport = null;
+            setImportChoiceBusy(true);
+            var incoming = (data.items || []).slice().sort(function (a, b) { return (a.o || 0) - (b.o || 0); });
+            // base spostata in avanti di `incoming.length` ms: il blocco ricevuto sta
+            // sopra qualsiasi desiderio già presente e resta sempre nell'ordine del mittente.
+            var base = Date.now() + incoming.length;
 
-            if (mode === 'own') {
-                if (!state.ownListId) { showToast('Nessun utente attivo', { variant: 'error' }); return; }
-                var existing = await Store.byIndex('items', 'listId', state.ownListId);
-                var keys = {};
-                existing.forEach(function (it) { keys[dedupeKey(it)] = true; });
-                var added = 0;
-                for (var i = 0; i < data.items.length; i++) {
-                    var it = data.items[i];
-                    var k = dedupeKey(it);
-                    if (keys[k]) continue;
-                    keys[k] = true;
-                    await Store.put('items', {
-                        // createdAt decrescente: la lista importata mantiene l'ordine originale
-                        id: uid('i'), listId: state.ownListId, createdAt: Date.now() - i,
-                        title: it.title, desc: it.desc, price: it.price,
-                        currency: it.currency, link: it.link, image: it.image, updatedAt: Date.now()
-                    });
-                    added++;
+            try {
+                if (mode === 'own') {
+                    if (!state.ownListId) { showToast('Nessun utente attivo', { variant: 'error' }); return; }
+                    var existing = await Store.byIndex('items', 'listId', state.ownListId);
+                    var byKey = {};
+                    existing.forEach(function (it) { byKey[dedupeKey(it)] = it; });
+                    var added = 0, moved = 0;
+                    for (var i = 0; i < incoming.length; i++) {
+                        var it = incoming[i];
+                        var k = dedupeKey(it);
+                        var ts = base - i;   // createdAt decrescente: la lista mantiene l'ordine originale
+                        var hit = byKey[k];
+                        if (hit) {
+                            // Il desiderio c'è già: va spostato nella posizione ricevuta, altrimenti
+                            // la lista resta nell'ordine di prima (spesso invertito rispetto al mittente).
+                            if (hit.createdAt !== ts || typeof hit.order === 'number') {
+                                hit.createdAt = ts;
+                                delete hit.order;
+                                hit.updatedAt = Date.now();
+                                await Store.put('items', hit);
+                                moved++;
+                            }
+                            continue;
+                        }
+                        var fresh = {
+                            id: uid('i'), listId: state.ownListId, createdAt: ts,
+                            title: it.title, desc: it.desc, price: it.price,
+                            currency: it.currency, link: it.link, image: it.image, updatedAt: Date.now()
+                        };
+                        await Store.put('items', fresh);
+                        byKey[k] = fresh;
+                        added++;
+                    }
+                    var list = await Store.get('lists', state.ownListId);
+                    if (list) { list.updatedAt = Date.now(); await Store.put('lists', list); }
+                    closeImportChoiceModal();
+                    await renderAll();
+                    playSuccessSound();
+                    showToast(importResultText(added, moved));
+                } else {
+                    var friendList = {
+                        id: uid('l'), ownerId: null, ownerName: data.owner,
+                        type: 'friend', viewerId: state.currentUserId,
+                        title: data.name || ('Wishlist di ' + data.owner),
+                        importedAt: Date.now(), updatedAt: Date.now()
+                    };
+                    await Store.put('lists', friendList);
+                    for (var j = 0; j < incoming.length; j++) {
+                        var fi = incoming[j];
+                        await Store.put('items', {
+                            // order esplicito: la lista dell'amico resta nell'ordine del mittente
+                            id: uid('i'), listId: friendList.id, createdAt: Date.now() - j, order: j,
+                            title: fi.title, desc: fi.desc, price: fi.price,
+                            currency: fi.currency, link: fi.link, image: fi.image, updatedAt: Date.now()
+                        });
+                    }
+                    closeImportChoiceModal();
+                    await renderAll();
+                    playShareSound();
+                    showToast('Wishlist di ' + data.owner + ' caricata (sola lettura)');
                 }
-                var list = await Store.get('lists', state.ownListId);
-                if (list) { list.updatedAt = Date.now(); await Store.put('lists', list); }
-                closeImportChoiceModal();
-                await renderAll();
-                playSuccessSound();
-                showToast(added
-                    ? ('Aggiunti ' + added + (added === 1 ? ' desiderio' : ' desideri') + ' alla tua wishlist')
-                    : 'Nessun nuovo desiderio (erano già presenti)');
-            } else {
-                var friendList = {
-                    id: uid('l'), ownerId: null, ownerName: data.owner,
-                    type: 'friend', viewerId: state.currentUserId,
-                    title: data.name || ('Wishlist di ' + data.owner),
-                    importedAt: Date.now(), updatedAt: Date.now()
-                };
-                await Store.put('lists', friendList);
-                for (var j = 0; j < data.items.length; j++) {
-                    var fi = data.items[j];
-                    await Store.put('items', {
-                        // createdAt decrescente: la lista importata mantiene l'ordine originale
-                        id: uid('i'), listId: friendList.id, createdAt: Date.now() - j,
-                        title: fi.title, desc: fi.desc, price: fi.price,
-                        currency: fi.currency, link: fi.link, image: fi.image, updatedAt: Date.now()
-                    });
-                }
-                closeImportChoiceModal();
-                await renderAll();
-                playShareSound();
-                showToast('Wishlist di ' + data.owner + ' caricata (sola lettura)');
+            } finally {
+                setImportChoiceBusy(false);
             }
         }
 
