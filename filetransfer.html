@@ -1443,6 +1443,7 @@
         var SEND_CHUNK = 262144;          // tetto per messaggio: si adatta a quello che regge il browser
         var MIN_CHUNK = 16384;            // sotto questo si perde tempo in overhead
         var MAX_LANES = 4;                // quante corsie parallele al massimo (una per data channel)
+        var RANGE_MIN = 32 * 1024 * 1024; // sopra questa soglia un file si spezza e viaggia su più corsie
         var MAX_BUFFERED = 8 * 1024 * 1024;   // coda massima complessiva, divisa fra le corsie
         var PROGRESS_MS = 120;            // le barre si ridisegnano al massimo ogni tanto
         var STALL_MS = 60000;             // se per un minuto non arriva nulla, il flusso è morto
@@ -1993,28 +1994,58 @@
             setActiveText(text, variant);
         }
 
-        // Quante corsie servono: una per file, senza esagerare.
-        function laneCount(count) {
-            return Math.max(1, Math.min(count || 1, MAX_LANES));
+        // Quante corsie servono: una per file quando i file sono tanti e piccoli,
+        // tutte quante appena c'è un file abbastanza grande da valere la pena
+        // di spezzare (altrimenti un file solo viaggerebbe su una corsia sola).
+        function laneCount(entries) {
+            var many = Math.max(1, Math.min(entries.length, MAX_LANES));
+            var big = entries.some(function (e) { return (e.size || 0) >= RANGE_MIN; });
+            return big ? MAX_LANES : many;
         }
 
-        // Divide i file fra le corsie a giro, così anche con dimensioni molto
-        // diverse il lavoro resta bilanciato.
-        function laneJobs(count, lanes) {
-            var out = [];
-            for (var k = 0; k < lanes; k++) out.push([]);
-            for (var i = 0; i < count; i++) out[i % lanes].push(i);
+        // Ogni lavoro è una porzione di un file: da sola se il file è piccolo,
+        // in più pezzi se è grande. Così anche un unico file grosso può viaggiare
+        // su tutte le corsie insieme.
+        function buildRanges(entries, lanes) {
+            var total = entries.reduce(function (a, e) { return a + (e.size || 0); }, 0);
+            var jobs = [];
+            entries.forEach(function (e, i) {
+                var size = e.size || 0;
+                if (size <= 0) { jobs.push({ i: i, start: 0, end: 0 }); return; }
+                var parts = 1;
+                if (lanes > 1 && size >= RANGE_MIN) {
+                    parts = Math.max(2, Math.min(lanes, Math.round(lanes * size / Math.max(1, total))));
+                }
+                var step = Math.ceil(size / parts);
+                for (var s = 0; s < size; s += step) jobs.push({ i: i, start: s, end: Math.min(size, s + step) });
+            });
+            return jobs;
+        }
+
+        // Assegna i lavori alle corsie partendo dai più grossi e riempiendo
+        // sempre quella più scarica: le corsie finiscono quasi insieme.
+        function laneJobs(entries, lanes) {
+            var out = [], load = [];
+            for (var k = 0; k < lanes; k++) { out.push([]); load.push(0); }
+            buildRanges(entries, lanes)
+                .sort(function (a, b) { return (b.end - b.start) - (a.end - a.start); })
+                .forEach(function (job) {
+                    var best = 0;
+                    for (var k = 1; k < lanes; k++) if (load[k] < load[best]) best = k;
+                    out[best].push(job);
+                    load[best] += job.end - job.start;
+                });
             return out;
         }
 
         // Un tentativo: pubblica un'offerta fresca e aspetta la risposta
         // dell'altro dispositivo. Se non riesce, il chiamante riprova.
-        async function attemptSenderLink(channel, count, token) {
+        async function attemptSenderLink(channel, entries, token) {
             var pc = createPeer();
             if (!pc) throw new Error('no-webrtc');
             var session = newSession(pc);
             try { session.add(pc.createDataChannel(CONTROL_LABEL, { ordered: true }), true); } catch (e) { throw new Error('no-webrtc'); }
-            var lanes = laneCount(count);
+            var lanes = laneCount(entries);
             for (var k = 0; k < lanes; k++) {
                 try { session.add(pc.createDataChannel('ftx-' + k, { ordered: true }), false); } catch (e) { }
             }
@@ -2048,30 +2079,33 @@
             return session;
         }
 
-        // Un file su una corsia: prima l'intestazione con il numero del file,
-        // poi i byte. Chi riceve sa così a quale file appartiene ogni pezzo.
-        async function sendEntry(session, lane, index, token, onBytes) {
-            await dcSend(lane, JSON.stringify({ t: 'part', i: index }), session.queueLimit);
-            var file = session.entries[index].file, size = file.size || 0, offset = 0;
-            while (offset < size) {
+        // Una porzione di file su una corsia: prima l'intestazione con il numero
+        // del file e il punto da cui partono i byte, poi i byte.
+        async function sendRange(session, lane, job, token, onBytes) {
+            var file = session.entries[job.i].file;
+            await dcSend(lane, JSON.stringify({ t: 'part', i: job.i, o: job.start, e: job.end }), session.queueLimit);
+            var offset = job.start;
+            while (offset < job.end) {
                 if (token !== state.sendToken) throw new Error('cancelled');
-                var end = Math.min(size, offset + session.chunkSize);
+                var end = Math.min(job.end, offset + session.chunkSize);
                 var bytes = await blobBytes(file.slice(offset, end));
                 await dcSend(lane, bytes, session.queueLimit);
                 onBytes(bytes.length);
                 offset = end;
             }
-            session.sent[index] = true;
         }
 
-        // Una corsia lavora sui file che le sono toccati, uno dopo l'altro.
+        // Una corsia lavora sulle porzioni che le sono toccate, una dopo l'altra.
         async function sendLane(session, lane, jobs, token, onBytes) {
             for (var i = 0; i < jobs.length; i++) {
                 if (token !== state.sendToken) throw new Error('cancelled');
-                await sendEntry(session, lane, jobs[i], token, onBytes);
-                if (session.entries.length > 1) {
-                    var done = session.sent.filter(function (v) { return v; }).length;
-                    setSendStatus('Invio in parallelo: ' + done + ' di ' + session.entries.length + ' file completati.');
+                await sendRange(session, lane, jobs[i], token, onBytes);
+                session.pending[jobs[i].i]--;
+                if (session.pending[jobs[i].i] <= 0) {
+                    session.doneFiles++;
+                    if (session.entries.length > 1) {
+                        setSendStatus('Invio in parallelo: ' + session.doneFiles + ' di ' + session.entries.length + ' file completati.');
+                    }
                 }
             }
         }
@@ -2105,7 +2139,6 @@
             createSparkles($('sendCode'), 10, true);
 
             session.entries = entries;
-            session.sent = entries.map(function () { return false; });
             session.chunkSize = chunkSizeFor(session.pc);
 
             var ackPromise = waitForDirectAck(session, token);
@@ -2118,13 +2151,19 @@
             }
 
             var lanes = session.workers.length ? session.workers : [session.dc];
-            var jobs = laneJobs(entries.length, lanes.length);
+            var jobs = laneJobs(entries, lanes.length);
+            session.pending = entries.map(function () { return 0; });
+            session.doneFiles = 0;
+            jobs.forEach(function (list) { list.forEach(function (job) { session.pending[job.i]++; }); });
+            var parts = jobs.reduce(function (a, list) { return a + list.length; }, 0);
+
             var running = [];
             for (var k = 0; k < lanes.length; k++) {
                 if (jobs[k].length) running.push(sendLane(session, lanes[k], jobs[k], token, onBytes));
             }
-            if (entries.length > 1) {
-                setSendStatus('Invio ' + entries.length + ' file in parallelo su ' + running.length + ' corsie…');
+            if (entries.length > 1 || parts > 1) {
+                setSendStatus('Invio ' + formatBytes(total) + ' su ' + Math.min(lanes.length, parts) +
+                    (parts > entries.length ? ' corsie, in parallelo a pezzi.' : ' corsie, in parallelo.'));
             }
             await Promise.all(running);
             if (token !== state.sendToken) return;
@@ -2157,7 +2196,7 @@
             while (Date.now() < deadline && token === state.sendToken) {
                 setSendStatus('Aspetto che l’altro dispositivo inserisca il codice…');
                 setActiveText('Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
-                var session = await attemptSenderLink(channel, entries.length, token);
+                var session = await attemptSenderLink(channel, entries, token);
                 if (token !== state.sendToken) { if (session) session.close(); return; }
                 if (session.isOpen()) {
                     state.session = session;
@@ -2491,7 +2530,7 @@
                 dc.onerror = function () { R.fail('direct-failed'); };
             };
             R.onWorker = function (dc) {
-                var lane = { dc: dc, file: -1, queue: [] };
+                var lane = { dc: dc, file: -1, offset: 0, queue: [] };
                 R.lanes.push(lane);
                 dc.onmessage = function (e) {
                     R.ping();
@@ -2515,7 +2554,10 @@
                 if (typeof data === 'string') {
                     var msg = null;
                     try { msg = JSON.parse(data); } catch (err) { msg = null; }
-                    if (msg && msg.t === 'part') lane.file = Number(msg.i) || 0;
+                    if (msg && msg.t === 'part') {
+                        lane.file = Number(msg.i) || 0;
+                        lane.offset = Number(msg.o) || 0;
+                    }
                     return;
                 }
                 var index = lane.file;
@@ -2524,7 +2566,10 @@
                 if (space <= 0) return;
                 var view = new Uint8Array(data);
                 var piece = view.length > space ? view.subarray(0, space) : view;
-                R.chunks[index].push(piece);
+                // Le porzioni possono arrivare in qualsiasi ordine: si tiene da
+                // parte il punto in cui vanno rimesse, e si ordina alla fine.
+                R.chunks[index].push({ o: lane.offset, b: piece });
+                lane.offset += piece.length;
                 R.got[index] += piece.length;
                 R.bytes += piece.length;
                 setRecvProgress(R.bytes, R.totalBytes);
@@ -2602,7 +2647,11 @@
                 var results = [];
                 stream.files.forEach(function (f, i) {
                     var type = f.y || 'application/octet-stream';
-                    var blob = new Blob(stream.chunks[i], { type: type });
+                    var parts = (stream.chunks[i] || [])
+                        .slice()
+                        .sort(function (a, b) { return a.o - b.o; })
+                        .map(function (s) { return s.b; });
+                    var blob = new Blob(parts, { type: type });
                     results.push({ name: f.n || ('file-' + (i + 1)), type: type, blob: blob, size: blob.size, url: URL.createObjectURL(blob) });
                 });
                 state.results = results;
