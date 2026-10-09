@@ -1455,9 +1455,9 @@
         // da soli lo stesso canale di contatto (vedi nearChannel): nessun codice
         // da scrivere e niente da copiare.
         var NEAR_PROBE_MS = 4000;         // raccolta degli indirizzi della propria rete
-        var NEAR_TRY_MS = 90000;          // quanto si cerca un vicino prima di ripiegare sul codice
-        var NEAR_SEARCH_MS = 120000;      // quanto si sta in ascolto di un invio vicino
-        var NEAR_FRESH_MS = 600000;       // un invio più vecchio di così è di un'altra volta
+        var NEAR_TRY_MS = 60000;          // quanto si cerca un vicino prima di ripiegare sul codice
+        var NEAR_SEARCH_MS = 75000;       // quanto si sta in ascolto di un invio vicino
+        var NEAR_FRESH_MS = 45000;        // un invio più vecchio di così è di un'altra volta
         var NEAR_POLL_MIN = 3000;         // canale dei vicini: vale solo quando il flusso non c'è
         var NEAR_POLL_MS = 5000;
         var SEND_BTN_LABEL = 'Invia';
@@ -2173,12 +2173,12 @@
         // Il numero del tentativo ("q") evita che una risposta vecchia, rimasta
         // nel deposito del canale, venga scambiata per la risposta a questa
         // offerta: è quello che succede ripetendo un invio interrotto.
-        async function buildOffer(pc, seq) {
+        async function buildOffer(pc, seq, offerId) {
             var candidates = [];
             pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
             await pc.setLocalDescription(await pc.createOffer());
             await waitIce(pc, ICE_WAIT_MS);
-            return JSON.stringify({ v: 2, t: 'link', r: 'offer', q: Number(seq) || 1, n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+            return JSON.stringify({ v: 2, t: 'link', r: 'offer', q: Number(seq) || 1, o: String(offerId || ''), n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
         }
 
         async function buildAnswer(pc, link) {
@@ -2186,7 +2186,7 @@
             pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
             await pc.setLocalDescription(await pc.createAnswer());
             await waitIce(pc, ICE_WAIT_MS);
-            return JSON.stringify({ v: 2, t: 'link', r: 'answer', q: Number(link && link.q) || 0, n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+            return JSON.stringify({ v: 2, t: 'link', r: 'answer', q: Number(link && link.q) || 0, o: String(link && link.o || ''), n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
         }
 
         async function applyRemote(pc, link) {
@@ -2437,7 +2437,11 @@
 
             channel.seq = (Number(channel.seq) || 0) + 1;
             var seq = channel.seq;
-            try { await relayPublish(channel, await buildOffer(pc, seq)); } catch (e) { }
+            // L'offerta porta un suo numero: così una risposta rimasta nel
+            // canale condiviso — magari di un invio di mezz'ora fa — non viene
+            // scambiata per la risposta a questa offerta.
+            var offerId = seq + '.' + Date.now().toString(36) + '.' + Math.random().toString(36).slice(2, 8);
+            try { await relayPublish(channel, await buildOffer(pc, seq, offerId)); } catch (e) { }
             var answered = false, answeredAt = 0;
             var wait = channel.pollMin || POLL_MIN_MS;
             var deadline = Date.now() + LINK_TIMEOUT_MS;
@@ -2450,7 +2454,9 @@
                     continue;
                 }
                 var answer = newestOf((await readLinks(channel) || []).filter(function (a) {
-                    return a.role === 'answer' && Number(a.payload.q) === seq;
+                    if (a.role !== 'answer' || Number(a.payload.q) !== seq) return false;
+                    var got = String(a.payload.o || '');
+                    return got ? got === offerId : true;
                 }), 'answer');
                 if (answer) {
                     answered = true;
@@ -2665,6 +2671,7 @@
             var options = opts || {};
             var near = !!options.near;
             var deadline = Date.now() + (options.maxMs || WAIT_SIGNAL_MS);
+            var started = Date.now();
             var attempts = 0, blocked = 0, busy = 0, resumes = 0, linked = false, lastErr = null;
             // Il tetto di tempo vale per la ricerca: una volta che i due
             // dispositivi si sono trovati, un trasferimento lungo non deve
@@ -2672,10 +2679,17 @@
             while (token === state.sendToken && (linked || Date.now() < deadline)) {
                 if (options.attempts && attempts >= options.attempts + resumes) break;
                 attempts++;
-                setSendStatus(near ? 'Cerco l’altro dispositivo sulla tua rete…' : 'Aspetto che l’altro dispositivo inserisca il codice…');
-                setActiveText(near
-                    ? 'Nessun codice: basta che l’altra persona apra l’app e tocchi Ricevi.'
-                    : 'Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
+                if (linked) {
+                    setSendStatus('Riprendo il collegamento…');
+                } else {
+                    var waited = Math.round((Date.now() - started) / 1000);
+                    setSendStatus(near
+                        ? 'Cerco l’altro dispositivo sulla tua rete… (' + waited + ' s) Sull’altro dispositivo tocca Ricevi.'
+                        : 'Aspetto che l’altro dispositivo inserisca il codice… (' + waited + ' s)');
+                    setActiveText(near
+                        ? 'Nessun codice: basta che l’altra persona apra l’app e tocchi Ricevi.'
+                        : 'Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
+                }
                 var session = await attemptSenderLink(channel, entries, token);
                 if (token !== state.sendToken) { if (session) session.close(); return; }
                 if (session.isOpen()) {
@@ -2707,7 +2721,9 @@
                 if (channel.busy && !session.afterAnswerMs) busy++; else if (!channel.busy) busy = 0;
                 session.close();
                 if (busy >= BLOCKED_TRIES && !lastErr) throw new Error('relay-busy');
-                if (blocked >= (options.attempts ? 1 : BLOCKED_TRIES) && !lastErr) throw new Error('link-blocked');
+                // Due collegamenti mancati di fila sono una prova, non un caso:
+                // insistere ancora fa solo perdere tempo.
+                if (blocked >= (options.attempts ? 2 : BLOCKED_TRIES) && !lastErr) throw new Error('link-blocked');
                 if (token === state.sendToken) {
                     setSendStatus(lastErr ? 'Riprovo il collegamento per finire il trasferimento…'
                         : (near ? 'Non trovo ancora nessuno: continuo a cercare…' : 'Collegamento diretto non riuscito: riprovo…'));
@@ -2788,6 +2804,7 @@
             // l'altro, dentro un tetto di tempo unico: è la stessa ricerca vista
             // da due lati, e se non si incontrano si passa al codice.
             var nearDeadline = Date.now() + NEAR_TRY_MS;
+            var useCode = false, codeWhy = '';
             for (var i = 0; i < rooms.length && token === state.sendToken; i++) {
                 var near = await nearChannel(rooms[i]);
                 if (token !== state.sendToken) return;
@@ -2796,27 +2813,32 @@
                 state.transfer.channel = near;
                 try {
                     await runSendLink(near, entries, manifest, total, token, {
-                        near: true, maxMs: Math.max(8000, nearDeadline - Date.now()), attempts: 3
+                        near: true,
+                        maxMs: Math.max(8000, Math.round((nearDeadline - Date.now()) / Math.max(1, rooms.length - i))),
+                        attempts: 3
                     });
                     closeChannels(state.sendRelays);
                     return;
                 } catch (err) {
                     if (token !== state.sendToken) return;
-                    // Solo "nessuno ha risposto" fa passare al codice: se la
-                    // risposta è arrivata e la rete ha bloccato il collegamento,
-                    // un codice non cambierebbe niente.
-                    if (String((err && err.message) || '') !== 'no-link') {
-                        sendFail(linkFailureMessage(err));
-                        return;
-                    }
                     closeRelay(near);
+                    var reason = String((err && err.message) || '');
+                    // Se la rete ha rifiutato il collegamento diretto, il codice
+                    // è l'ultima strada: meglio provarlo che dichiarare fallito.
+                    if (reason === 'link-blocked' || reason === 'relay-busy') {
+                        useCode = true;
+                        codeWhy = 'La rete non lascia aprire il collegamento diretto';
+                        break;
+                    }
+                    if (reason !== 'no-link') { sendFail(linkFailureMessage(err)); return; }
                     if (Date.now() >= nearDeadline) break;
                 }
             }
             if (token !== state.sendToken) return;
-            await sendWithCode(entries, manifest, total, token, rooms.length
+            if (!useCode && rooms.length && Date.now() >= nearDeadline) codeWhy = 'Non trovo l’altro dispositivo sulla tua rete';
+            await sendWithCode(entries, manifest, total, token, codeWhy || (rooms.length
                 ? 'Non trovo l’altro dispositivo sulla tua rete'
-                : 'Non riesco a leggere la rete in cui sei');
+                : 'Non riesco a leggere la rete in cui sei'));
         }
 
         // Nessun dispositivo vicino: si passa al codice, come quando i due sono
@@ -2988,6 +3010,11 @@
             var seen = '', session = null, wait = channel.pollMin || POLL_MIN_MS, failed = 0;
             var pollCap = Math.max(POLL_MS, channel.pollCap || 0);
             var busySince = 0;
+            var searchStart = Date.now();
+            // Un invio che non risponde più è di un'altra volta: si segna e non
+            // ci si torna, invece di riprovarci all'infinito.
+            var dead = {};
+            var tries = {};
             state.sawOffer = false;
             channel.lastSeq = minSeq;
             while (Date.now() < deadline && token === state.recvToken) {
@@ -2998,6 +3025,7 @@
                 // Riprendendo un invio interrotto valgono solo le offerte nuove:
                 // quella di prima è di un collegamento già caduto.
                 if (offer && minSeq && Number(offer.payload.q) <= minSeq) offer = null;
+                if (offer && dead[offer.id]) offer = null;
                 // Il ponte che chiede di rallentare non è un codice sbagliato:
                 // senza risposta si aspetta la fine della pausa invece di
                 // arrendersi.
@@ -3011,10 +3039,15 @@
                 busySince = 0;
                 if (offer) {
                     state.sawOffer = true;
-                    minSeq = Math.max(minSeq, Number(offer.payload.q) || 0);
-                    channel.lastSeq = minSeq;
+                    // Il numero si segna solo per informazione: alzare qui la
+                    // soglia farebbe scartare l'offerta buona, perché un invio
+                    // vecchio rimasto nel canale può avere un numero più alto.
+                    channel.lastSeq = Number(offer.payload.q) || 0;
                 } else {
-                    setRecvStatus('Cerco chi ha inviato i file con questo codice…');
+                    var look = Math.round((Date.now() - searchStart) / 1000);
+                    setRecvStatus(channel.near
+                        ? 'Nessuno sta ancora inviando sulla tua rete: resta su questa schermata. (' + look + ' s)'
+                        : 'Cerco chi ha inviato i file con questo codice… (' + look + ' s)');
                 }
                 // Se chi invia ha pubblicato una offerta nuova, si riparte da lì.
                 if (session && (!offer || offer.id !== seen)) { session.close(); session = null; }
@@ -3027,12 +3060,20 @@
                 }
                 if (session) {
                     if (await settledConnection(session, 8000)) return session;
-                    // Anche questo tentativo è andato a vuoto: se si ripete, la
-                    // rete blocca il collegamento e insistere non serve.
+                    // Un tentativo andato a vuoto può riuscire al secondo: il
+                    // collegamento non è mai uguale a se stesso. Solo dopo due
+                    // fallimenti quell'invio si considera finito.
                     session.close();
                     session = null;
+                    tries[seen] = (tries[seen] || 0) + 1;
+                    if (tries[seen] >= 2) dead[seen] = 1;
                     failed++;
-                    if (failed >= BLOCKED_TRIES) return null;
+                    // Sulla stessa rete il canale è di tutti: un invio vecchio
+                    // non vuol dire che la rete blocchi, quindi si continua ad
+                    // ascoltare fino alla scadenza. Con un codice, invece, la
+                    // stessa offerta che fallisce più volte è la rete che
+                    // impedisce il collegamento: meglio dirlo subito.
+                    if (!channel.near && failed >= BLOCKED_TRIES) return null;
                 }
                 await sleep(offer ? POLL_MIN_MS : wait);
                 if (!offer) wait = pollDelay(wait, pollCap);
@@ -3406,7 +3447,7 @@
                     }
                     done = await receiveLoop(channel, token, store, {
                         freshMs: NEAR_FRESH_MS,
-                        maxMs: Math.max(8000, nearDeadline - Date.now())
+                        maxMs: Math.max(8000, Math.round((nearDeadline - Date.now()) / Math.max(1, rooms.length - round)))
                     });
                     if (token !== state.recvToken || done.cancelled) return;
                     if (done.ok) return;
