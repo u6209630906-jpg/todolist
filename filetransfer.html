@@ -1045,7 +1045,7 @@
                     <div class="ft-icon">📤</div>
                     <div>
                         <h3>Invia un file</h3>
-                        <p>Scegli un file dal telefono o dal computer: otterrai un codice (a distanza) o un invito (stessa Wi‑Fi) da mandare a chi deve riceverlo.</p>
+                        <p>Scegli un file dal telefono o dal computer: trovo io l&#39;altro dispositivo se siete sulla stessa Wi‑Fi, altrimenti ti do un codice da mandare.</p>
                     </div>
                     <button class="glass-btn accent" style="justify-content:center;" onclick="openSendModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
@@ -1057,11 +1057,11 @@
                     <div class="ft-icon">📥</div>
                     <div>
                         <h3>Ricevi un file</h3>
-                        <p>Hai ricevuto un codice o un invito? Incollalo qui: il file arriva nel browser e lo salvi dove vuoi.</p>
+                        <p>Niente da scrivere se siete sulla stessa Wi‑Fi: tocca Ricevi e basta. Se ti hanno mandato un codice, incollalo qui.</p>
                     </div>
                     <button class="glass-btn accent" style="justify-content:center;" onclick="openReceiveModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
-                        Inserisci il codice
+                        Ricevi un file
                     </button>
                 </div>
             </div>
@@ -1069,11 +1069,11 @@
             <div class="glass ft-card" style="margin-top:14px;">
                 <h3 style="font-size:15px;">Come funziona</h3>
                 <div class="ft-steps">
-                    <div class="ft-step"><span class="ft-num">1</span><span>Chi invia tocca <b>Scegli un file</b> e poi sceglie: <b>codice</b> a distanza oppure <b>invito</b> se siete sulla stessa Wi‑Fi.</span></div>
-                    <div class="ft-step"><span class="ft-num">2</span><span><b>A distanza:</b> ottieni un codice come <b>FTX-4K7QM-P2XTB-9HZRE</b> da passare con WhatsApp, Telegram, SMS o a voce.</span></div>
-                    <div class="ft-step"><span class="ft-num">3</span><span><b>Stessa Wi‑Fi:</b> si incolla l&#39;invito ricevuto e si riporta indietro la risposta: nessun server, funziona anche senza internet.</span></div>
+                    <div class="ft-step"><span class="ft-num">1</span><span>Chi invia tocca <b>Scegli un file</b> e poi <b>Invia</b>: se siete sulla stessa Wi‑Fi l&#39;altro dispositivo lo trovo <b>da solo</b>, senza codici.</span></div>
+                    <div class="ft-step"><span class="ft-num">2</span><span><b>Stessa Wi‑Fi:</b> chi riceve apre la pagina e tocca <b>Ricevi</b>. Non c&#39;è niente da copiare.</span></div>
+                    <div class="ft-step"><span class="ft-num">3</span><span><b>A distanza:</b> se l&#39;altro non è sulla stessa rete compare un codice tipo <b>FTX-4K7QM-P2XTB-9HZRE</b>, da passare con WhatsApp, Telegram, SMS o a voce.</span></div>
                 </div>
-                <p style="font-size:12px; color:var(--text-tertiary); line-height:1.55;">I file viaggiano <b>direttamente</b> da un dispositivo all&#39;altro, cifrati: non si fermano su nessun server. Nella modalità a distanza il codice serve solo ai due dispositivi per trovarsi, e passano soltanto i dati di contatto (cifrati), non i file. Se la rete impedisce il collegamento diretto — succede con i dati mobili o sulle reti aziendali — usate l&#39;invito sulla stessa Wi‑Fi o sull&#39;hotspot di uno dei due telefoni: un browser non può aprire varchi nel firewall, ma sulla rete locale il collegamento è diretto e non serve nessun server. Funziona da telefono e da computer, senza account e senza installare nulla. Sui telefoni lasciate la pagina in primo piano fino alla fine: se il sistema la mette in pausa, il collegamento si interrompe.</p>
+                <p style="font-size:12px; color:var(--text-tertiary); line-height:1.55;">I file viaggiano <b>direttamente</b> da un dispositivo all&#39;altro, cifrati: non si fermano su nessun server. Il canale che i due dispositivi usano per trovarsi nasce dall&#39;indirizzo con cui la vostra rete si presenta a internet: è lo stesso per tutti quelli attaccati allo stesso router, quindi sulla stessa Wi‑Fi non serve scrivere niente. Il codice, quando serve, fa la stessa cosa ma in modo segreto. Passano soltanto i dati di contatto (cifrati), mai i file. Se la rete impedisce il collegamento diretto — succede con i dati mobili, sulle reti aziendali o quando il Wi‑Fi tiene isolati i dispositivi — provate con l&#39;hotspot di uno dei due telefoni: un browser non può aprire varchi nel firewall. Funziona da telefono e da computer, senza account e senza installare nulla. Sui telefoni lasciate la pagina in primo piano fino alla fine: se il sistema la mette in pausa, il collegamento si interrompe.</p>
             </div>
         </main>
     </div>
@@ -1086,7 +1086,7 @@
                     <div style="text-align:center; margin-bottom:16px;">
                         <div style="font-size:40px; margin-bottom:8px;">📤</div>
                         <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Invia un file</h3>
-                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli cosa mandare. Se siete sulla stessa Wi‑Fi usa l&#39;invito: nessun server, funziona anche senza internet.</p>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli cosa mandare: se l&#39;altra persona è sulla tua stessa Wi‑Fi la trovo da solo, senza codici. Se è lontana ti do un codice da mandarle.</p>
                     </div>
 
                     <div class="ft-drop" id="ftDrop">
@@ -1106,10 +1106,10 @@
 
                     <div style="display:flex; gap:10px; margin-top:16px;">
                         <button class="btn-secondary" style="flex:1;" onclick="closeSendModal()">Annulla</button>
-                        <button class="btn-primary" style="flex:1;" id="sendStartBtn" onclick="startSend()">Genera codice</button>
+                        <button class="btn-primary" style="flex:1;" id="sendStartBtn" onclick="startSend()">Invia</button>
                     </div>
 
-                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="sendLanStartBtn" onclick="startLanSend()">Siamo sulla stessa Wi‑Fi (invito)</button>
+                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="sendLanStartBtn" onclick="startLanSend()">Senza internet? Invito a mano</button>
                 </div>
 
                 <div id="sendRunPane" class="hidden">
@@ -1149,11 +1149,11 @@
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;">
                         <button class="btn-secondary" style="flex:1; min-width:100px;" onclick="closeSendModal()">Chiudi</button>
                         <button class="btn-secondary hidden" id="sendSheetBtn" style="flex:1; min-width:100px;" onclick="shareCodeViaSheet()">Condividi…</button>
-                        <button class="btn-primary" style="flex:1; min-width:100px;" onclick="copySendInvite()">Copia invito</button>
+                        <button class="btn-primary" style="flex:1; min-width:100px;" id="sendCopyBtn" onclick="copySendInvite()">Copia invito</button>
                     </div>
 
                     <button class="btn-danger hidden" id="sendRetryBtn" style="width:100%; margin-top:10px;" onclick="retrySend()">Riprova con un nuovo codice</button>
-                    <button class="btn-secondary hidden" id="sendLanBtn" style="width:100%; margin-top:10px;" onclick="startLanSend()">Prova nella stessa Wi‑Fi (invito)</button>
+                    <button class="btn-secondary hidden" id="sendLanBtn" style="width:100%; margin-top:10px;" onclick="startLanSend()">Senza internet? Invito a mano</button>
 
                     <p id="sendRunNote" style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Tieni questa schermata aperta finché l&#39;invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l&#39;altro dispositivo lo inserisce.</p>
                 </div>
@@ -1169,10 +1169,10 @@
                     <div style="text-align:center; margin-bottom:16px;">
                         <div style="font-size:38px; margin-bottom:8px;">📥</div>
                         <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Ricevi un file</h3>
-                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Inserisci il codice che ti hanno inviato. Se hai ricevuto un messaggio, va bene anche incollarlo tutto: il codice lo trovo io.</p>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Se siete sulla stessa Wi‑Fi non serve niente: tocca <b>Ricevi</b>. Se ti hanno mandato un codice, scrivilo qui (va bene anche incollare tutto il messaggio).</p>
                     </div>
 
-                    <input id="recvCodeInput" class="ios-input" type="text" placeholder="FTX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                    <input id="recvCodeInput" class="ios-input" type="text" placeholder="Codice (solo se te l&#39;hanno mandato)" autocomplete="off" autocapitalize="characters" spellcheck="false"
                            style="width:100%; font-size:15px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:1px; text-align:center;">
 
                     <button class="glass-btn" style="width:100%; margin-top:10px; justify-content:center;" onclick="pasteRecvCode()">
@@ -1184,17 +1184,17 @@
 
                     <div style="display:flex; gap:10px; margin-top:14px;">
                         <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Annulla</button>
-                        <button class="btn-primary" style="flex:1;" id="recvStartBtn" onclick="startReceive()">Scarica</button>
+                        <button class="btn-primary" style="flex:1;" id="recvStartBtn" onclick="startReceive()">Ricevi</button>
                     </div>
 
-                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="recvLanStartBtn" onclick="openLanReceive()">Siamo sulla stessa Wi‑Fi (invito)</button>
+                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="recvLanStartBtn" onclick="openLanReceive()">Senza internet? Invito a mano</button>
                 </div>
 
                 <div id="recvLanPane" class="hidden">
                     <div style="text-align:center; margin-bottom:14px;">
                         <div style="font-size:38px; margin-bottom:8px;">📶</div>
-                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Stessa Wi‑Fi</h3>
-                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Incolla l&#39;invito che ti ha mandato chi invia. Nessun server: basta essere sulla stessa Wi‑Fi (o sull&#39;hotspot), funziona anche senza internet.</p>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Invito a mano</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Serve solo se non c&#39;è internet. Incolla l&#39;invito che ti ha mandato chi invia e rimandagli la risposta: sono solo testo, non passano da nessun server.</p>
                     </div>
 
                     <label class="field-label" for="lanInviteIn">Invito ricevuto</label>
@@ -1249,7 +1249,7 @@
                         <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Chiudi</button>
                     </div>
 
-                    <button class="btn-secondary hidden" id="recvLanBtn" style="width:100%; margin-top:10px;" onclick="openLanReceive()">Prova nella stessa Wi‑Fi (invito)</button>
+                    <button class="btn-secondary hidden" id="recvLanBtn" style="width:100%; margin-top:10px;" onclick="openLanReceive()">Senza internet? Invito a mano</button>
 
                     <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Da telefono, se il file non si salva, usa <b>Condividi</b> (su iPhone) o <b>Apri</b> e salvalo dall&#39;anteprima.</p>
                 </div>
@@ -1504,6 +1504,16 @@
         var LAN_TAG = 'FTXLAN1:';
         var LAN_COMMS_MS = 20000;         // attesa massima per aprire il canale locale
         var BASE64URL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        // Modalità "vicino": i due dispositivi ricavano lo stesso canale di
+        // contatto dalla rete in cui si trovano (vedi nearChannel), quindi non
+        // c'è nessun codice da scrivere o da copiare.
+        var NEAR_PROBE_MS = 6000;         // raccolta degli indirizzi della propria rete
+        var NEAR_TRY_MS = 40000;          // quanto si cerca un vicino prima di ripiegare sul codice
+        var NEAR_MISSES = 6;              // quante volte si può non trovare l'invio prima di arrendersi
+        var NEAR_FRESH_MS = 600000;       // un invio più vecchio di così è di un'altra volta
+        var NEAR_POLL_MIN = 4000;         // il canale dei vicini è pubblico: si chiede piano
+        var NEAR_POLL_MS = 5000;
+        var SEND_BTN_LABEL = 'Invia';
         var LINK_SETTLE_MS = 8000;        // quanto si aspetta il collegamento dopo la risposta
         var BLOCKED_TRIES = 3;            // tentativi a vuoto prima di dire che la rete lo blocca
         var SEND_CHUNK = 262144;          // tetto per messaggio: si adatta a quello che regge il browser
@@ -1594,6 +1604,9 @@
                 topic: 'ftx1-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(),
                 key: key,
                 sinceId: null,        // ultimo messaggio visto: si chiede solo ciò che viene dopo
+                sinceAll: 'all',      // cosa chiedere al primo giro quando sinceId è vuoto
+                pollMin: POLL_MIN_MS, // ritmo delle domande al ponte
+                pollCap: ANSWER_POLL_MS,
                 busy: false,          // il ponte ha chiesto di rallentare
                 cooldownUntil: 0      // fine della pausa chiesta dal ponte
             };
@@ -1659,7 +1672,7 @@
         // quei byte ripetuti consumano la quota giornaliera.
         async function relayList(channel) {
             await relayPause(channel);
-            var since = channel.sinceId || 'all';
+            var since = channel.sinceId || channel.sinceAll || 'all';
             var res = await fetch(RELAY + '/' + channel.topic + '/json?poll=1&since=' + encodeURIComponent(since), { cache: 'no-store' });
             if (res.status === 429) { relayCooldown(channel, res); throw relayError(429); }
             if (!res.ok) {
@@ -1809,7 +1822,7 @@
             $('sendRetryBtn').classList.add('hidden');
             $('sendLanBtn').classList.add('hidden');
             $('sendStartBtn').disabled = false;
-            $('sendStartBtn').textContent = 'Genera codice';
+            $('sendStartBtn').textContent = SEND_BTN_LABEL;
             $('senderName').value = state.name;
             renderFileList();
             showModal('sendModal');
@@ -1817,20 +1830,29 @@
 
         function closeSendModal() { hideModal('sendModal'); }
 
-        // Mostra o nasconde le due facce della schermata di invio: il codice a
-        // distanza oppure l'invito per la stessa Wi-Fi.
-        function setSendRunMode(lan) {
-            state.lanMode = !!lan;
-            $('sendCodeRow').classList.toggle('hidden', !!lan);
-            $('lanSendBlock').classList.toggle('hidden', !lan);
-            $('sendRunTitle').textContent = lan ? 'Invito per la stessa Wi‑Fi' : 'Codice di trasferimento';
-            $('sendRunText').innerHTML = lan
-                ? 'Passa questo invito all’altra persona e incolla qui la risposta che ti rimanda.'
-                : 'Manda questo codice all’altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.';
-            $('sendRunNote').textContent = lan
-                ? 'Tieni questa schermata aperta: il collegamento parte appena incolli la risposta. Restate sulla stessa rete fino alla fine.'
-                : 'Tieni questa schermata aperta finché l’invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l’altro dispositivo lo inserisce.';
-            $('sendRetryBtn').textContent = lan ? 'Rifai l’invito' : 'Riprova con un nuovo codice';
+        // Le tre facce della schermata di invio: la ricerca automatica sulla
+        // stessa rete (nessun codice), il codice a distanza, oppure l'invito a
+        // mano quando non c'è proprio internet.
+        function setSendRunMode(mode) {
+            if (mode === true) mode = 'lan';
+            if (mode === false || !mode) mode = 'code';
+            state.lanMode = mode === 'lan';
+            $('sendCodeRow').classList.toggle('hidden', mode !== 'code');
+            $('lanSendBlock').classList.toggle('hidden', mode !== 'lan');
+            $('sendCopyBtn').classList.toggle('hidden', mode !== 'code');
+            $('sendSheetBtn').classList.toggle('hidden', mode !== 'code' || !navigator.share);
+            $('sendRunTitle').textContent = mode === 'near' ? 'Stessa rete' : (mode === 'lan' ? 'Invito a mano' : 'Codice di trasferimento');
+            $('sendRunText').innerHTML = mode === 'near'
+                ? 'Non serve nessun codice: l’altra persona apre l’app e tocca <b>Ricevi</b>. Sto cercando il suo dispositivo sulla tua stessa rete.'
+                : (mode === 'lan'
+                    ? 'Passa questo invito all’altra persona e incolla qui la risposta che ti rimanda.'
+                    : 'Manda questo codice all’altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.');
+            $('sendRunNote').textContent = mode === 'near'
+                ? 'Basta che l’altra persona apra l’app e tocchi «Ricevi». Se non vi trovo, passo da solo al codice.'
+                : (mode === 'lan'
+                    ? 'Tieni questa schermata aperta: il collegamento parte appena incolli la risposta. Restate sulla stessa rete fino alla fine.'
+                    : 'Tieni questa schermata aperta finché l’invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l’altro dispositivo lo inserisce.');
+            $('sendRetryBtn').textContent = mode === 'lan' ? 'Rifai l’invito' : 'Riprova';
         }
 
         function showRecvStage() {
@@ -2029,9 +2051,10 @@
 
         // Un browser non può chiedere al telefono o al router di aprire un varco
         // nel firewall. Quando la rete impedisce il collegamento diretto l'unica
-        // strada affidabile è mettersi sulla stessa rete: stesso Wi-Fi o hotspot.
+        // strada affidabile è mettersi su una rete che non lo blocca: l'hotspot
+        // di uno dei due telefoni.
         function linkBlockedMessage() {
-            return 'La rete blocca il collegamento diretto: succede con i dati mobili, su molte reti aziendali o quando il Wi-Fi tiene isolati i dispositivi. Un browser non può farsi aprire un varco nel firewall. Mettete i due dispositivi sulla stessa Wi-Fi (o sull’hotspot di uno dei due) e usate l’invito «Siamo sulla stessa Wi-Fi»: lì il collegamento è diretto e non serve nessun server.';
+            return 'La rete blocca il collegamento diretto: succede con i dati mobili, su molte reti aziendali o quando il Wi-Fi tiene isolati i dispositivi. Un browser non può farsi aprire un varco nel firewall. Provate accendendo l’hotspot su uno dei due telefoni e collegando l’altro: lì il collegamento diretto passa sempre.';
         }
 
         function noOfferMessage() {
@@ -2112,6 +2135,97 @@
                 pc.addEventListener('icegatheringstatechange', onChange);
                 var timer = setTimeout(finish, ms);
             });
+        }
+
+        // ---------- DISPOSITIVI VICINI (nessun codice) ----------
+        // Un browser non può interrogare la rete locale, mandare messaggi in
+        // broadcast, né scoprire da solo chi è collegato allo stesso Wi-Fi: non
+        // esiste nessuna API per farlo. Quello che può fare è farsi dire da STUN
+        // con quale indirizzo la propria rete si presenta a internet: due
+        // dispositivi attaccati allo stesso router vedono lo stesso indirizzo
+        // pubblico (o lo stesso prefisso /64 se la rete è solo IPv6). Da lì i due
+        // ricavano lo stesso canale di contatto, senza scrivere niente.
+        function candidateAddress(candidate) {
+            var text = String(candidate || '').trim();
+            if (!text) return '';
+            var parts = text.split(/\s+/);
+            // candidate:fondazione componente trasporto priorità INDIRIZZO porta typ…
+            return parts.length > 5 ? parts[4] : '';
+        }
+
+        // Di un IPv6 serve solo il prefisso /64: la parte finale è quella del
+        // singolo dispositivo, il prefisso è quello della rete.
+        function ipv6Prefix(address) {
+            var text = String(address || '').split('%')[0].toLowerCase();
+            if (text.indexOf(':') === -1) return '';
+            var head = text, tail = '';
+            var at = text.indexOf('::');
+            if (at !== -1) { head = text.slice(0, at); tail = text.slice(at + 2); }
+            var groups = head ? head.split(':') : [];
+            var rest = tail ? tail.split(':') : [];
+            var fill = 8 - groups.length - rest.length;
+            if (fill < 0) return '';
+            for (var i = 0; i < fill; i++) groups.push('0');
+            groups = groups.concat(rest);
+            if (groups.length !== 8) return '';
+            return groups.slice(0, 4).map(function (g) { return g.replace(/^0+([0-9a-f])/, '$1'); }).join(':');
+        }
+
+        function nearKey(address) {
+            var text = String(address || '').trim();
+            if (!text) return '';
+            if (text.indexOf(':') !== -1) {
+                var prefix = ipv6Prefix(text);
+                return prefix ? 'v6:' + prefix : '';
+            }
+            return /^\d{1,3}(\.\d{1,3}){3}$/.test(text) ? 'v4:' + text : '';
+        }
+
+        // L'indirizzo pubblico non è un segreto: lo vede ogni sito che visiti, e
+        // chi è sulla tua stessa rete lo vede identico al tuo.
+        async function nearRooms() {
+            var pc = createPeer();
+            if (!pc) return [];
+            var found = [];
+            pc.onicecandidate = function (e) {
+                var c = e.candidate;
+                if (!c || (c.type !== 'srflx' && c.type !== 'prflx')) return;
+                var key = nearKey(c.address || candidateAddress(c.candidate));
+                if (key && found.indexOf(key) === -1) found.push(key);
+            };
+            try {
+                pc.createDataChannel('ftx-near');
+                await pc.setLocalDescription(await pc.createOffer());
+                await waitIce(pc, NEAR_PROBE_MS);
+            } catch (e) { }
+            try { pc.close(); } catch (e) { }
+            // Prima IPv4: i due dispositivi devono scegliere lo stesso indirizzo,
+            // altrimenti non si incontrerebbero mai.
+            return found.sort(function (a, b) {
+                return (a.indexOf('v4:') === 0 ? 0 : 1) - (b.indexOf('v4:') === 0 ? 0 : 1);
+            });
+        }
+
+        // Il canale dei vicini: stessa rete, stesso canale. Il ponte continua a
+        // fare da campanello, ma nessuno deve scambiarsi niente a mano.
+        async function nearChannel(room) {
+            if (!room) return null;
+            var encoder = new TextEncoder();
+            var topicHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode('ftx/near/1|' + room)));
+            var keyHash = await crypto.subtle.digest('SHA-256', encoder.encode('ftx/near/key/1|' + room));
+            var key = await crypto.subtle.importKey('raw', keyHash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+            return {
+                code: '',
+                near: true,
+                topic: 'ftx1-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(),
+                key: key,
+                sinceId: null,
+                sinceAll: '10m',      // il deposito del canale è pubblico: non si ripesca tutto
+                pollMin: NEAR_POLL_MIN,
+                pollCap: NEAR_POLL_MS,
+                busy: false,
+                cooldownUntil: 0
+            };
         }
 
         // Descrizione e candidati in un unico messaggio: così sul ponte finisce
@@ -2322,7 +2436,7 @@
             var publishedAt = Date.now();
             try { await relayPublish(channel, await buildOffer(pc)); } catch (e) { }
             var answered = false, answeredAt = 0;
-            var wait = POLL_MIN_MS;
+            var wait = channel.pollMin || POLL_MIN_MS;
             var deadline = Date.now() + LINK_TIMEOUT_MS;
             while (Date.now() < deadline && token === state.sendToken) {
                 if (session.isOpen()) break;
@@ -2341,7 +2455,7 @@
                     continue;
                 }
                 await sleep(wait);
-                wait = pollDelay(wait, ANSWER_POLL_MS);
+                wait = pollDelay(wait, channel.pollCap || ANSWER_POLL_MS);
             }
             // Quanto si è aspettato dopo la risposta: distingue un collegamento
             // lento da una rete che non lo lascia passare.
@@ -2461,12 +2575,18 @@
             allowSleep();
         }
 
-        async function runSendLink(channel, entries, manifest, total, token) {
-            var deadline = Date.now() + WAIT_SIGNAL_MS;
-            var blocked = 0, busy = 0;
+        async function runSendLink(channel, entries, manifest, total, token, opts) {
+            var options = opts || {};
+            var near = !!options.near;
+            var deadline = Date.now() + (options.maxMs || WAIT_SIGNAL_MS);
+            var attempts = 0, blocked = 0, busy = 0;
             while (Date.now() < deadline && token === state.sendToken) {
-                setSendStatus('Aspetto che l’altro dispositivo inserisca il codice…');
-                setActiveText('Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
+                if (options.attempts && attempts >= options.attempts) break;
+                attempts++;
+                setSendStatus(near ? 'Cerco l’altro dispositivo sulla tua rete…' : 'Aspetto che l’altro dispositivo inserisca il codice…');
+                setActiveText(near
+                    ? 'Nessun codice: basta che l’altra persona apra l’app e tocchi Ricevi.'
+                    : 'Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
                 var session = await attemptSenderLink(channel, entries, token);
                 if (token !== state.sendToken) { if (session) session.close(); return; }
                 if (session.isOpen()) {
@@ -2481,33 +2601,42 @@
                 if (channel.busy && !session.afterAnswerMs) busy++; else if (!channel.busy) busy = 0;
                 session.close();
                 if (busy >= BLOCKED_TRIES) throw new Error('relay-busy');
-                if (blocked >= BLOCKED_TRIES) throw new Error('link-blocked');
-                if (token === state.sendToken) setSendStatus('Collegamento diretto non riuscito: riprovo…');
+                if (blocked >= (options.attempts ? 1 : BLOCKED_TRIES)) throw new Error('link-blocked');
+                if (token === state.sendToken) setSendStatus(near ? 'Non trovo ancora nessuno: continuo a cercare…' : 'Collegamento diretto non riuscito: riprovo…');
                 await sleep(1000);
             }
             if (token !== state.sendToken) return;
+            // Chi ha risposto c'era: il codice non aggiungerebbe niente.
+            if (options.attempts && blocked) throw new Error('link-blocked');
             throw new Error(channel.busy ? 'relay-busy' : 'no-link');
         }
 
+        // L'invio comincia sempre allo stesso modo: prima si cerca l'altro
+        // dispositivo sulla stessa rete, senza chiedere niente a nessuno; se non
+        // si trova (o se la rete non lascia leggere il proprio indirizzo), si
+        // passa al codice da mandare a mano.
         async function startSend() {
-            if (state.sendAlive) return;
             var files = state.files.slice();
             if (!files.length) { playErrorSound(); showToast('Scegli almeno un file', { variant: 'error' }); return; }
             if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
 
+            resetLanSend();
+            if (state.sendAlive) {
+                state.sendToken++;
+                state.sendAlive = false;
+                if (state.session) { try { state.session.close(); } catch (e) { } state.session = null; }
+            }
+
             state.name = ($('senderName').value || '').trim().slice(0, 24);
             try { localStorage.setItem(NAME_KEY, state.name); } catch (e) { }
 
-            resetLanSend();
-            setSendRunMode(false);
             $('sendStartBtn').disabled = true;
-            $('sendStartBtn').textContent = 'Genera codice';
+            $('sendStartBtn').textContent = SEND_BTN_LABEL;
             $('sendRetryBtn').classList.add('hidden');
             $('sendLanBtn').classList.add('hidden');
             $('sendProgressBox').classList.remove('hidden');
             $('sendPickPane').classList.add('hidden');
             $('sendRunPane').classList.remove('hidden');
-            $('sendSheetBtn').classList.toggle('hidden', !navigator.share);
             $('sendBar').style.width = '0%';
 
             var token = state.sendToken + 1;
@@ -2516,26 +2645,70 @@
             keepAwake();
 
             var total = totalBytes();
+            var entries = files.map(function (f, i) {
+                return {
+                    index: i,
+                    file: f,
+                    name: f.name || ('file-' + (i + 1)),
+                    type: f.type || 'application/octet-stream',
+                    size: f.size || 0
+                };
+            });
+            var manifest = buildManifest(entries, state.name);
+            setSendProgress(0, total);
+
+            // 1. Prova sulla stessa rete.
+            setSendRunMode('near');
+            state.transfer = { kind: 'send', icon: '📶', title: 'Cerco l’altro dispositivo', text: 'Nessun codice: basta che l’altra persona apra l’app.' };
+            updateActive();
+            setSendStatus('Cerco l’altro dispositivo sulla stessa rete…');
+
+            var room = '';
+            try { room = (await nearRooms())[0] || ''; } catch (e) { room = ''; }
+            if (token !== state.sendToken) return;
+            var near = room ? await nearChannel(room) : null;
+            if (token !== state.sendToken) return;
+            state.transfer.room = room;
+            if (near) {
+                try {
+                    await runSendLink(near, entries, manifest, total, token, { near: true, maxMs: NEAR_TRY_MS, attempts: 3 });
+                    return;
+                } catch (err) {
+                    if (token !== state.sendToken) return;
+                    // Solo "nessuno ha risposto" fa passare al codice: se la
+                    // risposta è arrivata e la rete ha bloccato il collegamento,
+                    // un codice non cambierebbe niente.
+                    if (String((err && err.message) || '') !== 'no-link') {
+                        sendFail(linkFailureMessage(err), isLinkError(err));
+                        return;
+                    }
+                }
+            }
+            if (token !== state.sendToken) return;
+            await sendWithCode(entries, manifest, total, token, room
+                ? 'Non trovo l’altro dispositivo sulla tua rete'
+                : 'Non riesco a leggere la rete in cui sei');
+        }
+
+        // Nessun dispositivo vicino: si passa al codice, come quando i due sono
+        // lontani. Da qui in poi è il codice a fare da punto d'incontro.
+        async function sendWithCode(entries, manifest, total, token, reason) {
             var code = newTransferCode();
             $('sendCode').textContent = code;
-            state.transfer = { kind: 'send', icon: '📡', title: 'In attesa del collegamento', text: 'Manda il codice a chi deve ricevere i file.', code: code };
+            setSendRunMode('code');
+            state.transfer.icon = '📡';
+            state.transfer.title = 'In attesa del collegamento';
+            state.transfer.text = 'Manda il codice a chi deve ricevere i file.';
+            state.transfer.code = code;
+            state.transfer.variant = '';
             updateActive();
-            setSendProgress(0, total);
-            setSendStatus('Codice pronto: manda il codice a chi deve ricevere i file.');
-
+            setSendStatus(reason + ': manda questo codice a chi deve ricevere i file.');
+            $('sendRunNote').textContent = reason + '. Manda il codice a chi deve ricevere i file: i file partono appena lo inserisce.';
             try {
                 var channel = await transferChannel(code);
                 state.transfer.channel = channel;
-                var entries = files.map(function (f, i) {
-                    return {
-                        index: i,
-                        file: f,
-                        name: f.name || ('file-' + (i + 1)),
-                        type: f.type || 'application/octet-stream',
-                        size: f.size || 0
-                    };
-                });
-                await runSendLink(channel, entries, buildManifest(entries, state.name), total, token);
+                if (token !== state.sendToken) return;
+                await runSendLink(channel, entries, manifest, total, token);
             } catch (err) {
                 if (token !== state.sendToken) return;
                 sendFail(linkFailureMessage(err), isLinkError(err));
@@ -2924,13 +3097,20 @@
         // Aspetta l'offerta di chi invia, risponde e resta agganciato al
         // collegamento diretto. Se un tentativo non riesce, riprova con la
         // prossima offerta.
-        async function waitForOffer(channel, token) {
-            var deadline = Date.now() + WAIT_SIGNAL_MS;
-            var seen = '', session = null, misses = 0, wait = POLL_MIN_MS, failed = 0;
+        async function waitForOffer(channel, token, opts) {
+            var options = opts || {};
+            var missCap = options.misses || OFFER_MISSES;
+            var freshMs = options.freshMs || 0;
+            var deadline = Date.now() + (options.maxMs || WAIT_SIGNAL_MS);
+            var seen = '', session = null, misses = 0, wait = channel.pollMin || POLL_MIN_MS, failed = 0;
+            var pollCap = Math.max(POLL_MS, channel.pollCap || 0);
             var busySince = 0;
             state.sawOffer = false;
             while (Date.now() < deadline && token === state.recvToken) {
                 var offer = newestOf(await readLinks(channel), 'offer');
+                // Sulla stessa rete il canale è condiviso con chiunque altro ci
+                // sia già passato: un invio vecchio è di un'altra volta.
+                if (offer && freshMs && offer.time && (Date.now() / 1000 - offer.time) * 1000 > freshMs) offer = null;
                 // Il ponte che chiede di rallentare non è un codice sbagliato:
                 // senza risposta si aspetta la fine della pausa invece di
                 // contare i tentativi a vuoto e arrendersi.
@@ -2944,7 +3124,7 @@
                 busySince = 0;
                 if (!offer) {
                     misses++;
-                    if (misses > OFFER_MISSES) { if (session) session.close(); return null; }
+                    if (misses > missCap) { if (session) session.close(); return null; }
                     setRecvStatus('Cerco chi ha inviato i file con questo codice…');
                 } else {
                     misses = 0;
@@ -2957,7 +3137,7 @@
                     setRecvHead('🔗', 'Collegamento diretto…', 'Sto raggiungendo l’altro dispositivo.');
                     setRecvStatus('Provo a collegarmi in diretta…');
                     session = await respondToOffer(channel, offer.payload);
-                    if (!session) { await sleep(wait); wait = pollDelay(wait); continue; }
+                    if (!session) { await sleep(wait); wait = pollDelay(wait, pollCap); continue; }
                 }
                 if (session) {
                     if (await settledConnection(session, 8000)) return session;
@@ -2969,7 +3149,7 @@
                     if (failed >= BLOCKED_TRIES) return null;
                 }
                 await sleep(offer ? POLL_MIN_MS : wait);
-                if (!offer) wait = pollDelay(wait);
+                if (!offer) wait = pollDelay(wait, pollCap);
             }
             if (session) session.close();
             return null;
@@ -3121,17 +3301,18 @@
             return session.sink.promise;
         }
 
-        async function startReceive() {
+        // Chi riceve non deve scrivere niente: se non ha un codice cerca un
+        // invio partito sulla sua stessa rete. Il codice serve solo quando i due
+        // dispositivi non sono sulla stessa rete.
+        function startReceive() {
             if (recvRunning) return;
-            var code = normalizeCode($('recvCodeInput').value || '');
-            if (!code) {
-                playErrorSound();
-                $('recvPickStatus').textContent = 'Inserisci il codice di 15 caratteri che ti hanno mandato.';
-                $('recvPickStatus').className = 'ft-status error';
-                return;
-            }
             if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
+            var code = normalizeCode($('recvCodeInput').value || '');
+            if (code) { startReceiveCode(code); return; }
+            startReceiveNear();
+        }
 
+        async function startReceiveCode(code) {
             var token = state.recvToken + 1;
             state.recvToken = token;
             recvRunning = true;
@@ -3168,6 +3349,75 @@
                 return;
             }
             await finishReceive(session, token);
+        }
+
+        // Nessun codice: si cerca un invio partito sulla stessa rete. Se non si
+        // trova niente si torna al codice, che è l'unica strada quando i due
+        // dispositivi non sono sulla stessa rete.
+        async function startReceiveNear() {
+            var token = state.recvToken + 1;
+            state.recvToken = token;
+            recvRunning = true;
+            keepAwake();
+            releaseResults();
+            $('recvStartBtn').disabled = true;
+            $('recvLanBtn').classList.add('hidden');
+            $('recvPickPane').classList.add('hidden');
+            $('recvRunPane').classList.remove('hidden');
+            $('recvBar').style.width = '0%';
+            setRecvProgress(0, 0);
+            setRecvHead('📶', 'Cerco chi invia…', 'Sulla tua stessa rete, senza codici.');
+            state.transfer = { kind: 'receive', icon: '📶', title: 'Cerco chi invia', text: 'Nessun codice: chi invia deve solo aver avviato l’invio.' };
+            updateActive();
+            setRecvStatus('Cerco chi sta inviando sulla tua rete…');
+
+            var channel = null;
+            try {
+                var rooms = await nearRooms();
+                if (token !== state.recvToken) return;
+                channel = rooms.length ? await nearChannel(rooms[0]) : null;
+            } catch (e) { channel = null; }
+            if (token !== state.recvToken) return;
+            if (!channel) {
+                nearReceiveGiveUp('Non riesco a leggere la rete in cui sei: fatti mandare un codice e scrivilo qui sopra.');
+                return;
+            }
+
+            var session = null;
+            try {
+                session = await waitForOffer(channel, token, { misses: NEAR_MISSES, freshMs: NEAR_FRESH_MS });
+                if (token !== state.recvToken) { if (session) session.close(); return; }
+                if (!session) {
+                    if (channel.busy) { recvFail(signalingBusyMessage()); return; }
+                    nearReceiveGiveUp('Non trovo nessuno che stia inviando sulla tua rete. Se ti hanno mandato un codice, scrivilo qui sopra e tocca «Ricevi».');
+                    return;
+                }
+                state.session = session;
+                state.transfer.channel = channel;
+            } catch (err) {
+                if (session) session.close();
+                state.session = null;
+                if (token !== state.recvToken) return;
+                recvFail(linkFailureMessage(err), isLinkError(err));
+                return;
+            }
+            await finishReceive(session, token);
+        }
+
+        // La ricerca sulla stessa rete finisce dove è cominciata: si torna alla
+        // schermata col campo del codice, già pronto per essere scritto.
+        function nearReceiveGiveUp(message) {
+            recvRunning = false;
+            allowSleep();
+            $('recvStartBtn').disabled = false;
+            $('recvRunPane').classList.add('hidden');
+            $('recvPickPane').classList.remove('hidden');
+            $('recvPickStatus').textContent = message;
+            $('recvPickStatus').className = 'ft-status error';
+            playErrorSound();
+            state.transfer = null;
+            updateActive();
+            try { $('recvCodeInput').focus(); } catch (e) { }
         }
 
         // Il collegamento è aperto: si aspetta che arrivino tutti i file, si
