@@ -1045,7 +1045,7 @@
                     <div class="ft-icon">📤</div>
                     <div>
                         <h3>Invia un file</h3>
-                        <p>Scegli un file dal telefono o dal computer: otterrai un codice da mandare a chi deve riceverlo.</p>
+                        <p>Scegli un file dal telefono o dal computer: otterrai un codice (a distanza) o un invito (stessa Wi‑Fi) da mandare a chi deve riceverlo.</p>
                     </div>
                     <button class="glass-btn accent" style="justify-content:center;" onclick="openSendModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
@@ -1057,7 +1057,7 @@
                     <div class="ft-icon">📥</div>
                     <div>
                         <h3>Ricevi un file</h3>
-                        <p>Hai ricevuto un codice? Inseriscilo qui: il file arriva nel browser e lo salvi dove vuoi.</p>
+                        <p>Hai ricevuto un codice o un invito? Incollalo qui: il file arriva nel browser e lo salvi dove vuoi.</p>
                     </div>
                     <button class="glass-btn accent" style="justify-content:center;" onclick="openReceiveModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
@@ -1069,11 +1069,11 @@
             <div class="glass ft-card" style="margin-top:14px;">
                 <h3 style="font-size:15px;">Come funziona</h3>
                 <div class="ft-steps">
-                    <div class="ft-step"><span class="ft-num">1</span><span>Chi invia tocca <b>Scegli un file</b> e riceve un codice come <b>FTX-4K7QM-P2XTB-9HZRE</b>.</span></div>
-                    <div class="ft-step"><span class="ft-num">2</span><span>Il codice si passa con <b>WhatsApp, Telegram, SMS</b> o anche a voce.</span></div>
-                    <div class="ft-step"><span class="ft-num">3</span><span>Chi riceve tocca <b>Inserisci il codice</b>, aspetta qualche secondo e salva il file.</span></div>
+                    <div class="ft-step"><span class="ft-num">1</span><span>Chi invia tocca <b>Scegli un file</b> e poi sceglie: <b>codice</b> a distanza oppure <b>invito</b> se siete sulla stessa Wi‑Fi.</span></div>
+                    <div class="ft-step"><span class="ft-num">2</span><span><b>A distanza:</b> ottieni un codice come <b>FTX-4K7QM-P2XTB-9HZRE</b> da passare con WhatsApp, Telegram, SMS o a voce.</span></div>
+                    <div class="ft-step"><span class="ft-num">3</span><span><b>Stessa Wi‑Fi:</b> si incolla l&#39;invito ricevuto e si riporta indietro la risposta: nessun server, funziona anche senza internet.</span></div>
                 </div>
-                <p style="font-size:12px; color:var(--text-tertiary); line-height:1.55;">I file viaggiano <b>direttamente</b> da un dispositivo all&#39;altro, cifrati: non passano da nessun server e non si fermano da nessuna parte. Il codice serve solo ai due dispositivi per trovarsi, non per trasportare i file. Funziona da telefono e da computer, senza account e senza installare nulla. Sui telefoni lasciate la pagina in primo piano fino alla fine: se il sistema la mette in pausa, il collegamento diretto si interrompe.</p>
+                <p style="font-size:12px; color:var(--text-tertiary); line-height:1.55;">I file viaggiano <b>direttamente</b> da un dispositivo all&#39;altro, cifrati: non si fermano su nessun server. Nella modalità a distanza il codice serve solo ai due dispositivi per trovarsi, e passano soltanto i dati di contatto (cifrati), non i file. Se la rete impedisce il collegamento diretto — succede con i dati mobili o sulle reti aziendali — usate l&#39;invito sulla stessa Wi‑Fi o sull&#39;hotspot di uno dei due telefoni: un browser non può aprire varchi nel firewall, ma sulla rete locale il collegamento è diretto e non serve nessun server. Funziona da telefono e da computer, senza account e senza installare nulla. Sui telefoni lasciate la pagina in primo piano fino alla fine: se il sistema la mette in pausa, il collegamento si interrompe.</p>
             </div>
         </main>
     </div>
@@ -1086,7 +1086,7 @@
                     <div style="text-align:center; margin-bottom:16px;">
                         <div style="font-size:40px; margin-bottom:8px;">📤</div>
                         <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Invia un file</h3>
-                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli cosa mandare. Alla fine otterrai un codice da passare all&#39;altra persona.</p>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli cosa mandare. Se siete sulla stessa Wi‑Fi usa l&#39;invito: nessun server, funziona anche senza internet.</p>
                     </div>
 
                     <div class="ft-drop" id="ftDrop">
@@ -1108,20 +1108,32 @@
                         <button class="btn-secondary" style="flex:1;" onclick="closeSendModal()">Annulla</button>
                         <button class="btn-primary" style="flex:1;" id="sendStartBtn" onclick="startSend()">Genera codice</button>
                     </div>
+
+                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="sendLanStartBtn" onclick="startLanSend()">Siamo sulla stessa Wi‑Fi (invito)</button>
                 </div>
 
                 <div id="sendRunPane" class="hidden">
                     <div style="text-align:center; margin-bottom:14px;">
                         <div style="font-size:38px; margin-bottom:8px;">📡</div>
-                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Codice di trasferimento</h3>
-                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all&#39;altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.</p>
+                        <h3 id="sendRunTitle" style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Codice di trasferimento</h3>
+                        <p id="sendRunText" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all&#39;altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.</p>
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
+                    <div id="sendCodeRow" style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
                         <code id="sendCode" class="ft-code" style="flex:1; min-width:0;">—</code>
                         <button class="icon-btn" title="Copia il codice" onclick="copySendCode()">
                             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 8h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
                         </button>
+                    </div>
+
+                    <div id="lanSendBlock" class="hidden">
+                        <label class="field-label" for="lanInvite">1. Passa questo invito all&#39;altro dispositivo</label>
+                        <textarea id="lanInvite" class="ios-input" rows="3" readonly spellcheck="false" autocapitalize="off" autocomplete="off" onclick="this.select()"></textarea>
+                        <p style="font-size:11.5px; color:var(--text-tertiary); margin:8px 4px 0; line-height:1.5;">Usa i pulsanti qui sotto (<b>Copia invito</b> o <b>Condividi…</b>) e mandalo come preferisci: messaggio, email, AirDrop. È solo testo.</p>
+
+                        <label class="field-label" for="lanAnswer" style="margin-top:16px;">2. Incolla qui la risposta che ti rimanda</label>
+                        <textarea id="lanAnswer" class="ios-input" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Incolla la risposta (comincia con FTXLAN1:)" onclick="this.select()"></textarea>
+                        <button class="btn-primary" style="width:100%; margin-top:10px;" id="lanConnectBtn" onclick="applyLanAnswer()" disabled>Collega</button>
                     </div>
 
                     <p id="sendStatus" class="ft-status">Preparo l&#39;invio…</p>
@@ -1140,9 +1152,10 @@
                         <button class="btn-primary" style="flex:1; min-width:100px;" onclick="copySendInvite()">Copia invito</button>
                     </div>
 
-                    <button class="btn-danger hidden" id="sendRetryBtn" style="width:100%; margin-top:10px;" onclick="startSend()">Riprova con un nuovo codice</button>
+                    <button class="btn-danger hidden" id="sendRetryBtn" style="width:100%; margin-top:10px;" onclick="retrySend()">Riprova con un nuovo codice</button>
+                    <button class="btn-secondary hidden" id="sendLanBtn" style="width:100%; margin-top:10px;" onclick="startLanSend()">Prova nella stessa Wi‑Fi (invito)</button>
 
-                    <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Tieni questa schermata aperta finché l&#39;invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l&#39;altro dispositivo lo inserisce.</p>
+                    <p id="sendRunNote" style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Tieni questa schermata aperta finché l&#39;invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l&#39;altro dispositivo lo inserisce.</p>
                 </div>
             </div>
         </div>
@@ -1173,6 +1186,43 @@
                         <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Annulla</button>
                         <button class="btn-primary" style="flex:1;" id="recvStartBtn" onclick="startReceive()">Scarica</button>
                     </div>
+
+                    <button class="btn-secondary" style="width:100%; margin-top:10px;" id="recvLanStartBtn" onclick="openLanReceive()">Siamo sulla stessa Wi‑Fi (invito)</button>
+                </div>
+
+                <div id="recvLanPane" class="hidden">
+                    <div style="text-align:center; margin-bottom:14px;">
+                        <div style="font-size:38px; margin-bottom:8px;">📶</div>
+                        <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Stessa Wi‑Fi</h3>
+                        <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Incolla l&#39;invito che ti ha mandato chi invia. Nessun server: basta essere sulla stessa Wi‑Fi (o sull&#39;hotspot), funziona anche senza internet.</p>
+                    </div>
+
+                    <label class="field-label" for="lanInviteIn">Invito ricevuto</label>
+                    <textarea id="lanInviteIn" class="ios-input" rows="4" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Incolla l'invito (comincia con FTXLAN1:)" onclick="this.select()"></textarea>
+
+                    <button class="glass-btn" style="width:100%; margin-top:10px; justify-content:center;" onclick="pasteLanText('lanInviteIn')">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Incolla dagli appunti
+                    </button>
+
+                    <div id="lanReplyBlock" class="hidden">
+                        <label class="field-label" for="lanReplyOut" style="margin-top:16px;">Risposta: mandala a chi invia</label>
+                        <textarea id="lanReplyOut" class="ios-input" rows="4" readonly spellcheck="false" autocapitalize="off" autocomplete="off" onclick="this.select()"></textarea>
+
+                        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                            <button class="btn-secondary" style="flex:1; min-width:110px;" onclick="copyLanReply()">Copia risposta</button>
+                            <button class="btn-secondary hidden" style="flex:1; min-width:110px;" id="lanReplyShareBtn" onclick="shareLanReply()">Condividi…</button>
+                        </div>
+                    </div>
+
+                    <p id="lanRecvStatus" class="ft-status"></p>
+
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn-secondary" style="flex:1;" onclick="backToCode()">Codice</button>
+                        <button class="btn-primary" style="flex:1;" id="lanJoinBtn" onclick="connectLanInvite()">Collega</button>
+                    </div>
+
+                    <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Passate invito e risposta con un copia‑incolla, un messaggio o AirDrop: sono solo testo, non passano da nessun server. Restate sulla stessa rete fino alla fine.</p>
                 </div>
 
                 <div id="recvRunPane" class="hidden">
@@ -1198,6 +1248,8 @@
                         <button class="btn-primary hidden" style="flex:1;" id="recvSaveAllBtn">Salva tutto</button>
                         <button class="btn-secondary" style="flex:1;" onclick="closeReceiveModal()">Chiudi</button>
                     </div>
+
+                    <button class="btn-secondary hidden" id="recvLanBtn" style="width:100%; margin-top:10px;" onclick="openLanReceive()">Prova nella stessa Wi‑Fi (invito)</button>
 
                     <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">Da telefono, se il file non si salva, usa <b>Condividi</b> (su iPhone) o <b>Apri</b> e salvalo dall&#39;anteprima.</p>
                 </div>
@@ -1433,13 +1485,27 @@
         var WAIT_SIGNAL_MS = 600000;      // quanto si aspetta l'altro dispositivo
         var WAIT_ACK_MS = 180000;         // conferma di ricezione, via collegamento diretto
         var LINK_TIMEOUT_MS = 18000;      // attesa massima per il collegamento diretto
+        // Il ponte (ntfy.sh) conta le richieste per indirizzo IP e i byte già
+        // letti: chiedere a raffica, o richiedere ogni volta tutto il deposito,
+        // esaurisce la quota e il ponte risponde 429. Per questo i controlli non
+        // sono mai più ravvicinati di così e ogni richiesta chiede solo quello
+        // che è arrivato dopo l'ultimo messaggio visto.
         var POLL_MS = 5000;               // ogni quanto si chiede al ponte se ci sono novità
-        var POLL_MIN_MS = 400;            // i primi controlli sono ravvicinati, poi si dirada
-        var ANSWER_POLL_MS = 1500;        // attesa della risposta: qui conviene insistere
+        var POLL_MIN_MS = 1000;           // i primi controlli sono ravvicinati, poi si dirada
+        var ANSWER_POLL_MS = 2500;        // attesa della risposta: qui conviene insistere
+        var BUSY_MAX_MS = 60000;          // quanto si aspetta al massimo se il ponte chiede di rallentare
         var LOCAL_POLL_MS = 200;          // attesa locale del collegamento, senza toccare il ponte
         var OFFER_MISSES = 10;            // quante volte si può non trovare l'invio prima di arrendersi
         var ICE_WAIT_MS = 2500;           // raccolta dei candidati di rete da spedire
         var STUN_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
+        // Invito e risposta della modalità "stessa Wi-Fi": sono testo semplice da
+        // passare a mano (copia-incolla, messaggio, AirDrop). Non toccano nessun
+        // server: servono solo a scambiare i dati di contatto fra i due dispositivi.
+        var LAN_TAG = 'FTXLAN1:';
+        var LAN_COMMS_MS = 20000;         // attesa massima per aprire il canale locale
+        var BASE64URL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        var LINK_SETTLE_MS = 8000;        // quanto si aspetta il collegamento dopo la risposta
+        var BLOCKED_TRIES = 3;            // tentativi a vuoto prima di dire che la rete lo blocca
         var SEND_CHUNK = 262144;          // tetto per messaggio: si adatta a quello che regge il browser
         var MIN_CHUNK = 16384;            // sotto questo si perde tempo in overhead
         var MAX_LANES = 4;                // quante corsie parallele al massimo (una per data channel)
@@ -1523,7 +1589,14 @@
             var topicHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode('ftx/topic/1|' + compact)));
             var keyHash = await crypto.subtle.digest('SHA-256', encoder.encode('ftx/key/1|' + compact));
             var key = await crypto.subtle.importKey('raw', keyHash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
-            return { code: normalized, topic: 'ftx1-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(), key: key };
+            return {
+                code: normalized,
+                topic: 'ftx1-' + base32FromBytes(topicHash).slice(0, 22).toLowerCase(),
+                key: key,
+                sinceId: null,        // ultimo messaggio visto: si chiede solo ciò che viene dopo
+                busy: false,          // il ponte ha chiesto di rallentare
+                cooldownUntil: 0      // fine della pausa chiesta dal ponte
+            };
         }
 
         async function sealBytes(key, bytes) {
@@ -1553,8 +1626,26 @@
         async function relayPublish(channel, text) {
             var body = TAG + bytesToBase64Url(await sealText(channel.key, text));
             var res = await fetch(RELAY + '/' + channel.topic, { method: 'POST', body: body });
+            if (res.status === 429) { relayCooldown(channel, res); throw relayError(429); }
             if (!res.ok) throw relayError(res.status);
+            if (channel) channel.busy = false;
             return true;
+        }
+
+        // Il ponte limita le richieste per indirizzo IP e i byte ripetuti:
+        // quando risponde 429 dice anche quanto aspettare. Insistere non aiuta,
+        // peggiora: si segna la pausa richiesta e si aspetta.
+        function relayCooldown(channel, res) {
+            var after = Number(res.headers.get('Retry-After'));
+            if (!(after > 0)) after = 5;
+            channel.busy = true;
+            channel.cooldownUntil = Date.now() + Math.min(after, 60) * 1000;
+        }
+
+        // Quanto manca alla fine della pausa chiesta dal ponte.
+        function relayPause(channel) {
+            var left = Math.max(0, (channel.cooldownUntil || 0) - Date.now());
+            return left ? sleep(Math.min(left, 10000)) : Promise.resolve();
         }
 
         // Nel flusso JSON del ponte il testo del messaggio arriva nel campo
@@ -1563,9 +1654,20 @@
             return String((msg && (msg.message || msg.body)) || '');
         }
 
+        // Si chiede solo ciò che è arrivato dopo l'ultimo messaggio visto: senza
+        // "since" il ponte rimanda ogni volta tutto il deposito del canale, e
+        // quei byte ripetuti consumano la quota giornaliera.
         async function relayList(channel) {
-            var res = await fetch(RELAY + '/' + channel.topic + '/json?poll=1&since=all', { cache: 'no-store' });
-            if (!res.ok) throw relayError(res.status);
+            await relayPause(channel);
+            var since = channel.sinceId || 'all';
+            var res = await fetch(RELAY + '/' + channel.topic + '/json?poll=1&since=' + encodeURIComponent(since), { cache: 'no-store' });
+            if (res.status === 429) { relayCooldown(channel, res); throw relayError(429); }
+            if (!res.ok) {
+                // Segnaposto non più valido (deposito scaduto): si riparte da capo.
+                if (channel.sinceId) channel.sinceId = null;
+                throw relayError(res.status);
+            }
+            channel.busy = false;
             var text = await res.text();
             var messages = [];
             text.split(LF).forEach(function (line) {
@@ -1576,6 +1678,8 @@
                 if (msg && msg.event === 'message' && (msg.message || msg.attachment)) messages.push(msg);
             });
             messages.sort(function (a, b) { return (a.time || 0) - (b.time || 0); });
+            var last = messages.length ? messages[messages.length - 1] : null;
+            if (last && last.id) channel.sinceId = last.id;
             return messages;
         }
 
@@ -1606,7 +1710,14 @@
             results: [],
             transfer: null,
             session: null,
-            sawOffer: false
+            sawOffer: false,
+            lanMode: false,       // invio in corso sulla stessa rete (senza codice)
+            lanPending: false,    // ricezione sulla stessa rete: invito già incollato
+            lanSession: null,     // collegamento dell'invio locale, in attesa della risposta
+            lanEntries: null,
+            lanManifest: null,
+            lanTotal: 0,
+            lanToken: 0
         };
 
         function myName() { return (state.name || '').trim() || 'Un dispositivo'; }
@@ -1658,9 +1769,11 @@
             if (state.transfer && state.transfer.kind === 'send') {
                 state.sendToken++;
                 state.sendAlive = false;
+                resetLanSend();
             } else {
                 state.recvToken++;
                 recvRunning = false;
+                state.lanPending = false;
                 $('recvStartBtn').disabled = false;
                 releaseResults();
             }
@@ -1677,8 +1790,7 @@
                 $('sendRunPane').classList.remove('hidden');
                 showModal('sendModal');
             } else {
-                $('recvPickPane').classList.add('hidden');
-                $('recvRunPane').classList.remove('hidden');
+                showRecvStage();
                 showModal('receiveModal');
             }
         }
@@ -1695,6 +1807,7 @@
             $('sendRunPane').classList.add('hidden');
             $('sendPickPane').classList.remove('hidden');
             $('sendRetryBtn').classList.add('hidden');
+            $('sendLanBtn').classList.add('hidden');
             $('sendStartBtn').disabled = false;
             $('sendStartBtn').textContent = 'Genera codice';
             $('senderName').value = state.name;
@@ -1703,6 +1816,126 @@
         }
 
         function closeSendModal() { hideModal('sendModal'); }
+
+        // Mostra o nasconde le due facce della schermata di invio: il codice a
+        // distanza oppure l'invito per la stessa Wi-Fi.
+        function setSendRunMode(lan) {
+            state.lanMode = !!lan;
+            $('sendCodeRow').classList.toggle('hidden', !!lan);
+            $('lanSendBlock').classList.toggle('hidden', !lan);
+            $('sendRunTitle').textContent = lan ? 'Invito per la stessa Wi‑Fi' : 'Codice di trasferimento';
+            $('sendRunText').innerHTML = lan
+                ? 'Passa questo invito all’altra persona e incolla qui la risposta che ti rimanda.'
+                : 'Manda questo codice all’altra persona: chi lo riceve apre <b>Ricevi un file</b> e lo inserisce.';
+            $('sendRunNote').textContent = lan
+                ? 'Tieni questa schermata aperta: il collegamento parte appena incolli la risposta. Restate sulla stessa rete fino alla fine.'
+                : 'Tieni questa schermata aperta finché l’invio non è finito: il codice funziona solo mentre aspetti. I file partono appena l’altro dispositivo lo inserisce.';
+            $('sendRetryBtn').textContent = lan ? 'Rifai l’invito' : 'Riprova con un nuovo codice';
+        }
+
+        function showRecvStage() {
+            $('recvPickPane').classList.add('hidden');
+            $('recvLanPane').classList.toggle('hidden', !state.lanPending);
+            $('recvRunPane').classList.toggle('hidden', !!state.lanPending);
+        }
+
+        // ---------- STESSA RETE (invito e risposta) ----------
+        // Sotto la stessa Wi-Fi (o sull'hotspot di uno dei due) i due dispositivi
+        // si scambiano i dati di contatto a mano: nessun server, nessun codice, e
+        // funziona anche senza internet. Invito e risposta sono solo testo, da
+        // passare come un messaggio qualsiasi.
+        function lanEncode(text) {
+            return LAN_TAG + bytesToBase64Url(new TextEncoder().encode(text));
+        }
+
+        function lanDecode(text) {
+            var raw = String(text || '').replace(/\r\n?/g, '\n');
+            var at = raw.indexOf(LAN_TAG);
+            if (at === -1) return '';
+            // Il testo arriva dentro un messaggio (prima e dopo ci sono frasi):
+            // tengo i caratteri dell'alfabeto base64url, salto i singoli a capo
+            // che a volte aggiungono i messaggini, e mi fermo alla prima riga
+            // vuota, che è dove finisce il testo dell'invito.
+            var body = raw.slice(at + LAN_TAG.length);
+            var buf = '', afterWs = false;
+            for (var i = 0; i < body.length; i++) {
+                var c = body.charAt(i);
+                if (BASE64URL_CHARS.indexOf(c) !== -1) { buf += c; afterWs = false; continue; }
+                if (/\s/.test(c)) {
+                    if (afterWs) break;
+                    afterWs = true;
+                    continue;
+                }
+                break;
+            }
+            if (buf.length < 16) return '';
+            var out;
+            try {
+                out = new TextDecoder().decode(base64UrlToBytes(buf));
+            } catch (e) {
+                return '';
+            }
+            // Se in coda è rimasto qualche carattere che sembra base64 ma non lo
+            // era (per esempio la parola "fine"), lo taglio: il messaggio finisce
+            // con la graffa di chiusura del JSON.
+            var stop = out.lastIndexOf('}');
+            return stop === -1 ? out : out.slice(0, stop + 1);
+        }
+
+        function lanWhatText() {
+            if (state.files.length === 1) return 'il file ' + state.files[0].name;
+            if (state.files.length > 1) return state.files.length + ' file';
+            return 'un file';
+        }
+
+        function lanInviteMessage() {
+            var text = ($('lanInvite').value || '').trim();
+            if (!text) return '';
+            return 'Ti mando ' + lanWhatText() + ' con FileTransfer, sulla stessa Wi-Fi.' + LF + LF
+                + 'Apri l’app, tocca «Ricevi un file» e poi «Siamo sulla stessa Wi-Fi», incolla questo invito e mandami indietro la risposta:' + LF + LF
+                + text + LF + LF
+                + 'Serve solo la stessa Wi-Fi (o l’hotspot di uno dei due): questo testo non passa da nessun server.';
+        }
+
+        function lanReplyMessage() {
+            var text = ($('lanReplyOut').value || '').trim();
+            if (!text) return '';
+            return 'Ecco la risposta di FileTransfer.' + LF + LF
+                + 'Torna sulla schermata di invio e incollala dove c’è scritto «2. Incolla qui la risposta che ti rimanda», poi tocca «Collega»:' + LF + LF
+                + text;
+        }
+
+        function copyLanReply() {
+            var text = lanReplyMessage();
+            if (!text) return;
+            copyToClipboard(text).then(function (ok) {
+                if (ok) { playShareSound(); showToast('Risposta copiata: mandala a chi invia'); }
+                else showToast('Copia non riuscita: seleziona il testo e copialo a mano', { variant: 'error' });
+            });
+        }
+
+        function shareLanReply() {
+            var text = lanReplyMessage();
+            if (!text) return;
+            if (!navigator.share) { copyLanReply(); return; }
+            playShareSound();
+            navigator.share({ title: 'FileTransfer', text: text }).then(function () { }, function () { });
+        }
+
+        function pasteLanText(id) {
+            playClickSound();
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                showToast('Tieni premuto nel campo e scegli "Incolla"');
+                return;
+            }
+            navigator.clipboard.readText().then(function (text) {
+                $(id).value = text || '';
+                createSparkles($(id), 8, true);
+                showToast('Testo incollato');
+            }, function () {
+                showToast('Il browser non dà accesso agli appunti: incolla a mano', { variant: 'error' });
+            });
+        }
 
         function openFilePicker() { $('fileInput').click(); }
 
@@ -1778,25 +2011,51 @@
             if (name === 'no-webrtc') return 'Questo browser non sa fare il collegamento diretto fra dispositivi.';
             if (name === 'stream-stall') return 'Il collegamento diretto si è interrotto durante il trasferimento. Riprova tenendo entrambe le schermate aperte.';
             if (name === 'direct-lost' || name === 'direct-closed' || name === 'direct-failed') return 'Il collegamento diretto si è chiuso. Riprova.';
+            if (name === 'link-blocked') return linkBlockedMessage();
+            if (name === 'relay-busy') return signalingBusyMessage();
             if (name === 'no-manifest') return 'Non mi è arrivato l’elenco dei file. Riprova.';
             if (name === 'no-link') return 'Nessuno si è collegato con il codice. Riprova e manda il codice all’altra persona.';
-            if (err && err.code === 429) return 'Il servizio di contatto è occupato. Aspetta qualche secondo e riprova.';
+            if (err && err.code === 429) return signalingBusyMessage();
             if (err && err.code === 404) return 'I dati di contatto non sono più disponibili: chiedi di rifare l’invio.';
             return 'Connessione non riuscita. Controlla di essere online e riprova.';
         }
 
+        // Il ponte di contatto limita le richieste per indirizzo IP: sulle reti
+        // condivise (dati mobili) la quota può esaurirsi anche per colpa di
+        // altri, e allora nessun messaggio passa più per qualche minuto.
+        function signalingBusyMessage() {
+            return 'Il servizio di contatto sta rifiutando le richieste (troppo traffico dallo stesso indirizzo). Aspetta un minuto e riprova: è la rete, non il codice.';
+        }
+
+        // Un browser non può chiedere al telefono o al router di aprire un varco
+        // nel firewall. Quando la rete impedisce il collegamento diretto l'unica
+        // strada affidabile è mettersi sulla stessa rete: stesso Wi-Fi o hotspot.
         function linkBlockedMessage() {
-            return 'Non sono riuscito ad aprire il collegamento diretto: la rete (Wi‑Fi o dati) lo blocca. Riprovate da un’altra rete, oppure mettete i due dispositivi sulla stessa Wi‑Fi.';
+            return 'La rete blocca il collegamento diretto: succede con i dati mobili, su molte reti aziendali o quando il Wi-Fi tiene isolati i dispositivi. Un browser non può farsi aprire un varco nel firewall. Mettete i due dispositivi sulla stessa Wi-Fi (o sull’hotspot di uno dei due) e usate l’invito «Siamo sulla stessa Wi-Fi»: lì il collegamento è diretto e non serve nessun server.';
         }
 
         function noOfferMessage() {
             return 'Non trovo nessun invio con questo codice. Controlla di averlo scritto giusto, oppure chiedi di generarne uno nuovo.';
         }
 
+        // Un errore che parla di collegamento, non di codice sbagliato.
+        function isLinkError(err) {
+            var name = String((err && (err.message || err.name)) || '');
+            return name.indexOf('direct-') === 0 || name === 'no-link' || name === 'link-blocked' || name === 'stream-stall';
+        }
+
+        // ---------- SERVER DI RETE (STUN) ----------
+        // STUN serve solo a farsi dire dal router quale indirizzo pubblico ha il
+        // dispositivo: è un'informazione, non un passaggio di dati, e i file non
+        // lo toccano mai. Se non risponde, sulla stessa rete locale il
+        // collegamento diretto funziona lo stesso.
         function createPeer() {
             if (!window.RTCPeerConnection) return null;
-            try { return new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] }); }
-            catch (e) { return null; }
+            try {
+                return new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
+            } catch (e) {
+                try { return new RTCPeerConnection(); } catch (e2) { return null; }
+            }
         }
 
         // Canale di controllo più una corsia per file: così più file viaggiano
@@ -2038,11 +2297,9 @@
             return out;
         }
 
-        // Un tentativo: pubblica un'offerta fresca e aspetta la risposta
-        // dell'altro dispositivo. Se non riesce, il chiamante riprova.
-        async function attemptSenderLink(channel, entries, token) {
-            var pc = createPeer();
-            if (!pc) throw new Error('no-webrtc');
+        // Chi invia apre il canale di controllo e una corsia per file: la stessa
+        // preparazione vale per il codice a distanza e per l'invito in rete locale.
+        function senderChannels(pc, entries) {
             var session = newSession(pc);
             try { session.add(pc.createDataChannel(CONTROL_LABEL, { ordered: true }), true); } catch (e) { throw new Error('no-webrtc'); }
             var lanes = laneCount(entries);
@@ -2052,10 +2309,19 @@
             // La coda si divide fra le corsie: la memoria totale resta la stessa.
             session.queueLimit = Math.max(1 << 20, Math.floor(MAX_BUFFERED / Math.max(1, session.workers.length)));
             session.workers.forEach(function (ch) { ch.bufferedAmountLowThreshold = Math.floor(session.queueLimit / 2); });
+            return session;
+        }
+
+        // Un tentativo: pubblica un'offerta fresca e aspetta la risposta
+        // dell'altro dispositivo. Se non riesce, il chiamante riprova.
+        async function attemptSenderLink(channel, entries, token) {
+            var pc = createPeer();
+            if (!pc) throw new Error('no-webrtc');
+            var session = senderChannels(pc, entries);
 
             var publishedAt = Date.now();
             try { await relayPublish(channel, await buildOffer(pc)); } catch (e) { }
-            var answered = false;
+            var answered = false, answeredAt = 0;
             var wait = POLL_MIN_MS;
             var deadline = Date.now() + LINK_TIMEOUT_MS;
             while (Date.now() < deadline && token === state.sendToken) {
@@ -2069,6 +2335,7 @@
                 var answer = newestOf(await readLinks(channel), 'answer');
                 if (answer && answer.time * 1000 >= publishedAt - 10000) {
                     answered = true;
+                    answeredAt = Date.now();
                     if (answer.payload.n) session.peerName = String(answer.payload.n).slice(0, 24);
                     try { await applyRemote(pc, answer.payload); } catch (e) { }
                     continue;
@@ -2076,6 +2343,9 @@
                 await sleep(wait);
                 wait = pollDelay(wait, ANSWER_POLL_MS);
             }
+            // Quanto si è aspettato dopo la risposta: distingue un collegamento
+            // lento da una rete che non lo lascia passare.
+            session.afterAnswerMs = answeredAt ? Date.now() - answeredAt : 0;
             return session;
         }
 
@@ -2181,7 +2451,7 @@
                 setActiveTitle('Consegnato', '🎉');
                 setActiveText(who + ' ha ricevuto ' + formatBytes(got) + '.');
                 playSuccessSound();
-                createSparkles($('sendCode'), 14, true);
+                createSparkles(state.lanMode ? $('sendStatus') : $('sendCode'), 14, true);
             } else {
                 setSendStatus('File inviati. Se l’altro dispositivo non li vede, riprova.', 'ok');
             }
@@ -2193,6 +2463,7 @@
 
         async function runSendLink(channel, entries, manifest, total, token) {
             var deadline = Date.now() + WAIT_SIGNAL_MS;
+            var blocked = 0, busy = 0;
             while (Date.now() < deadline && token === state.sendToken) {
                 setSendStatus('Aspetto che l’altro dispositivo inserisca il codice…');
                 setActiveText('Manda il codice: i file partiranno appena l’altro dispositivo si collega.');
@@ -2203,12 +2474,19 @@
                     await deliverFiles(session, entries, manifest, total, token);
                     return;
                 }
+                // La risposta è arrivata e si è aspettato abbastanza: se il
+                // collegamento non si apre non è lentezza, è la rete che blocca.
+                if (session.afterAnswerMs >= LINK_SETTLE_MS) blocked++; else blocked = 0;
+                // Nessuna risposta e il ponte che rifiuta: insistere peggiora.
+                if (channel.busy && !session.afterAnswerMs) busy++; else if (!channel.busy) busy = 0;
                 session.close();
+                if (busy >= BLOCKED_TRIES) throw new Error('relay-busy');
+                if (blocked >= BLOCKED_TRIES) throw new Error('link-blocked');
                 if (token === state.sendToken) setSendStatus('Collegamento diretto non riuscito: riprovo…');
                 await sleep(1000);
             }
             if (token !== state.sendToken) return;
-            throw new Error('no-link');
+            throw new Error(channel.busy ? 'relay-busy' : 'no-link');
         }
 
         async function startSend() {
@@ -2220,9 +2498,12 @@
             state.name = ($('senderName').value || '').trim().slice(0, 24);
             try { localStorage.setItem(NAME_KEY, state.name); } catch (e) { }
 
+            resetLanSend();
+            setSendRunMode(false);
             $('sendStartBtn').disabled = true;
             $('sendStartBtn').textContent = 'Genera codice';
             $('sendRetryBtn').classList.add('hidden');
+            $('sendLanBtn').classList.add('hidden');
             $('sendProgressBox').classList.remove('hidden');
             $('sendPickPane').classList.add('hidden');
             $('sendRunPane').classList.remove('hidden');
@@ -2257,20 +2538,145 @@
                 await runSendLink(channel, entries, buildManifest(entries, state.name), total, token);
             } catch (err) {
                 if (token !== state.sendToken) return;
-                sendFail(linkFailureMessage(err));
+                sendFail(linkFailureMessage(err), isLinkError(err));
             }
         }
 
-        function sendFail(message) {
+        function sendFail(message, net) {
             state.sendAlive = false;
             allowSleep();
             if (state.session) { state.session.close(); state.session = null; }
             playErrorSound();
             setSendStatus(message, 'error');
+            $('sendLanBtn').classList.toggle('hidden', !net || state.lanMode);
             $('sendRetryBtn').classList.remove('hidden');
             $('sendStartBtn').disabled = false;
             setActiveTitle('Invio interrotto', '⚠️');
             setActiveText(message, 'error');
+        }
+
+        // "Riprova" vale per tutte e due le strade: chi è sulla stessa Wi-Fi
+        // rifà l'invito, chi è a distanza genera un codice nuovo.
+        function retrySend() {
+            if (state.lanMode) startLanSend();
+            else startSend();
+        }
+
+        // ---------- INVIO SULLA STESSA RETE ----------
+        // Niente codice e niente ponte: l'offerta del collegamento diventa un
+        // testo da passare a mano, e la risposta torna indietro allo stesso modo.
+        function resetLanSend() {
+            if (state.lanSession) {
+                try { state.lanSession.close(); } catch (e) { }
+                state.lanSession = null;
+            }
+            state.lanEntries = null;
+            state.lanManifest = null;
+            state.lanTotal = 0;
+        }
+
+        async function startLanSend() {
+            if (state.sendAlive) {
+                state.sendToken++;
+                state.sendAlive = false;
+                resetLanSend();
+            }
+            var files = state.files.slice();
+            if (!files.length) { playErrorSound(); showToast('Scegli almeno un file', { variant: 'error' }); return; }
+            if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
+
+            state.name = ($('senderName').value || '').trim().slice(0, 24);
+            try { localStorage.setItem(NAME_KEY, state.name); } catch (e) { }
+
+            var token = state.sendToken + 1;
+            state.sendToken = token;
+            state.sendAlive = true;
+            keepAwake();
+
+            $('sendPickPane').classList.add('hidden');
+            $('sendRunPane').classList.remove('hidden');
+            setSendRunMode(true);
+            $('sendRetryBtn').classList.add('hidden');
+            $('sendLanBtn').classList.add('hidden');
+            $('sendSheetBtn').classList.toggle('hidden', !navigator.share);
+            $('sendProgressBox').classList.add('hidden');
+            $('sendBar').style.width = '0%';
+            $('lanInvite').value = '';
+            $('lanAnswer').value = '';
+            $('lanConnectBtn').disabled = true;
+
+            var total = totalBytes();
+            state.transfer = { kind: 'send', icon: '📶', title: 'Invito per la stessa Wi‑Fi', text: 'Passa l’invito all’altro dispositivo.' };
+            updateActive();
+            setSendStatus('Preparo l’invito…');
+
+            var entries = files.map(function (f, i) {
+                return {
+                    index: i,
+                    file: f,
+                    name: f.name || ('file-' + (i + 1)),
+                    type: f.type || 'application/octet-stream',
+                    size: f.size || 0
+                };
+            });
+
+            try {
+                var pc = createPeer();
+                if (!pc) throw new Error('no-webrtc');
+                var session = senderChannels(pc, entries);
+                state.lanSession = session;
+                state.lanEntries = entries;
+                state.lanManifest = buildManifest(entries, state.name);
+                state.lanTotal = total;
+                state.lanToken = token;
+                $('lanInvite').value = lanEncode(await buildOffer(pc));
+            } catch (err) {
+                if (token !== state.sendToken) return;
+                resetLanSend();
+                sendFail(linkFailureMessage(err), false);
+                return;
+            }
+            if (token !== state.sendToken) return;
+            $('lanConnectBtn').disabled = false;
+            setSendStatus('Invito pronto: passalo all’altro dispositivo, poi incolla qui la sua risposta.');
+            setActiveText('Passa l’invito: i file partono appena incolli la risposta.');
+            playPopSound();
+            createSparkles($('lanInvite'), 10, true);
+        }
+
+        async function applyLanAnswer() {
+            var session = state.lanSession, token = state.lanToken;
+            if (!session || !state.sendAlive || token !== state.sendToken) return;
+            var link = null;
+            try { link = JSON.parse(lanDecode($('lanAnswer').value)); } catch (e) { link = null; }
+            if (!link || !link.sdp) {
+                playErrorSound();
+                showToast('Questa non sembra la risposta: controlla di aver incollato tutto il testo', { variant: 'error' });
+                return;
+            }
+            $('lanConnectBtn').disabled = true;
+            $('sendProgressBox').classList.remove('hidden');
+            setSendStatus('Collegamento diretto in corso…');
+            if (link.n) session.peerName = String(link.n).slice(0, 24);
+            try {
+                await applyRemote(session.pc, link);
+            } catch (e) {
+                $('lanConnectBtn').disabled = false;
+                $('sendProgressBox').classList.add('hidden');
+                playErrorSound();
+                showToast('Risposta non leggibile: fatti rimandare il testo per intero', { variant: 'error' });
+                return;
+            }
+            var ok = await settledConnection(session, LAN_COMMS_MS);
+            if (token !== state.sendToken) { session.close(); return; }
+            if (!ok) {
+                session.close();
+                resetLanSend();
+                sendFail('Il collegamento non si è aperto. Controllate di essere davvero sulla stessa Wi‑Fi (o sull’hotspot) e che il Wi‑Fi non tenga isolati i dispositivi. Poi rifai l’invito.', false);
+                return;
+            }
+            state.session = session;
+            await deliverFiles(session, state.lanEntries, state.lanManifest, state.lanTotal, token);
         }
 
         // ---------- CODICE / INVITO ----------
@@ -2279,7 +2685,9 @@
         }
 
         function inviteText() {
+            if (state.lanMode) return lanInviteMessage();
             var code = currentSendCode();
+            if (code.length < 10) return '';
             var what = 'un file';
             if (state.files.length === 1) what = 'il file ' + state.files[0].name;
             else if (state.files.length > 1) what = state.files.length + ' file';
@@ -2299,17 +2707,20 @@
         }
 
         function copySendInvite() {
-            if (currentSendCode().length < 10) return;
-            copyToClipboard(inviteText()).then(function (ok) {
-                if (ok) { playShareSound(); showToast('Invito copiato: incollalo dove vuoi'); }
+            var text = inviteText();
+            if (!text) return;
+            copyToClipboard(text).then(function (ok) {
+                if (ok) { playShareSound(); showToast(state.lanMode ? 'Invito copiato: mandalo a chi riceve' : 'Invito copiato: incollalo dove vuoi'); }
                 else showToast('Copia non riuscita', { variant: 'error' });
             });
         }
 
         function shareCodeViaSheet() {
+            var text = inviteText();
+            if (!text) return;
             if (!navigator.share) { copySendInvite(); return; }
             playShareSound();
-            navigator.share({ title: 'FileTransfer', text: inviteText() }).then(function () {
+            navigator.share({ title: 'FileTransfer', text: text }).then(function () {
                 showToast('Invito condiviso');
             }, function () { });
         }
@@ -2320,12 +2731,12 @@
         function openReceiveModal() {
             playClickSound();
             if (recvRunning) {
-                $('recvPickPane').classList.add('hidden');
-                $('recvRunPane').classList.remove('hidden');
+                showRecvStage();
                 showModal('receiveModal');
                 return;
             }
             $('recvRunPane').classList.add('hidden');
+            $('recvLanPane').classList.add('hidden');
             $('recvPickPane').classList.remove('hidden');
             $('recvPickStatus').textContent = '';
             $('recvStartBtn').disabled = false;
@@ -2334,6 +2745,107 @@
         }
 
         function closeReceiveModal() { hideModal('receiveModal'); }
+
+        // La ricezione sulla stessa rete: si incolla l'invito, si rimanda la
+        // risposta e si aspetta il collegamento. Nessun server in mezzo.
+        function openLanReceive() {
+            if (recvRunning) return;
+            playClickSound();
+            state.lanPending = false;
+            $('recvPickPane').classList.add('hidden');
+            $('recvRunPane').classList.add('hidden');
+            $('recvLanPane').classList.remove('hidden');
+            $('lanReplyBlock').classList.add('hidden');
+            $('lanReplyOut').value = '';
+            $('lanJoinBtn').disabled = false;
+            $('lanRecvStatus').textContent = '';
+            $('lanRecvStatus').className = 'ft-status';
+            showModal('receiveModal');
+            setTimeout(function () { try { $('lanInviteIn').focus(); } catch (e) { } }, 280);
+        }
+
+        function backToCode() {
+            playClickSound();
+            state.lanPending = false;
+            $('recvLanPane').classList.add('hidden');
+            $('recvRunPane').classList.add('hidden');
+            $('recvPickPane').classList.remove('hidden');
+            $('recvPickStatus').textContent = '';
+            $('recvStartBtn').disabled = false;
+        }
+
+        function lanRecvFail(message) {
+            recvRunning = false;
+            state.lanPending = false;
+            allowSleep();
+            playErrorSound();
+            $('lanJoinBtn').disabled = false;
+            $('lanRecvStatus').textContent = message;
+            $('lanRecvStatus').className = 'ft-status error';
+            setActiveTitle('Ricezione non riuscita', '⚠️');
+            setActiveText(message, 'error');
+        }
+
+        async function connectLanInvite() {
+            if (recvRunning) return;
+            var link = null;
+            try { link = JSON.parse(lanDecode($('lanInviteIn').value)); } catch (e) { link = null; }
+            if (!link || !link.sdp) {
+                playErrorSound();
+                $('lanRecvStatus').textContent = 'Questo non sembra un invito FileTransfer: incolla tutto il testo che ti è arrivato.';
+                $('lanRecvStatus').className = 'ft-status error';
+                return;
+            }
+            if (!window.RTCPeerConnection) { playErrorSound(); showToast('Questo browser non sa fare il collegamento diretto', { variant: 'error' }); return; }
+
+            var token = state.recvToken + 1;
+            state.recvToken = token;
+            recvRunning = true;
+            state.lanPending = true;
+            keepAwake();
+            releaseResults();
+            $('lanJoinBtn').disabled = true;
+            $('lanRecvStatus').textContent = 'Preparo la risposta…';
+            $('lanRecvStatus').className = 'ft-status';
+            state.transfer = { kind: 'receive', icon: '📶', title: 'Stessa Wi‑Fi', text: 'Aspetto la risposta di chi invia.' };
+            updateActive();
+
+            var pc = createPeer(), session = null;
+            try {
+                if (!pc) throw new Error('no-webrtc');
+                session = newSession(pc);
+                // Chi riceve deve essere pronto a raccogliere i byte appena i
+                // canali si aprono, altrimenti i primi pezzi vanno persi.
+                session.sink = createReceiver();
+                session.onChannel = function (ch, isControl) {
+                    if (isControl) session.sink.onControl(ch);
+                    else session.sink.onWorker(ch);
+                };
+                pc.ondatachannel = function (e) { session.add(e.channel, e.channel.label === CONTROL_LABEL); };
+                if (link.n) session.peerName = String(link.n).slice(0, 24);
+                await applyRemote(pc, link);
+                $('lanReplyOut').value = lanEncode(await buildAnswer(pc));
+                $('lanReplyBlock').classList.remove('hidden');
+                $('lanRecvStatus').textContent = 'Risposta pronta: copiala e mandala a chi invia. Poi aspetto il collegamento…';
+                playPopSound();
+            } catch (err) {
+                if (session) session.close();
+                lanRecvFail(linkFailureMessage(err));
+                return;
+            }
+
+            var ok = await settledConnection(session, WAIT_SIGNAL_MS);
+            if (token !== state.recvToken) { session.close(); return; }
+            if (!ok) {
+                session.close();
+                lanRecvFail('Il collegamento non si è aperto. Controllate di essere davvero sulla stessa Wi‑Fi (o sull’hotspot) e che il Wi‑Fi non tenga isolati i dispositivi. Poi rifate lo scambio.');
+                return;
+            }
+            state.session = session;
+            state.lanPending = false;
+            showRecvStage();
+            await finishReceive(session, token);
+        }
 
         function pasteRecvCode() {
             playClickSound();
@@ -2391,13 +2903,16 @@
             }
         }
 
-        function recvFail(message) {
+        function recvFail(message, net) {
             recvRunning = false;
             allowSleep();
             $('recvStartBtn').disabled = false;
             playErrorSound();
             setRecvHead('⚠️', 'Non riuscito', '');
             setRecvStatus(message, 'error');
+            $('recvLanBtn').classList.toggle('hidden', !net || state.lanPending);
+            $('lanRecvStatus').textContent = message;
+            $('lanRecvStatus').className = 'ft-status error';
             setActiveTitle('Ricezione non riuscita', '⚠️');
             setActiveText(message, 'error');
             if (!state.results.length) {
@@ -2411,10 +2926,22 @@
         // prossima offerta.
         async function waitForOffer(channel, token) {
             var deadline = Date.now() + WAIT_SIGNAL_MS;
-            var seen = '', session = null, misses = 0, wait = POLL_MIN_MS;
+            var seen = '', session = null, misses = 0, wait = POLL_MIN_MS, failed = 0;
+            var busySince = 0;
             state.sawOffer = false;
             while (Date.now() < deadline && token === state.recvToken) {
                 var offer = newestOf(await readLinks(channel), 'offer');
+                // Il ponte che chiede di rallentare non è un codice sbagliato:
+                // senza risposta si aspetta la fine della pausa invece di
+                // contare i tentativi a vuoto e arrendersi.
+                if (channel.busy && !session) {
+                    if (!busySince) busySince = Date.now();
+                    if (Date.now() - busySince >= BUSY_MAX_MS) return null;
+                    setRecvStatus('Il servizio di contatto sta chiedendo di rallentare: aspetto…');
+                    await sleep(POLL_MIN_MS);
+                    continue;
+                }
+                busySince = 0;
                 if (!offer) {
                     misses++;
                     if (misses > OFFER_MISSES) { if (session) session.close(); return null; }
@@ -2430,9 +2957,19 @@
                     setRecvHead('🔗', 'Collegamento diretto…', 'Sto raggiungendo l’altro dispositivo.');
                     setRecvStatus('Provo a collegarmi in diretta…');
                     session = await respondToOffer(channel, offer.payload);
+                    if (!session) { await sleep(wait); wait = pollDelay(wait); continue; }
                 }
-                if (session && await settledConnection(session, 8000)) return session;
-                if (!offer) { await sleep(wait); wait = pollDelay(wait); }
+                if (session) {
+                    if (await settledConnection(session, 8000)) return session;
+                    // Anche questo tentativo è andato a vuoto: se si ripete, la
+                    // rete blocca il collegamento e insistere non serve.
+                    session.close();
+                    session = null;
+                    failed++;
+                    if (failed >= BLOCKED_TRIES) return null;
+                }
+                await sleep(offer ? POLL_MIN_MS : wait);
+                if (!offer) wait = pollDelay(wait);
             }
             if (session) session.close();
             return null;
@@ -2601,6 +3138,7 @@
             keepAwake();
             releaseResults();
             $('recvStartBtn').disabled = true;
+            $('recvLanBtn').classList.add('hidden');
             $('recvPickPane').classList.add('hidden');
             $('recvRunPane').classList.remove('hidden');
             $('recvBar').style.width = '0%';
@@ -2615,10 +3153,27 @@
                 var channel = await transferChannel(code);
                 session = await waitForOffer(channel, token);
                 if (token !== state.recvToken) { if (session) session.close(); return; }
-                if (!session) { recvFail(state.sawOffer ? linkBlockedMessage() : noOfferMessage()); return; }
+                if (!session) {
+                    if (channel.busy) { recvFail(signalingBusyMessage()); return; }
+                    recvFail(state.sawOffer ? linkBlockedMessage() : noOfferMessage(), state.sawOffer);
+                    return;
+                }
                 state.session = session;
                 state.transfer.channel = channel;
+            } catch (err) {
+                if (session) session.close();
+                state.session = null;
+                if (token !== state.recvToken) return;
+                recvFail(linkFailureMessage(err), isLinkError(err));
+                return;
+            }
+            await finishReceive(session, token);
+        }
 
+        // Il collegamento è aperto: si aspetta che arrivino tutti i file, si
+        // mettono a disposizione dell'utente e si conferma a chi ha inviato.
+        async function finishReceive(session, token) {
+            try {
                 setActiveTitle('Collegato', '🔗');
                 setRecvHead('🔗', 'Collegato', 'Sto ricevendo i file in diretta.');
                 setRecvStatus('Collegato in diretta: i file stanno arrivando.');
@@ -2676,7 +3231,7 @@
                 if (session) session.close();
                 state.session = null;
                 if (token !== state.recvToken) return;
-                recvFail(linkFailureMessage(err));
+                recvFail(linkFailureMessage(err), isLinkError(err));
             }
         }
 
@@ -2837,9 +3392,19 @@
                 if (e.key === 'Enter') { e.preventDefault(); startReceive(); }
             });
 
+            $('lanInviteIn').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); connectLanInvite(); }
+            });
+            $('lanAnswer').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); applyLanAnswer(); }
+            });
+
             $('recvSaveAllBtn').addEventListener('click', function () { saveAllResults($('recvSaveAllBtn')); });
 
-            if (navigator.share) $('sendSheetBtn').classList.remove('hidden');
+            if (navigator.share) {
+                $('sendSheetBtn').classList.remove('hidden');
+                $('lanReplyShareBtn').classList.remove('hidden');
+            }
 
             ['sendModal', 'receiveModal'].forEach(function (id) {
                 var overlay = $(id);
