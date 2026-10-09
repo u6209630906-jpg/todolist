@@ -1438,22 +1438,27 @@
         // esaurisce la quota e il ponte risponde 429. Per questo i controlli non
         // sono mai più ravvicinati di così e ogni richiesta chiede solo quello
         // che è arrivato dopo l'ultimo messaggio visto.
-        var POLL_MS = 5000;               // ogni quanto si chiede al ponte se ci sono novità
-        var POLL_MIN_MS = 1000;           // i primi controlli sono ravvicinati, poi si dirada
+        // Il ponte consegna i messaggi da sé, tenendo aperto un flusso: le
+        // richieste diventano pochissime e non si esaurisce la quota per
+        // indirizzo IP. I ritmi qui sotto valgono solo come ripiego, quando il
+        // flusso non è disponibile.
+        var POLL_MS = 5000;               // ritmo di ripiego delle domande al ponte
+        var POLL_MIN_MS = 3000;           // mai più fitto di così: la quota è per indirizzo IP
         var ANSWER_POLL_MS = 2500;        // attesa della risposta: qui conviene insistere
+        var RELAY_WAIT_MS = 1500;         // quanto si aspetta un messaggio sul flusso aperto
         var BUSY_MAX_MS = 60000;          // quanto si aspetta al massimo se il ponte chiede di rallentare
         var LOCAL_POLL_MS = 200;          // attesa locale del collegamento, senza toccare il ponte
-        var OFFER_MISSES = 10;            // quante volte si può non trovare l'invio prima di arrendersi
+        var OFFER_SEARCH_MS = 120000;     // quanto si cerca chi ha inviato prima di arrendersi
         var ICE_WAIT_MS = 2500;           // raccolta dei candidati di rete da spedire
         var STUN_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
         // Modalità "vicino": i due dispositivi, stando sulla stessa rete, ricavano
         // da soli lo stesso canale di contatto (vedi nearChannel): nessun codice
         // da scrivere e niente da copiare.
-        var NEAR_PROBE_MS = 6000;         // raccolta degli indirizzi della propria rete
-        var NEAR_TRY_MS = 40000;          // quanto si cerca un vicino prima di ripiegare sul codice
-        var NEAR_MISSES = 6;              // quante volte si può non trovare l'invio prima di arrendersi
+        var NEAR_PROBE_MS = 4000;         // raccolta degli indirizzi della propria rete
+        var NEAR_TRY_MS = 90000;          // quanto si cerca un vicino prima di ripiegare sul codice
+        var NEAR_SEARCH_MS = 120000;      // quanto si sta in ascolto di un invio vicino
         var NEAR_FRESH_MS = 600000;       // un invio più vecchio di così è di un'altra volta
-        var NEAR_POLL_MIN = 4000;         // il canale dei vicini è pubblico: si chiede piano
+        var NEAR_POLL_MIN = 3000;         // canale dei vicini: vale solo quando il flusso non c'è
         var NEAR_POLL_MS = 5000;
         var SEND_BTN_LABEL = 'Invia';
         var LINK_SETTLE_MS = 8000;        // quanto si aspetta il collegamento dopo la risposta
@@ -1464,7 +1469,10 @@
         var RANGE_MIN = 32 * 1024 * 1024; // sopra questa soglia un file si spezza e viaggia su più corsie
         var MAX_BUFFERED = 8 * 1024 * 1024;   // coda massima complessiva, divisa fra le corsie
         var PROGRESS_MS = 120;            // le barre si ridisegnano al massimo ogni tanto
-        var STALL_MS = 60000;             // se per un minuto non arriva nulla, il flusso è morto
+        var STALL_MS = 60000;             // un minuto senza un byte: il flusso è fermo
+        var DIRECT_GRACE_MS = 45000;      // quanto si tollera un canale messosi in pausa
+        var RESUME_TRIES = 3;             // quante volte si riprende un invio interrotto
+        var HELLO_WAIT_MS = 4000;         // quanto si aspetta di sapere cosa ha già chi riceve
         var BIG_TOTAL = 512 * 1024 * 1024;   // oltre mezzo giga la memoria del telefono soffre
 
         // Chiedere subito, poi diradare: il contatto di solito arriva in un paio
@@ -1558,10 +1566,16 @@
                 key: key,
                 sinceId: null,        // ultimo messaggio visto: si chiede solo ciò che viene dopo
                 sinceAll: '10m',      // deposito pubblico: non si ripesca tutta la cronologia
-                pollMin: POLL_MIN_MS, // ritmo delle domande al ponte
+                pollMin: POLL_MIN_MS, // ritmo delle domande al ponte (solo come ripiego)
                 pollCap: ANSWER_POLL_MS,
                 busy: false,          // il ponte ha chiesto di rallentare
-                cooldownUntil: 0      // fine della pausa chiesta dal ponte
+                cooldownUntil: 0,     // fine della pausa chiesta dal ponte
+                live: false,          // il flusso in diretta è aperto
+                watching: false,      // il flusso è già stato aperto una volta
+                streams: [],
+                inbox: [],            // messaggi consegnati e non ancora letti
+                lastAsk: 0,           // ultima domanda fatta al ponte
+                seq: 0                // numero del tentativo in corso
             };
         }
 
@@ -1591,10 +1605,19 @@
 
         async function relayPublish(channel, text) {
             var body = TAG + bytesToBase64Url(await sealText(channel.key, text));
-            var res = await fetch(RELAY + '/' + channel.topic, { method: 'POST', body: body });
-            if (res.status === 429) { relayCooldown(channel, res); throw relayError(429); }
-            if (!res.ok) throw relayError(res.status);
-            if (channel) channel.busy = false;
+            var topics = [channel.topic].concat(channel.extras || []);
+            for (var i = 0; i < topics.length; i++) {
+                try {
+                    var res = await fetch(RELAY + '/' + topics[i], { method: 'POST', body: body });
+                    if (res.status === 429) { relayCooldown(channel, res); if (!i) throw relayError(429); continue; }
+                    if (!res.ok) { if (!i) throw relayError(res.status); continue; }
+                    if (channel) channel.busy = false;
+                } catch (err) {
+                    // I canali aggiuntivi sono una possibilità in più, non una
+                    // condizione: se uno non risponde basta che risponda l'altro.
+                    if (!i) throw err;
+                }
+            }
             return true;
         }
 
@@ -1649,6 +1672,76 @@
             return messages;
         }
 
+        // ---------- FLUSSO IN DIRETTA DAL PONTE ----------
+        // Chiedere "c'è qualcosa?" ogni pochi secondi costa una richiesta per
+        // volta, e il ponte le conta per indirizzo IP: due dispositivi sulla
+        // stessa rete le esauriscono subito e finiscono con l'aspettare invece
+        // di trovarsi. Si tiene quindi aperta una sola richiesta: il ponte ci
+        // scrive dentro appena qualcuno pubblica, e i messaggi arrivano subito.
+        function openRelayStream(channel, topic) {
+            if (!window.EventSource) return null;
+            var source = null;
+            try {
+                // Con "since" il ponte rimanda prima quello che è già nel
+                // deposito, poi resta in ascolto: non si perde niente di chi ha
+                // pubblicato l'offerta prima che ci si mettesse in attesa.
+                source = new EventSource(RELAY + '/' + topic + '/sse?since=' + encodeURIComponent(channel.sinceAll || '10m'));
+            } catch (e) { return null; }
+            source.onopen = function () {
+                channel.live = true;
+                channel.busy = false;
+            };
+            source.onmessage = function (e) {
+                var msg = null;
+                try { msg = JSON.parse(e.data); } catch (err) { msg = null; }
+                if (!msg || msg.event !== 'message') return;
+                if (msg.id) channel.sinceId = msg.id;
+                pushInbox(channel, msg);
+            };
+            // Se il flusso cade il browser lo riapre da sé; nel frattempo si
+            // torna a chiedere, come ripiego.
+            source.onerror = function () { channel.live = false; };
+            return source;
+        }
+
+        function pushInbox(channel, msg) {
+            if (!channel.inbox) channel.inbox = [];
+            for (var i = 0; i < channel.inbox.length; i++) if (channel.inbox[i].id === msg.id) return;
+            channel.inbox.push(msg);
+            if (channel.inbox.length > 300) channel.inbox.splice(0, channel.inbox.length - 300);
+        }
+
+        async function watchRelay(channel) {
+            if (!channel || channel.watching) return;
+            channel.watching = true;
+            channel.inbox = channel.inbox || [];
+            if (window.EventSource) {
+                channel.streams = [];
+                [channel.topic].concat(channel.extras || []).forEach(function (topic) {
+                    var source = openRelayStream(channel, topic);
+                    if (source) channel.streams.push(source);
+                });
+            }
+            // Una domanda sola all'inizio, per essere sicuri di avere il
+            // deposito anche se il flusso non lo rimandasse.
+            try { (await relayList(channel)).forEach(function (m) { pushInbox(channel, m); }); } catch (e) { }
+        }
+
+        function closeRelay(channel) {
+            if (!channel) return;
+            channel.watching = false;
+            channel.live = false;
+            (channel.streams || []).forEach(function (source) { try { source.close(); } catch (e) { } });
+            channel.streams = [];
+        }
+
+        // Il flusso in diretta resta aperto finché serve: quando il
+        // trasferimento è finito va chiuso, altrimenti continuerebbe a consumare
+        // la quota del ponte e la batteria del telefono.
+        function closeChannels(list) {
+            (list || []).splice(0).forEach(closeRelay);
+        }
+
         // I messaggi leggibili appartengono al nostro codice; "sealed" conta anche
         // quelli che non si aprono, per distinguere "codice sbagliato" da "in attesa".
         async function readPayloads(channel, messages) {
@@ -1676,7 +1769,9 @@
             results: [],
             transfer: null,
             session: null,
-            sawOffer: false
+            sawOffer: false,
+            sendRelays: [],
+            recvRelays: []
         };
 
         function myName() { return (state.name || '').trim() || 'Un dispositivo'; }
@@ -1728,9 +1823,11 @@
             if (state.transfer && state.transfer.kind === 'send') {
                 state.sendToken++;
                 state.sendAlive = false;
+                closeChannels(state.sendRelays);
             } else {
                 state.recvToken++;
                 recvRunning = false;
+                closeChannels(state.recvRelays);
                 $('recvStartBtn').disabled = false;
                 releaseResults();
             }
@@ -1871,9 +1968,11 @@
             if (name === 'no-webrtc') return 'Questo browser non sa fare il collegamento diretto fra dispositivi.';
             if (name === 'stream-stall') return 'Il collegamento diretto si è interrotto durante il trasferimento. Riprova tenendo entrambe le schermate aperte.';
             if (name === 'direct-lost' || name === 'direct-closed' || name === 'direct-failed') return 'Il collegamento diretto si è chiuso. Riprova.';
+            if (name === 'direct-stall') return 'Il collegamento diretto si è fermato: la rete o il telefono non tengono il passo. Riprova, meglio se i due dispositivi sono vicini.';
             if (name === 'link-blocked') return linkBlockedMessage();
             if (name === 'relay-busy') return signalingBusyMessage();
             if (name === 'no-manifest') return 'Non mi è arrivato l’elenco dei file. Riprova.';
+            if (name === 'stream-partial') return 'Mancano ancora dei pezzi: il collegamento è caduto prima della fine. Riprova, meglio se i due dispositivi sono vicini.';
             if (name === 'no-link') return 'Nessuno si è collegato con il codice. Riprova e manda il codice all’altra persona.';
             if (err && err.code === 429) return signalingBusyMessage();
             if (err && err.code === 404) return 'I dati di contatto non sono più disponibili: chiedi di rifare l’invio.';
@@ -1906,10 +2005,13 @@
         // collegamento diretto funziona lo stesso.
         function createPeer() {
             if (!window.RTCPeerConnection) return null;
+            // bundlePolicy "max-bundle" tiene tutti i canali su un unico
+            // collegamento: sul telefono è più leggero e regge meglio.
+            var config = { iceServers: [{ urls: STUN_URLS }], bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require' };
             try {
-                return new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
+                return new RTCPeerConnection(config);
             } catch (e) {
-                try { return new RTCPeerConnection(); } catch (e2) { return null; }
+                try { return new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] }); } catch (e2) { return null; }
             }
         }
 
@@ -2056,26 +2158,35 @@
                 pollMin: NEAR_POLL_MIN,
                 pollCap: NEAR_POLL_MS,
                 busy: false,
-                cooldownUntil: 0
+                cooldownUntil: 0,
+                live: false,
+                watching: false,
+                streams: [],
+                inbox: [],
+                lastAsk: 0,
+                seq: 0
             };
         }
 
         // Descrizione e candidati in un unico messaggio: così sul ponte finisce
         // una sola pubblicazione per tentativo, e i file non ci passano mai.
-        async function buildOffer(pc) {
+        // Il numero del tentativo ("q") evita che una risposta vecchia, rimasta
+        // nel deposito del canale, venga scambiata per la risposta a questa
+        // offerta: è quello che succede ripetendo un invio interrotto.
+        async function buildOffer(pc, seq) {
             var candidates = [];
             pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
             await pc.setLocalDescription(await pc.createOffer());
             await waitIce(pc, ICE_WAIT_MS);
-            return JSON.stringify({ v: 2, t: 'link', r: 'offer', n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+            return JSON.stringify({ v: 2, t: 'link', r: 'offer', q: Number(seq) || 1, n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
         }
 
-        async function buildAnswer(pc) {
+        async function buildAnswer(pc, link) {
             var candidates = [];
             pc.onicecandidate = function (e) { if (e.candidate) candidates.push(e.candidate); };
             await pc.setLocalDescription(await pc.createAnswer());
             await waitIce(pc, ICE_WAIT_MS);
-            return JSON.stringify({ v: 2, t: 'link', r: 'answer', n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
+            return JSON.stringify({ v: 2, t: 'link', r: 'answer', q: Number(link && link.q) || 0, n: myName(), sdp: pc.localDescription.sdp, ice: candidates });
         }
 
         async function applyRemote(pc, link) {
@@ -2087,9 +2198,29 @@
             }
         }
 
+        // I messaggi nuovi che riguardano il collegamento. Con il flusso aperto
+        // il ponte li consegna da sé: si guarda lì dentro e si esce appena
+        // arriva qualcosa. Solo se il flusso non c'è si torna a chiedere, e
+        // comunque non più spesso di quanto il ponte tollera.
         async function readLinks(channel) {
-            var messages = null;
-            try { messages = await relayList(channel); } catch (e) { return null; }
+            if (!channel) return null;
+            await watchRelay(channel);
+            if (channel.live) {
+                var waited = 0;
+                while (!channel.inbox.length && waited < RELAY_WAIT_MS) {
+                    await sleep(60);
+                    waited += 60;
+                }
+            } else {
+                var elapsed = Date.now() - (channel.lastAsk || 0);
+                if (elapsed < POLL_MIN_MS) {
+                    await sleep(Math.min(POLL_MIN_MS - elapsed, 400));
+                } else {
+                    channel.lastAsk = Date.now();
+                    try { (await relayList(channel)).forEach(function (m) { pushInbox(channel, m); }); } catch (e) { }
+                }
+            }
+            var messages = channel.inbox.splice(0, channel.inbox.length);
             var payloads = (await readPayloads(channel, messages)).list;
             var out = [];
             for (var i = 0; i < payloads.length; i++) {
@@ -2134,21 +2265,39 @@
 
         // Manda un pezzo rispettando la coda del data channel, così la memoria
         // del telefono non esplode con i file grandi.
+        // Manda un pezzo rispettando la coda del data channel. Sul telefono la
+        // coda regge pochi secondi di traffico: se la si riempie oltre, il
+        // sistema chiude il canale di colpo e il trasferimento muore a metà.
+        // Qui si aspetta che si svuoti, e se non si svuota lo si dice al
+        // chiamante, che riprende il collegamento invece di perdere tutto.
         async function dcSend(dc, data, limit) {
             if (!dc || dc.readyState !== 'open') throw new Error('direct-lost');
             limit = limit || MAX_BUFFERED;
-            if (dc.bufferedAmount > limit) {
+            for (var tries = 0; tries < 4; tries++) {
+                if (dc.bufferedAmount <= limit) break;
                 await new Promise(function (resolve) {
-                    var timer = setTimeout(resolve, 4000);
-                    dc.onbufferedamountlow = function () {
+                    var done = false;
+                    function finish() {
+                        if (done) return;
+                        done = true;
                         clearTimeout(timer);
                         dc.onbufferedamountlow = null;
                         resolve();
-                    };
+                    }
+                    var timer = setTimeout(finish, 4000);
+                    try { dc.bufferedAmountLowThreshold = Math.floor(limit / 2); } catch (e) { }
+                    dc.onbufferedamountlow = finish;
                 });
+                if (dc.readyState !== 'open') throw new Error('direct-lost');
             }
-            if (dc.readyState !== 'open') throw new Error('direct-lost');
-            dc.send(data);
+            if (dc.bufferedAmount > limit) throw new Error('direct-stall');
+            try {
+                dc.send(data);
+            } catch (e) {
+                // Il sistema ha rifiutato il pezzo: la coda è piena oltre il
+                // limite. Non è un guasto, è una pausa da recuperare.
+                throw new Error('direct-stall');
+            }
         }
 
         // Ogni browser dichiara quanto regge per singolo messaggio: su Safari è
@@ -2208,31 +2357,42 @@
             return big ? MAX_LANES : many;
         }
 
-        // Ogni lavoro è una porzione di un file: da sola se il file è piccolo,
-        // in più pezzi se è grande. Così anche un unico file grosso può viaggiare
-        // su tutte le corsie insieme.
-        function buildRanges(entries, lanes) {
-            var total = entries.reduce(function (a, e) { return a + (e.size || 0); }, 0);
+        // Le porzioni ancora da mandare: una per file se il file è piccolo, in
+        // più pezzi se è grande, così anche un unico file grosso viaggia su tutte
+        // le corsie insieme. Se l'altro dispositivo dichiara di avere già dei
+        // byte (ripresa dopo un'interruzione) si calcola il complemento della sua
+        // copertura e si rimanda solo quello che manca davvero.
+        function missingRanges(entries, have) {
             var jobs = [];
             entries.forEach(function (e, i) {
                 var size = e.size || 0;
-                if (size <= 0) { jobs.push({ i: i, start: 0, end: 0 }); return; }
-                var parts = 1;
-                if (lanes > 1 && size >= RANGE_MIN) {
-                    parts = Math.max(2, Math.min(lanes, Math.round(lanes * size / Math.max(1, total))));
-                }
-                var step = Math.ceil(size / parts);
-                for (var s = 0; s < size; s += step) jobs.push({ i: i, start: s, end: Math.min(size, s + step) });
+                if (size <= 0) return;
+                var covered = (have && have[i]) || [];
+                var cursor = 0;
+                covered.forEach(function (span) {
+                    var start = Math.max(0, Math.min(size, Number(span[0]) || 0));
+                    var end = Math.max(0, Math.min(size, Number(span[1]) || 0));
+                    if (start > cursor) splitRange(jobs, i, cursor, start);
+                    cursor = Math.max(cursor, end);
+                });
+                if (cursor < size) splitRange(jobs, i, cursor, size);
             });
             return jobs;
         }
 
+        function splitRange(jobs, i, start, end) {
+            var span = end - start;
+            if (span <= 0) return;
+            var step = span >= RANGE_MIN ? Math.ceil(span / MAX_LANES) : span;
+            for (var s = start; s < end; s += step) jobs.push({ i: i, start: s, end: Math.min(end, s + step) });
+        }
+
         // Assegna i lavori alle corsie partendo dai più grossi e riempiendo
         // sempre quella più scarica: le corsie finiscono quasi insieme.
-        function laneJobs(entries, lanes) {
+        function laneJobs(jobs, lanes) {
             var out = [], load = [];
             for (var k = 0; k < lanes; k++) { out.push([]); load.push(0); }
-            buildRanges(entries, lanes)
+            jobs.slice()
                 .sort(function (a, b) { return (b.end - b.start) - (a.end - a.start); })
                 .forEach(function (job) {
                     var best = 0;
@@ -2245,6 +2405,16 @@
 
         // Chi invia apre il canale di controllo e una corsia per file: la stessa
         // preparazione vale sia in rete locale sia col codice a distanza.
+        // Quanto si può tenere in coda su una corsia: al massimo una decina di
+        // secondi di dati al ritmo misurato. Su iOS la coda di invio si chiude
+        // da sola dopo mezzo minuto di attesa, e quando si chiude cade tutto il
+        // collegamento: meglio andare piano che rompere il trasferimento.
+        function queueLimitFor(session) {
+            var cap = Math.max(1 << 18, Math.floor(MAX_BUFFERED / Math.max(1, (session.workers || []).length)));
+            if (!session.rate) return cap;
+            return Math.max(MIN_CHUNK * 4, Math.min(cap, Math.floor(session.rate * 8000)));
+        }
+
         function senderChannels(pc, entries) {
             var session = newSession(pc);
             try { session.add(pc.createDataChannel(CONTROL_LABEL, { ordered: true }), true); } catch (e) { throw new Error('no-webrtc'); }
@@ -2253,7 +2423,7 @@
                 try { session.add(pc.createDataChannel('ftx-' + k, { ordered: true }), false); } catch (e) { }
             }
             // La coda si divide fra le corsie: la memoria totale resta la stessa.
-            session.queueLimit = Math.max(1 << 20, Math.floor(MAX_BUFFERED / Math.max(1, session.workers.length)));
+            session.queueLimit = queueLimitFor(session);
             session.workers.forEach(function (ch) { ch.bufferedAmountLowThreshold = Math.floor(session.queueLimit / 2); });
             return session;
         }
@@ -2265,8 +2435,9 @@
             if (!pc) throw new Error('no-webrtc');
             var session = senderChannels(pc, entries);
 
-            var publishedAt = Date.now();
-            try { await relayPublish(channel, await buildOffer(pc)); } catch (e) { }
+            channel.seq = (Number(channel.seq) || 0) + 1;
+            var seq = channel.seq;
+            try { await relayPublish(channel, await buildOffer(pc, seq)); } catch (e) { }
             var answered = false, answeredAt = 0;
             var wait = channel.pollMin || POLL_MIN_MS;
             var deadline = Date.now() + LINK_TIMEOUT_MS;
@@ -2278,8 +2449,10 @@
                     await sleep(LOCAL_POLL_MS);
                     continue;
                 }
-                var answer = newestOf(await readLinks(channel), 'answer');
-                if (answer && answer.time * 1000 >= publishedAt - 10000) {
+                var answer = newestOf((await readLinks(channel) || []).filter(function (a) {
+                    return a.role === 'answer' && Number(a.payload.q) === seq;
+                }), 'answer');
+                if (answer) {
                     answered = true;
                     answeredAt = Date.now();
                     if (answer.payload.n) session.peerName = String(answer.payload.n).slice(0, 24);
@@ -2289,6 +2462,7 @@
                 await sleep(wait);
                 wait = pollDelay(wait, channel.pollCap || ANSWER_POLL_MS);
             }
+            session.seq = seq;
             // Quanto si è aspettato dopo la risposta: distingue un collegamento
             // lento da una rete che non lo lascia passare.
             session.afterAnswerMs = answeredAt ? Date.now() - answeredAt : 0;
@@ -2300,7 +2474,7 @@
         async function sendRange(session, lane, job, token, onBytes) {
             var file = session.entries[job.i].file;
             await dcSend(lane, JSON.stringify({ t: 'part', i: job.i, o: job.start, e: job.end }), session.queueLimit);
-            var offset = job.start;
+            var offset = job.start, markAt = Date.now(), markBytes = 0;
             while (offset < job.end) {
                 if (token !== state.sendToken) throw new Error('cancelled');
                 var end = Math.min(job.end, offset + session.chunkSize);
@@ -2308,6 +2482,14 @@
                 await dcSend(lane, bytes, session.queueLimit);
                 onBytes(bytes.length);
                 offset = end;
+                markBytes += bytes.length;
+                var elapsed = Date.now() - markAt;
+                if (elapsed >= 1000) {
+                    session.rate = markBytes / (elapsed / 1000);
+                    markAt = Date.now();
+                    markBytes = 0;
+                    session.queueLimit = queueLimitFor(session);
+                }
             }
         }
 
@@ -2316,8 +2498,10 @@
             for (var i = 0; i < jobs.length; i++) {
                 if (token !== state.sendToken) throw new Error('cancelled');
                 await sendRange(session, lane, jobs[i], token, onBytes);
-                session.pending[jobs[i].i]--;
-                if (session.pending[jobs[i].i] <= 0) {
+                var file = jobs[i].i;
+                session.pending[file]--;
+                if (session.pending[file] <= 0 && !session.counted[file]) {
+                    session.counted[file] = true;
                     session.doneFiles++;
                     if (session.entries.length > 1) {
                         setSendStatus('Invio in parallelo: ' + session.doneFiles + ' di ' + session.entries.length + ' file completati.');
@@ -2326,50 +2510,98 @@
             }
         }
 
-        // La conferma arriva dall'altro dispositivo lungo il collegamento diretto.
-        function waitForDirectAck(session, token) {
-            return new Promise(function (resolve) {
-                var dc = session.dc, done = false;
-                function finish(value) {
-                    if (done) return;
-                    done = true;
-                    clearTimeout(timer);
-                    dc.onmessage = null;
-                    resolve(value);
+        // Sul canale di controllo arrivano due cose: quello che l'altro
+        // dispositivo ha già ricevuto (serve a riprendere un invio interrotto) e
+        // la conferma finale. Si ascolta una volta sola e si smistano i
+        // messaggi: mettersi in ascolto due volte vorrebbe dire perdere il primo.
+        function controlInbox(session, token) {
+            var dc = session.dc;
+            var box = { have: null, ack: null, need: null, haveWait: [], ackWait: [], needWait: [] };
+            dc.onmessage = function (e) {
+                if (typeof e.data !== 'string') return;
+                var msg = null;
+                try { msg = JSON.parse(e.data); } catch (err) { return; }
+                if (!msg) return;
+                if (msg.t === 'have' && !box.have) {
+                    box.have = msg;
+                    box.haveWait.splice(0).forEach(function (f) { f(msg); });
+                } else if (msg.t === 'ack' && !box.ack) {
+                    box.ack = msg;
+                    box.ackWait.splice(0).forEach(function (f) { f(msg); });
+                } else if (msg.t === 'need') {
+                    // Può arrivare più volte: ogni controllo finale che trova
+                    // qualcosa mancante è una nuova richiesta.
+                    box.need = msg;
+                    box.needWait.splice(0).forEach(function (f) { f(msg); });
                 }
-                var timer = setTimeout(function () { finish(null); }, WAIT_ACK_MS);
-                dc.onmessage = function (e) {
-                    if (typeof e.data !== 'string') return;
-                    var msg = null;
-                    try { msg = JSON.parse(e.data); } catch (err) { msg = null; }
-                    if (msg && msg.t === 'ack') finish(msg);
-                };
-            });
+            };
+            box.waitHave = function (ms) {
+                if (box.have) return Promise.resolve(box.have);
+                return new Promise(function (resolve) {
+                    var done = false;
+                    function finish(value) { if (done) return; done = true; clearTimeout(timer); resolve(value); }
+                    var timer = setTimeout(function () { finish(null); }, ms);
+                    box.haveWait.push(finish);
+                });
+            };
+            box.takeNeed = function (ms) {
+                if (box.need) { var msg = box.need; box.need = null; return Promise.resolve(msg); }
+                return new Promise(function (resolve) {
+                    var done = false;
+                    function finish(value) { if (done) return; done = true; clearTimeout(timer); resolve(value); }
+                    var timer = setTimeout(function () { finish(null); }, ms);
+                    box.needWait.push(finish);
+                });
+            };
+            box.waitAck = function () {
+                if (box.ack) return Promise.resolve(box.ack);
+                return new Promise(function (resolve) {
+                    var done = false;
+                    function finish(value) { if (done) return; done = true; clearTimeout(timer); resolve(value); }
+                    var timer = setTimeout(function () { finish(null); }, WAIT_ACK_MS);
+                    box.ackWait.push(finish);
+                });
+            };
+            return box;
         }
 
         async function deliverFiles(session, entries, manifest, total, token) {
-            setActiveTitle('Collegato', '🔗');
-            setSendStatus('Collegato in diretta. Invio i file…', 'ok');
-            setActiveText('Collegamento diretto attivo: i file non passano da nessun server.');
-            playSuccessSound();
-            createSparkles($('sendCode'), 10, true);
-
             session.entries = entries;
             session.chunkSize = chunkSizeFor(session.pc);
 
-            var ackPromise = waitForDirectAck(session, token);
+            // L'elenco dei file parte sempre: è anche il segnale che dice a chi
+            // riceve di rispondere con quello che ha già ricevuto.
+            var inbox = controlInbox(session, token);
+            var ackPromise = inbox.waitAck();
             await dcSend(session.dc, JSON.stringify(manifest), session.queueLimit);
 
-            var sent = 0;
+            var have = await inbox.waitHave(HELLO_WAIT_MS);
+            var sent = have ? Math.min(Number(have.sz) || 0, total) : 0;
+            if (sent > 0) {
+                setSendStatus('Riprendo da dove eravamo: ' + formatBytes(sent) + ' già arrivati, mando il resto…');
+                setSendProgress(sent, total);
+            } else {
+                setActiveTitle('Collegato', '🔗');
+                setSendStatus('Collegato in diretta. Invio i file…', 'ok');
+                setActiveText('Collegamento diretto attivo: i file non passano da nessun server.');
+                playSuccessSound();
+                createSparkles($('sendCode'), 10, true);
+            }
+
             function onBytes(n) {
                 sent += n;
                 setSendProgress(sent, total);
             }
 
             var lanes = session.workers.length ? session.workers : [session.dc];
-            var jobs = laneJobs(entries, lanes.length);
+            var jobs = laneJobs(missingRanges(entries, have && have.r), lanes.length);
             session.pending = entries.map(function () { return 0; });
+            session.counted = entries.map(function () { return false; });
             session.doneFiles = 0;
+            // I file vuoti non hanno niente da mandare: sono già a posto.
+            entries.forEach(function (e, i) {
+                if (!(e.size > 0)) { session.counted[i] = true; session.doneFiles++; }
+            });
             jobs.forEach(function (list) { list.forEach(function (job) { session.pending[job.i]++; }); });
             var parts = jobs.reduce(function (a, list) { return a + list.length; }, 0);
 
@@ -2377,16 +2609,38 @@
             for (var k = 0; k < lanes.length; k++) {
                 if (jobs[k].length) running.push(sendLane(session, lanes[k], jobs[k], token, onBytes));
             }
-            if (entries.length > 1 || parts > 1) {
+            if (sent === 0 && (entries.length > 1 || parts > 1)) {
                 setSendStatus('Invio ' + formatBytes(total) + ' su ' + Math.min(lanes.length, parts) +
                     (parts > entries.length ? ' corsie, in parallelo a pezzi.' : ' corsie, in parallelo.'));
             }
             await Promise.all(running);
             if (token !== state.sendToken) return;
+            // Un attimo di respiro: l'ultimo pezzo può essere ancora in viaggio
+            // quando si annuncia la fine, e chi riceve lo tratterebbe come perso.
+            await sleep(400);
             await dcSend(session.dc, JSON.stringify({ t: 'done' }), session.queueLimit);
             setSendProgress(total, total);
             setSendStatus('✅ Inviati: aspetto la conferma…', 'ok');
             setActiveTitle('Invio completato', '📡');
+
+            // Controllo finale: se a chi riceve manca ancora qualcosa lo dice, e
+            // si rimanda solo quello. Su una rete che perde pezzi questo è ciò
+            // che separa "trasferimento riuscito" da "riprova da capo".
+            for (var pass = 0; pass < 2; pass++) {
+                var need = (inbox.ack || token !== state.sendToken) ? null : await inbox.takeNeed(1500);
+                if (!need || token !== state.sendToken) break;
+                var fix = laneJobs(missingRanges(entries, need.r), lanes.length);
+                var again = [];
+                for (var m = 0; m < lanes.length; m++) {
+                    if (fix[m].length) again.push(sendLane(session, lanes[m], fix[m], token, onBytes));
+                }
+                if (!again.length) break;
+                setSendStatus('Controllo finale: rimando quello che manca…');
+                await Promise.all(again);
+                if (token !== state.sendToken) return;
+                await sleep(300);
+                await dcSend(session.dc, JSON.stringify({ t: 'done' }), session.queueLimit);
+            }
 
             var ack = await ackPromise;
             if (token !== state.sendToken) { session.close(); return; }
@@ -2411,9 +2665,12 @@
             var options = opts || {};
             var near = !!options.near;
             var deadline = Date.now() + (options.maxMs || WAIT_SIGNAL_MS);
-            var attempts = 0, blocked = 0, busy = 0;
-            while (Date.now() < deadline && token === state.sendToken) {
-                if (options.attempts && attempts >= options.attempts) break;
+            var attempts = 0, blocked = 0, busy = 0, resumes = 0, linked = false, lastErr = null;
+            // Il tetto di tempo vale per la ricerca: una volta che i due
+            // dispositivi si sono trovati, un trasferimento lungo non deve
+            // essere interrotto solo perché è passato il minuto previsto.
+            while (token === state.sendToken && (linked || Date.now() < deadline)) {
+                if (options.attempts && attempts >= options.attempts + resumes) break;
                 attempts++;
                 setSendStatus(near ? 'Cerco l’altro dispositivo sulla tua rete…' : 'Aspetto che l’altro dispositivo inserisca il codice…');
                 setActiveText(near
@@ -2422,9 +2679,26 @@
                 var session = await attemptSenderLink(channel, entries, token);
                 if (token !== state.sendToken) { if (session) session.close(); return; }
                 if (session.isOpen()) {
+                    linked = true;
                     state.session = session;
-                    await deliverFiles(session, entries, manifest, total, token);
-                    return;
+                    try {
+                        await deliverFiles(session, entries, manifest, total, token);
+                        return;
+                    } catch (err) {
+                        if (String((err && err.message) || '') === 'cancelled') throw err;
+                        if (token !== state.sendToken) { session.close(); return; }
+                        // Caduto a metà: si riprende da dove era arrivato, invece
+                        // di ricominciare da capo o di dichiarare fallito.
+                        session.close();
+                        state.session = null;
+                        lastErr = err;
+                        resumes++;
+                        if (resumes > RESUME_TRIES) throw err;
+                        setSendStatus('Il collegamento è caduto: riprendo da dove eravamo…');
+                        setActiveText('Riprendo il trasferimento dal punto in cui si è interrotto: non si rimanda quello che è già arrivato.');
+                        await sleep(1200);
+                        continue;
+                    }
                 }
                 // La risposta è arrivata e si è aspettato abbastanza: se il
                 // collegamento non si apre non è lentezza, è la rete che blocca.
@@ -2432,12 +2706,18 @@
                 // Nessuna risposta e il ponte che rifiuta: insistere peggiora.
                 if (channel.busy && !session.afterAnswerMs) busy++; else if (!channel.busy) busy = 0;
                 session.close();
-                if (busy >= BLOCKED_TRIES) throw new Error('relay-busy');
-                if (blocked >= (options.attempts ? 1 : BLOCKED_TRIES)) throw new Error('link-blocked');
-                if (token === state.sendToken) setSendStatus(near ? 'Non trovo ancora nessuno: continuo a cercare…' : 'Collegamento diretto non riuscito: riprovo…');
+                if (busy >= BLOCKED_TRIES && !lastErr) throw new Error('relay-busy');
+                if (blocked >= (options.attempts ? 1 : BLOCKED_TRIES) && !lastErr) throw new Error('link-blocked');
+                if (token === state.sendToken) {
+                    setSendStatus(lastErr ? 'Riprovo il collegamento per finire il trasferimento…'
+                        : (near ? 'Non trovo ancora nessuno: continuo a cercare…' : 'Collegamento diretto non riuscito: riprovo…'));
+                }
                 await sleep(1000);
             }
             if (token !== state.sendToken) return;
+            // Un trasferimento interrotto si segnala per quello che è: non è
+            // "nessuno si è collegato".
+            if (lastErr) throw lastErr;
             // Chi ha risposto c'era: il codice non aggiungerebbe niente.
             if (options.attempts && blocked) throw new Error('link-blocked');
             throw new Error(channel.busy ? 'relay-busy' : 'no-link');
@@ -2472,6 +2752,7 @@
             var token = state.sendToken + 1;
             state.sendToken = token;
             state.sendAlive = true;
+            closeChannels(state.sendRelays);
             keepAwake();
 
             var total = totalBytes();
@@ -2493,15 +2774,31 @@
             updateActive();
             setSendStatus('Cerco l’altro dispositivo sulla stessa rete…');
 
-            var room = '';
-            try { room = (await nearRooms())[0] || ''; } catch (e) { room = ''; }
+            var rooms = [];
+            for (var tries = 0; tries < 3 && token === state.sendToken; tries++) {
+                try { rooms = await nearRooms(); } catch (e) { rooms = []; }
+                if (token !== state.sendToken) return;
+                if (rooms.length) break;
+                setSendStatus('Guardo su che rete sei…');
+                await sleep(1200);
+            }
             if (token !== state.sendToken) return;
-            var near = room ? await nearChannel(room) : null;
-            if (token !== state.sendToken) return;
-            state.transfer.room = room;
-            if (near) {
+            state.transfer.room = rooms[0] || '';
+            // Tutti gli spazi condivisi della stessa rete si provano uno dietro
+            // l'altro, dentro un tetto di tempo unico: è la stessa ricerca vista
+            // da due lati, e se non si incontrano si passa al codice.
+            var nearDeadline = Date.now() + NEAR_TRY_MS;
+            for (var i = 0; i < rooms.length && token === state.sendToken; i++) {
+                var near = await nearChannel(rooms[i]);
+                if (token !== state.sendToken) return;
+                if (!near) continue;
+                state.sendRelays.push(near);
+                state.transfer.channel = near;
                 try {
-                    await runSendLink(near, entries, manifest, total, token, { near: true, maxMs: NEAR_TRY_MS, attempts: 3 });
+                    await runSendLink(near, entries, manifest, total, token, {
+                        near: true, maxMs: Math.max(8000, nearDeadline - Date.now()), attempts: 3
+                    });
+                    closeChannels(state.sendRelays);
                     return;
                 } catch (err) {
                     if (token !== state.sendToken) return;
@@ -2512,10 +2809,12 @@
                         sendFail(linkFailureMessage(err));
                         return;
                     }
+                    closeRelay(near);
+                    if (Date.now() >= nearDeadline) break;
                 }
             }
             if (token !== state.sendToken) return;
-            await sendWithCode(entries, manifest, total, token, room
+            await sendWithCode(entries, manifest, total, token, rooms.length
                 ? 'Non trovo l’altro dispositivo sulla tua rete'
                 : 'Non riesco a leggere la rete in cui sei');
         }
@@ -2537,8 +2836,10 @@
             try {
                 var channel = await transferChannel(code);
                 state.transfer.channel = channel;
+                state.sendRelays.push(channel);
                 if (token !== state.sendToken) return;
                 await runSendLink(channel, entries, manifest, total, token);
+                closeChannels(state.sendRelays);
             } catch (err) {
                 if (token !== state.sendToken) return;
                 sendFail(linkFailureMessage(err));
@@ -2547,6 +2848,7 @@
 
         function sendFail(message) {
             state.sendAlive = false;
+            closeChannels(state.sendRelays);
             allowSleep();
             if (state.session) { state.session.close(); state.session = null; }
             playErrorSound();
@@ -2660,6 +2962,7 @@
 
         function recvFail(message) {
             recvRunning = false;
+            closeChannels(state.recvRelays);
             allowSleep();
             $('recvStartBtn').disabled = false;
             playErrorSound();
@@ -2674,25 +2977,30 @@
         }
 
         // Aspetta l'offerta di chi invia, risponde e resta agganciato al
-        // collegamento diretto. Se un tentativo non riesce, riprova con la
-        // prossima offerta.
+        // collegamento diretto. Non si contano i tentativi a vuoto ma si guarda
+        // l'orologio: con il flusso in diretta l'offerta arriva quando arriva, e
+        // arrendersi dopo N domande senza risposta non ha più senso.
         async function waitForOffer(channel, token, opts) {
             var options = opts || {};
-            var missCap = options.misses || OFFER_MISSES;
             var freshMs = options.freshMs || 0;
+            var minSeq = Number(options.minSeq) || 0;
             var deadline = Date.now() + (options.maxMs || WAIT_SIGNAL_MS);
-            var seen = '', session = null, misses = 0, wait = channel.pollMin || POLL_MIN_MS, failed = 0;
+            var seen = '', session = null, wait = channel.pollMin || POLL_MIN_MS, failed = 0;
             var pollCap = Math.max(POLL_MS, channel.pollCap || 0);
             var busySince = 0;
             state.sawOffer = false;
+            channel.lastSeq = minSeq;
             while (Date.now() < deadline && token === state.recvToken) {
                 var offer = newestOf(await readLinks(channel), 'offer');
                 // Sulla stessa rete il canale è condiviso con chiunque altro ci
                 // sia già passato: un invio vecchio è di un'altra volta.
                 if (offer && freshMs && offer.time && (Date.now() / 1000 - offer.time) * 1000 > freshMs) offer = null;
+                // Riprendendo un invio interrotto valgono solo le offerte nuove:
+                // quella di prima è di un collegamento già caduto.
+                if (offer && minSeq && Number(offer.payload.q) <= minSeq) offer = null;
                 // Il ponte che chiede di rallentare non è un codice sbagliato:
                 // senza risposta si aspetta la fine della pausa invece di
-                // contare i tentativi a vuoto e arrendersi.
+                // arrendersi.
                 if (channel.busy && !session) {
                     if (!busySince) busySince = Date.now();
                     if (Date.now() - busySince >= BUSY_MAX_MS) return null;
@@ -2701,13 +3009,12 @@
                     continue;
                 }
                 busySince = 0;
-                if (!offer) {
-                    misses++;
-                    if (misses > missCap) { if (session) session.close(); return null; }
-                    setRecvStatus('Cerco chi ha inviato i file con questo codice…');
-                } else {
-                    misses = 0;
+                if (offer) {
                     state.sawOffer = true;
+                    minSeq = Math.max(minSeq, Number(offer.payload.q) || 0);
+                    channel.lastSeq = minSeq;
+                } else {
+                    setRecvStatus('Cerco chi ha inviato i file con questo codice…');
                 }
                 // Se chi invia ha pubblicato una offerta nuova, si riparte da lì.
                 if (session && (!offer || offer.id !== seen)) { session.close(); session = null; }
@@ -2715,7 +3022,7 @@
                     seen = offer.id;
                     setRecvHead('🔗', 'Collegamento diretto…', 'Sto raggiungendo l’altro dispositivo.');
                     setRecvStatus('Provo a collegarmi in diretta…');
-                    session = await respondToOffer(channel, offer.payload);
+                    session = await respondToOffer(channel, offer.payload, options.store);
                     if (!session) { await sleep(wait); wait = pollDelay(wait, pollCap); continue; }
                 }
                 if (session) {
@@ -2734,25 +3041,27 @@
             return null;
         }
 
-        async function respondToOffer(channel, link) {
+        async function respondToOffer(channel, link, store) {
             var pc = createPeer();
             if (!pc) throw new Error('no-webrtc');
             var session = newSession(pc);
             // Chi riceve deve essere pronto a raccogliere i byte appena i canali
             // si aprono: se aspettasse la fine dell'aggancio, i primi pezzi
             // andrebbero persi.
-            session.sink = createReceiver();
+            session.sink = createReceiver(store);
             session.onChannel = function (ch, isControl) {
                 if (isControl) session.sink.onControl(ch);
                 else session.sink.onWorker(ch);
             };
             pc.ondatachannel = function (e) { session.add(e.channel, e.channel.label === CONTROL_LABEL); };
             if (link.n) session.peerName = String(link.n).slice(0, 24);
+            session.offerSeq = Number(link.q) || 0;
             try {
                 await applyRemote(pc, link);
                 // La risposta parte subito: senza di essa chi invia non può
                 // chiudere il collegamento, e il canale non si aprirebbe mai.
-                await relayPublish(channel, await buildAnswer(pc));
+                // Il numero del tentativo la lega a questa offerta precisa.
+                await relayPublish(channel, await buildAnswer(pc, link));
             } catch (e) {
                 session.close();
                 return null;
@@ -2760,13 +3069,64 @@
             return session;
         }
 
+        // Dove finiscono i byte ricevuti. Vive fuori dal collegamento: è proprio
+        // questo che permette di riprendere un invio interrotto invece di
+        // ricominciare da capo, e di chiudere bene anche quando il canale cade
+        // dopo che i byte sono ormai tutti arrivati.
+        function createStore() {
+            return { manifest: null, files: [], totals: [], spans: [], chunks: [], bytes: 0, totalBytes: 0 };
+        }
+
+        function coveredBytes(store, index) {
+            var sum = 0, list = store.spans[index] || [];
+            for (var i = 0; i < list.length; i++) sum += list[i][1] - list[i][0];
+            return sum;
+        }
+
+        // Segna come presenti i byte appena arrivati e conta solo quelli che
+        // mancavano davvero: una ripresa non gonfia il conto né duplica i pezzi.
+        function addSpan(store, index, start, length) {
+            var list = store.spans[index];
+            if (!list || !(length > 0)) return 0;
+            var end = start + length, fresh = length, out = [], placed = false;
+            for (var i = 0; i < list.length; i++) {
+                var s = list[i][0], e = list[i][1];
+                if (e < start) { out.push(list[i]); continue; }
+                if (s > end) {
+                    if (!placed) { out.push([start, end]); placed = true; }
+                    out.push(list[i]);
+                    continue;
+                }
+                fresh -= Math.min(e, end) - Math.max(s, start);
+                start = Math.min(start, s);
+                end = Math.max(end, e);
+            }
+            if (!placed) out.push([start, end]);
+            store.spans[index] = out;
+            return Math.max(0, fresh);
+        }
+
+        // Le parti di una porzione che non erano ancora arrivate: serve a
+        // scartare i doppioni, così una ripresa non raddoppia i byte.
+        function uncoveredParts(store, index, start, end) {
+            var out = [], list = store.spans[index] || [];
+            for (var i = 0; i < list.length && start < end; i++) {
+                var s = list[i][0], e = list[i][1];
+                if (e <= start) continue;
+                if (s > start) out.push([start, Math.min(s, end)]);
+                start = Math.max(start, e);
+            }
+            if (start < end) out.push([start, end]);
+            return out;
+        }
+
         // Chi riceve tiene insieme i pezzi che arrivano dalle varie corsie.
         // L'elenco dei file viaggia sul canale di controllo; sui canali dei file
         // un'intestazione dice a quale file appartengono i byte che seguono.
-        function createReceiver() {
+        function createReceiver(store) {
+            store = store || createStore();
             var R = {
-                manifest: null, files: [], totals: [], got: [], chunks: [],
-                bytes: 0, totalBytes: 0, done: false, settled: false,
+                store: store, done: false, settled: false,
                 lanes: [], timer: null, lastPing: 0, resolve: null, reject: null
             };
             R.promise = new Promise(function (resolve, reject) { R.resolve = resolve; R.reject = reject; });
@@ -2790,39 +3150,89 @@
                 if (R.settled) return;
                 R.settled = true;
                 clearTimeout(R.timer);
-                R.resolve({
-                    manifest: R.manifest, files: R.files, totals: R.totals, got: R.got,
-                    chunks: R.chunks, bytes: R.bytes, totalBytes: R.totalBytes
-                });
+                R.resolve(store);
+            };
+            R.complete = function () {
+                if (!store.totals.length) return false;
+                for (var i = 0; i < store.totals.length; i++) {
+                    if (coveredBytes(store, i) < store.totals[i]) return false;
+                }
+                return true;
             };
             R.maybeFinish = function () {
-                if (!R.manifest || !R.done || R.settled) return;
-                for (var i = 0; i < R.totals.length; i++) if (R.got[i] < R.totals[i]) return;
-                R.finish();
+                if (!store.manifest || !R.done || R.settled) return;
+                if (R.complete()) R.finish();
+            };
+            // Se il canale cade quando i byte sono già tutti qui, il
+            // trasferimento è riuscito: non c'è niente da riprendere.
+            R.onClosed = function () {
+                if (R.settled) return;
+                if (R.complete()) R.finish();
+                else R.fail('direct-lost');
+            };
+            R.ask = function () {
+                if (!R.ctl) return;
+                try { R.ctl.send(JSON.stringify({ t: 'need', r: store.spans, sz: store.bytes })); } catch (err) { }
+            };
+            // Chi invia annuncia la fine appena l'ultimo pezzo è partito, ma i
+            // byte possono essere ancora per strada: prima di dire cosa manca
+            // aspetto che il conto si fermi, altrimenti si rimanda roba già
+            // arrivata e il totale inviato risulta gonfiato.
+            R.settle = async function () {
+                var stable = 0;
+                for (var w = 0; w < 12 && !R.settled && !R.complete() && stable < 2; w++) {
+                    var before = store.bytes;
+                    await sleep(200);
+                    stable = store.bytes > before ? 0 : stable + 1;
+                }
+                if (R.settled) return;
+                if (R.complete()) { R.done = true; R.maybeFinish(); }
+                else R.ask();
             };
             R.onControl = function (dc) {
+                R.ctl = dc;
                 dc.onmessage = function (e) {
                     if (typeof e.data !== 'string') return;
                     R.ping();
                     var msg = null;
                     try { msg = JSON.parse(e.data); } catch (err) { msg = null; }
                     if (!msg) return;
-                    if (msg.t === 'f' && !R.manifest) {
-                        R.manifest = msg;
-                        R.files = msg.fi || [];
-                        R.totals = R.files.map(function (f) { return Number(f.s) || 0; });
-                        R.got = R.files.map(function () { return 0; });
-                        R.chunks = R.files.map(function () { return []; });
-                        R.totalBytes = Number(msg.sz) || R.totals.reduce(function (a, b) { return a + b; }, 0);
-                        setRecvHead('📥', R.files.length === 1 ? 'Ricevo 1 file' : ('Ricevo ' + R.files.length + ' file'),
-                            R.files.map(function (f) { return f.n; }).join(', ').slice(0, 90));
-                        setRecvProgress(0, R.totalBytes);
+                    if (msg.t === 'f') {
+                        var files = msg.fi || [];
+                        var same = store.manifest && files.length === store.files.length && files.every(function (f, i) {
+                            return f.n === store.files[i].n && (Number(f.s) || 0) === (Number(store.files[i].s) || 0);
+                        });
+                        if (!same) {
+                            store.manifest = msg;
+                            store.files = files;
+                            store.totals = files.map(function (f) { return Number(f.s) || 0; });
+                            store.spans = files.map(function () { return []; });
+                            store.chunks = files.map(function () { return []; });
+                            store.bytes = 0;
+                            store.totalBytes = Number(msg.sz) || store.totals.reduce(function (a, b) { return a + b; }, 0);
+                            setRecvHead('📥', files.length === 1 ? 'Ricevo 1 file' : ('Ricevo ' + files.length + ' file'),
+                                files.map(function (f) { return f.n; }).join(', ').slice(0, 90));
+                            setRecvProgress(0, store.totalBytes);
+                        }
+                        // Quello che ho già: chi invia manderà solo il resto.
+                        try {
+                            dc.send(JSON.stringify({ t: 'have', r: store.spans, sz: store.bytes }));
+                        } catch (err) { }
                         R.replay();
                         return;
                     }
-                    if (msg.t === 'done') { R.done = true; R.maybeFinish(); }
+                    if (msg.t === 'done') {
+                        // Se manca ancora qualcosa non si dichiara finito: si dice
+                        // cosa manca e chi invia rimanda solo quello. È la rete a
+                        // perdere i pezzi, non il collegamento a essere rotto.
+                        if (R.complete()) { R.done = true; R.maybeFinish(); }
+                        else if (!R.settling) {
+                            R.settling = true;
+                            R.settle().then(function () { R.settling = false; }, function () { R.settling = false; });
+                        }
+                    }
                 };
-                dc.onclose = function () { R.maybeFinish(); };
+                dc.onclose = function () { R.onClosed(); };
                 dc.onerror = function () { R.fail('direct-failed'); };
             };
             R.onWorker = function (dc) {
@@ -2832,10 +3242,10 @@
                     R.ping();
                     // Se l'elenco dei file non è ancora arrivato, i pezzi si
                     // mettono da parte: l'ordine dentro la corsia è garantito.
-                    if (R.manifest) R.read(lane, e.data);
+                    if (store.manifest) R.read(lane, e.data);
                     else lane.queue.push(e.data);
                 };
-                dc.onclose = function () { R.maybeFinish(); };
+                dc.onclose = function () { R.onClosed(); };
                 dc.onerror = function () { R.fail('direct-failed'); };
             };
             R.replay = function () {
@@ -2857,18 +3267,28 @@
                     return;
                 }
                 var index = lane.file;
-                if (index < 0 || index >= R.totals.length) return;
-                var space = R.totals[index] - R.got[index];
-                if (space <= 0) return;
+                if (index < 0 || index >= store.totals.length) return;
                 var view = new Uint8Array(data);
-                var piece = view.length > space ? view.subarray(0, space) : view;
-                // Le porzioni possono arrivare in qualsiasi ordine: si tiene da
-                // parte il punto in cui vanno rimesse, e si ordina alla fine.
-                R.chunks[index].push({ o: lane.offset, b: piece });
-                lane.offset += piece.length;
-                R.got[index] += piece.length;
-                R.bytes += piece.length;
-                setRecvProgress(R.bytes, R.totalBytes);
+                // Il punto in cui vanno rimessi è dichiarato nell'intestazione:
+                // le porzioni possono arrivare in qualsiasi ordine, e una ripresa
+                // non ricomincia da dove ci si era fermati.
+                var at = lane.offset;
+                var room = store.totals[index] - at;
+                if (room <= 0) return;
+                var piece = view.length > room ? view.subarray(0, room) : view;
+                lane.offset = at + piece.length;
+                // Si tiene solo quello che mancava: se una ripresa rimandasse
+                // byte già arrivati, il file non deve raddoppiare.
+                var spans = uncoveredParts(store, index, at, at + piece.length);
+                for (var k = 0; k < spans.length; k++) {
+                    var s = spans[k][0], e = spans[k][1];
+                    store.chunks[index].push({ o: s, b: piece.subarray(s - at, e - at) });
+                }
+                var fresh = addSpan(store, index, at, piece.length);
+                if (fresh > 0) {
+                    store.bytes += fresh;
+                    setRecvProgress(store.bytes, store.totalBytes);
+                }
                 R.maybeFinish();
             };
             return R;
@@ -2895,6 +3315,7 @@
             var token = state.recvToken + 1;
             state.recvToken = token;
             recvRunning = true;
+            closeChannels(state.recvRelays);
             keepAwake();
             releaseResults();
             $('recvStartBtn').disabled = true;
@@ -2910,23 +3331,18 @@
             var session = null;
             try {
                 var channel = await transferChannel(code);
-                session = await waitForOffer(channel, token);
-                if (token !== state.recvToken) { if (session) session.close(); return; }
-                if (!session) {
-                    if (channel.busy) { recvFail(signalingBusyMessage()); return; }
-                    recvFail(state.sawOffer ? linkBlockedMessage() : noOfferMessage());
-                    return;
-                }
-                state.session = session;
+                state.recvRelays.push(channel);
                 state.transfer.channel = channel;
+                var done = await receiveLoop(channel, token, createStore(), { maxMs: OFFER_SEARCH_MS });
+                if (token !== state.recvToken || done.cancelled) return;
+                if (done.ok) return;
+                if (channel.busy) { recvFail(signalingBusyMessage()); return; }
+                recvFail(state.sawOffer ? linkBlockedMessage() : noOfferMessage());
+                return;
             } catch (err) {
-                if (session) session.close();
-                state.session = null;
                 if (token !== state.recvToken) return;
                 recvFail(linkFailureMessage(err));
-                return;
             }
-            await finishReceive(session, token);
         }
 
         // Nessun codice: si cerca un invio partito sulla stessa rete. Se non si
@@ -2936,6 +3352,7 @@
             var token = state.recvToken + 1;
             state.recvToken = token;
             recvRunning = true;
+            closeChannels(state.recvRelays);
             keepAwake();
             releaseResults();
             $('recvStartBtn').disabled = true;
@@ -2948,10 +3365,19 @@
             updateActive();
             setRecvStatus('Cerco chi sta inviando sulla tua rete…');
 
-            var channel = null;
-            try {
-                var rooms = await nearRooms();
+            // Il punto di contatto sulla stessa rete si ricava dall'indirizzo con
+            // cui i due dispositivi escono: se la lettura non riesce al primo
+            // colpo si riprova, perché è proprio questo a fare la differenza tra
+            // trovarsi e non trovarsi.
+            var channel = null, rooms = [];
+            for (var tries = 0; tries < 3 && token === state.recvToken; tries++) {
+                try { rooms = await nearRooms(); } catch (e) { rooms = []; }
                 if (token !== state.recvToken) return;
+                if (rooms.length) break;
+                setRecvStatus('Guardo su che rete sei…');
+                await sleep(1200);
+            }
+            try {
                 channel = rooms.length ? await nearChannel(rooms[0]) : null;
             } catch (e) { channel = null; }
             if (token !== state.recvToken) return;
@@ -2959,32 +3385,46 @@
                 nearReceiveGiveUp('Non riesco a leggere la rete in cui sei: fatti mandare un codice e scrivilo qui sopra.');
                 return;
             }
+            state.recvRelays.push(channel);
+            state.transfer.channel = channel;
 
+            // Un solo spazio condiviso vale per tutta la rete: chi invia scrive
+            // lì e chi riceve aspetta. Se la rete blocca il collegamento diretto
+            // si passa al codice, che usa lo stesso ponte ma un canale tutto
+            // suo.
             var session = null;
             try {
-                session = await waitForOffer(channel, token, { misses: NEAR_MISSES, freshMs: NEAR_FRESH_MS });
-                if (token !== state.recvToken) { if (session) session.close(); return; }
-                if (!session) {
+                var store = createStore();
+                var nearDeadline = Date.now() + NEAR_SEARCH_MS;
+                var done = null;
+                for (var round = 0; round < rooms.length && token === state.recvToken; round++) {
+                    if (round) {
+                        try { channel = await nearChannel(rooms[round]); } catch (e) { channel = null; }
+                        if (!channel) continue;
+                        state.recvRelays.push(channel);
+                        state.transfer.channel = channel;
+                    }
+                    done = await receiveLoop(channel, token, store, {
+                        freshMs: NEAR_FRESH_MS,
+                        maxMs: Math.max(8000, nearDeadline - Date.now())
+                    });
+                    if (token !== state.recvToken || done.cancelled) return;
+                    if (done.ok) return;
                     if (channel.busy) { recvFail(signalingBusyMessage()); return; }
-                    nearReceiveGiveUp('Non trovo nessuno che stia inviando sulla tua rete. Se ti hanno mandato un codice, scrivilo qui sopra e tocca «Ricevi».');
-                    return;
                 }
-                state.session = session;
-                state.transfer.channel = channel;
+                nearReceiveGiveUp('Non trovo nessuno che stia inviando sulla tua rete. Se ti hanno mandato un codice, scrivilo qui sopra e tocca «Ricevi».');
+                return;
             } catch (err) {
-                if (session) session.close();
-                state.session = null;
                 if (token !== state.recvToken) return;
                 recvFail(linkFailureMessage(err));
-                return;
             }
-            await finishReceive(session, token);
         }
 
         // La ricerca sulla stessa rete finisce dove è cominciata: si torna alla
         // schermata col campo del codice, già pronto per essere scritto.
         function nearReceiveGiveUp(message) {
             recvRunning = false;
+            closeChannels(state.recvRelays);
             allowSleep();
             $('recvStartBtn').disabled = false;
             $('recvRunPane').classList.add('hidden');
@@ -2999,67 +3439,101 @@
 
         // Il collegamento è aperto: si aspetta che arrivino tutti i file, si
         // mettono a disposizione dell'utente e si conferma a chi ha inviato.
+        // Se il collegamento cade a metà la funzione lo dice al chiamante, che
+        // riprende in mano la ricezione invece di buttare via quello che è già
+        // arrivato.
         async function finishReceive(session, token) {
-            try {
-                setActiveTitle('Collegato', '🔗');
-                setRecvHead('🔗', 'Collegato', 'Sto ricevendo i file in diretta.');
-                setRecvStatus('Collegato in diretta: i file stanno arrivando.');
-                playSuccessSound();
-                createSparkles($('recvTitle'), 10, true);
+            setActiveTitle('Collegato', '🔗');
+            setRecvHead('🔗', 'Collegato', 'Sto ricevendo i file in diretta.');
+            setRecvStatus('Collegato in diretta: i file stanno arrivando.');
+            playSuccessSound();
+            createSparkles($('recvTitle'), 10, true);
 
-                var stream = await waitForFiles(session);
-                if (token !== state.recvToken) { session.close(); return; }
-                if (!stream.manifest || !stream.files.length) {
-                    session.close();
-                    recvFail('Non mi è arrivato l’elenco dei file. Riprova.');
-                    return;
-                }
+            var stream = await waitForFiles(session);
+            clearTimeout(session.sink.timer);
+            if (token !== state.recvToken) { session.close(); return; }
+            if (!stream.manifest || !stream.files.length) throw new Error('no-manifest');
 
-                var missing = [];
-                stream.files.forEach(function (f, i) {
-                    if (stream.got[i] < stream.totals[i]) missing.push(f.n || ('file ' + (i + 1)));
+            // Con il controllo finale questo non dovrebbe più capitare: se
+            // succede, i byte mancanti sono persi davvero.
+            var missing = [];
+            stream.files.forEach(function (f, i) {
+                if (coveredBytes(stream, i) < stream.totals[i]) missing.push(f.n || ('file ' + (i + 1)));
+            });
+            if (missing.length) throw new Error('stream-partial');
+
+            releaseResults();
+            var results = [];
+            stream.files.forEach(function (f, i) {
+                var type = f.y || 'application/octet-stream';
+                var parts = (stream.chunks[i] || [])
+                    .slice()
+                    .sort(function (a, b) { return a.o - b.o; })
+                    .map(function (s) { return s.b; });
+                var blob = new Blob(parts, { type: type });
+                results.push({ name: f.n || ('file-' + (i + 1)), type: type, blob: blob, size: blob.size, url: URL.createObjectURL(blob) });
+            });
+            state.results = results;
+            renderResults();
+            recvRunning = false;
+            allowSleep();
+            $('recvStartBtn').disabled = false;
+            setRecvProgress(stream.bytes, stream.totalBytes > 0 ? stream.totalBytes : stream.bytes);
+            setRecvHead('✅', 'File ricevuti', results.length === 1 ? results[0].name : (results.length + ' file'));
+            setRecvStatus('🎉 Pronti: tocca Salva per metterli nella cartella dei download.', 'ok');
+            setActiveTitle('File ricevuti', '✅');
+            setActiveText('Ricevuti in diretta dall’altro dispositivo: ' + formatBytes(stream.bytes) + '.');
+            playSuccessSound();
+            createSparkles($('recvTitle'), 12, true);
+            keepAwake();
+
+            // Conferma a chi ha inviato, lungo lo stesso collegamento diretto.
+            try { session.dc.send(JSON.stringify({ t: 'ack', n: myName(), c: results.length, g: stream.bytes })); } catch (e) { }
+            var closing = session;
+            setTimeout(function () { if (closing.isOpen() || closing.dc) closing.close(); }, 1500);
+            state.session = null;
+            closeChannels(state.recvRelays);
+        }
+
+        // Chi riceve non si arrende al primo intoppo: se il collegamento cade a
+        // metà, chi invia riprende da dove era rimasto e qui si aspetta la sua
+        // nuova offerta tenendo tutto quello che è già arrivato. Il deposito dei
+        // byte vive fuori dal collegamento proprio per questo.
+        async function receiveLoop(channel, token, store, options) {
+            var opts = options || {};
+            var deadline = Date.now() + (opts.maxMs || OFFER_SEARCH_MS);
+            var minSeq = Number(opts.minSeq) || 0;
+            var lastErr = null;
+            while (token === state.recvToken) {
+                var session = await waitForOffer(channel, token, {
+                    store: store,
+                    freshMs: opts.freshMs || 0,
+                    minSeq: minSeq,
+                    maxMs: Math.max(8000, deadline - Date.now())
                 });
-                if (missing.length) {
+                if (token !== state.recvToken) { if (session) session.close(); return { ok: false, cancelled: true }; }
+                if (!session) return { ok: false, error: lastErr };
+                minSeq = Math.max(minSeq, Number(session.offerSeq) || 0);
+                state.session = session;
+                state.transfer.channel = channel;
+                try {
+                    await finishReceive(session, token);
+                    return { ok: true };
+                } catch (err) {
+                    var name = String((err && err.message) || '');
+                    if (name === 'no-manifest' || name === 'stream-partial') throw err;
+                    if (token !== state.recvToken) { if (session) session.close(); return { ok: false, cancelled: true }; }
+                    // Caduto a metà: si aspetta che l'altro dispositivo riprenda.
+                    lastErr = err;
                     session.close();
-                    recvFail('Trasferimento incompleto: manca ' + missing.join(', ') + '. Riprovate.');
-                    return;
+                    state.session = null;
+                    setRecvHead('🔗', 'Riprendo…', 'Il collegamento è caduto: aspetto che l’altro dispositivo riprenda.');
+                    setRecvStatus('Il collegamento è caduto: aspetto che l’altro dispositivo riprenda da dove eravamo…');
+                    if (Date.now() > deadline) deadline = Date.now() + OFFER_SEARCH_MS;
+                    await sleep(800);
                 }
-
-                releaseResults();
-                var results = [];
-                stream.files.forEach(function (f, i) {
-                    var type = f.y || 'application/octet-stream';
-                    var parts = (stream.chunks[i] || [])
-                        .slice()
-                        .sort(function (a, b) { return a.o - b.o; })
-                        .map(function (s) { return s.b; });
-                    var blob = new Blob(parts, { type: type });
-                    results.push({ name: f.n || ('file-' + (i + 1)), type: type, blob: blob, size: blob.size, url: URL.createObjectURL(blob) });
-                });
-                state.results = results;
-                renderResults();
-                recvRunning = false;
-                allowSleep();
-                $('recvStartBtn').disabled = false;
-                setRecvProgress(stream.bytes, stream.totalBytes > 0 ? stream.totalBytes : stream.bytes);
-                setRecvHead('✅', 'File ricevuti', results.length === 1 ? results[0].name : (results.length + ' file'));
-                setRecvStatus('🎉 Pronti: tocca Salva per metterli nella cartella dei download.', 'ok');
-                setActiveTitle('File ricevuti', '✅');
-                setActiveText('Ricevuti in diretta dall’altro dispositivo: ' + formatBytes(stream.bytes) + '.');
-                playSuccessSound();
-                createSparkles($('recvTitle'), 12, true);
-
-                // Conferma a chi ha inviato, lungo lo stesso collegamento diretto.
-                try { session.dc.send(JSON.stringify({ t: 'ack', n: myName(), c: results.length, g: stream.bytes })); } catch (e) { }
-                var closing = session;
-                setTimeout(function () { if (closing.isOpen() || closing.dc) closing.close(); }, 1500);
-                state.session = null;
-            } catch (err) {
-                if (session) session.close();
-                state.session = null;
-                if (token !== state.recvToken) return;
-                recvFail(linkFailureMessage(err));
             }
+            return { ok: false, cancelled: true };
         }
 
 
