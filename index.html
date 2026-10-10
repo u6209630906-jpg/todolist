@@ -423,6 +423,81 @@
 
 <script>
     /* =========================================================
+       MYNIAPP — AUDIO
+       ========================================================= */
+    var audioCtx = null;
+    var bootSoundPlayed = false;
+
+    function getAudioContext() {
+        if (!audioCtx) {
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return null;
+            audioCtx = new Ctx();
+        }
+        if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) { } }
+        return audioCtx;
+    }
+
+    function tone(freq, delay, dur, vol, type, endFreq) {
+        var ctx = getAudioContext();
+        if (!ctx) return;
+        try {
+            var now = ctx.currentTime + delay;
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(vol, now + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + dur + 0.05);
+        } catch (e) { }
+    }
+
+    function playPopSound() { tone(660, 0, 0.09, 0.05, 'sine', 990); }
+    function playOpenSound() { tone(560, 0, 0.1, 0.045, 'sine', 760); tone(1040, 0.05, 0.14, 0.028, 'sine', 1300); }
+    function playBootSound() { tone(523.25, 0, 0.13, 0.045, 'sine', 784); tone(880, 0.06, 0.2, 0.032, 'sine', 1174.66); }
+
+    function isAudioRunning() {
+        var ctx = getAudioContext();
+        return !!ctx && ctx.state === 'running';
+    }
+
+    function playBootOnce() {
+        if (bootSoundPlayed || !isAudioRunning()) return false;
+        bootSoundPlayed = true;
+        playBootSound();
+        return true;
+    }
+
+    // I browser bloccano l'audio finche' non c'e' un gesto dell'utente:
+    // se il suono di benvenuto parte bloccato, lo riproduce alla prima interazione.
+    function armBootSound() {
+        var events = ['pointerdown', 'touchstart', 'keydown'];
+        function off() {
+            events.forEach(function (name) { window.removeEventListener(name, attempt); });
+        }
+        function attempt(event) {
+            var ctx = getAudioContext();
+            if (!ctx) return off();
+            var ready = (ctx.state === 'running') ? Promise.resolve() : ctx.resume();
+            ready.then(function () {
+                if (ctx.state !== 'running') return;
+                off();
+                var el = event.target;
+                // le interazioni con suono proprio non devono sovrapporsi al benvenuto
+                if (el && el.closest && el.closest('.app-link, .theme-toggle')) return;
+                playBootOnce();
+            }).catch(function () { });
+        }
+        events.forEach(function (name) { window.addEventListener(name, attempt, { passive: true }); });
+    }
+
+    /* =========================================================
        MYNIAPP — TEMA
        ========================================================= */
     var THEME_KEY = 'myniapp_theme';
@@ -465,11 +540,32 @@
         theme = theme === 'dark' ? 'light' : 'dark';
         applyTheme(theme);
         saveTheme(theme);
+        playPopSound();
+    }
+
+    /* =========================================================
+       MYNIAPP — APERTURA APP
+       ========================================================= */
+    function initAppLinks() {
+        var list = document.querySelector('.app-list');
+        if (!list) return;
+        list.addEventListener('click', function (event) {
+            var link = event.target.closest ? event.target.closest('.app-link') : null;
+            if (!link || event.defaultPrevented) return;
+            // nuovo tab o download: nessuna navigazione da ritardare
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            playOpenSound();
+            // lascia partire il suono prima di cambiare pagina
+            window.setTimeout(function () { window.location.href = link.href; }, 150);
+        });
     }
 
     var saved = readSavedTheme();
     theme = (saved === 'light' || saved === 'dark') ? saved : systemTheme();
     applyTheme(theme);
+    initAppLinks();
+    if (!playBootOnce()) armBootSound();
 </script>
 </body>
 </html>
