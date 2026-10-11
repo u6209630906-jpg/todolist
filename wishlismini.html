@@ -833,6 +833,63 @@
             to { opacity: 0; transform: translate(-50%, 14px) scale(0.94); }
         }
 
+        /* === NOTIFICHE (richieste / ricezione in corso) === */
+        .notify-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 19px;
+            height: 19px;
+            padding: 0 5px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff6b6b, #ff3b30);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 19px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.45);
+            pointer-events: none;
+        }
+        .glass-btn.alerting {
+            border-color: rgba(255, 59, 48, 0.55);
+            animation: notifyPulse 1.8s ease-out infinite;
+        }
+        @keyframes notifyPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        }
+        .activity-pill {
+            position: fixed;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 320;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: calc(100vw - 28px);
+            padding: 11px 17px;
+            border-radius: 16px;
+            background: var(--toast-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid var(--toast-border);
+            box-shadow: var(--toast-shadow);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.35;
+            animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .activity-pill.leaving { animation: toastOut 0.3s ease forwards; }
+        .activity-pill .spinner { color: var(--accent); flex-shrink: 0; }
+        @media (prefers-reduced-motion: reduce) {
+            .glass-btn.alerting { animation: none; }
+            .activity-pill, .activity-pill.leaving { animation-duration: 0.01s; }
+        }
+
         /* === MISC === */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -924,6 +981,17 @@
         }
         .saved-user:hover { background: var(--glass-bg-hover); transform: translateY(-1px); }
         .saved-user .avatar { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; }
+        .presence-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: var(--glass-bg);
+            border: 0.5px solid var(--glass-border);
+        }
+        .presence-user .presence-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .presence-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
         .divider {
             display: flex;
             align-items: center;
@@ -985,7 +1053,7 @@
                 </div>
 
                 <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:22px; line-height:1.6;">
-                    Tutti i dati restano sul tuo dispositivo.<br>Nessun account, nessun server.
+                    Wishlist e utenti sono salvati su questo dispositivo.<br>Condivisione e presenza online usano relay di terze parti.
                 </p>
             </div>
         </div>
@@ -1029,6 +1097,11 @@
                     <button class="glass-btn" onclick="openImportModal()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
                         Carica wishlist
+                    </button>
+                    <button class="glass-btn" id="directoryBtn" style="position:relative;" onclick="openDirectoryModal()">
+                        <span aria-hidden="true">👥</span>
+                        Trova utenti online
+                        <span id="directoryBadge" class="notify-badge hidden" aria-hidden="true"></span>
                     </button>
                 </div>
             </div>
@@ -1172,10 +1245,10 @@
                 <div style="text-align:center; margin-bottom:14px;">
                     <div style="font-size:40px; margin-bottom:8px;">📤</div>
                     <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
-                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Carica wishlist</b> e lo inserisce.</p>
+                    <p id="shareDescription" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Carica wishlist</b> e lo inserisce.</p>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
+                <div id="shareCodeRow" style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
                     <code id="shareCodeText" style="flex:1; min-width:0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:16.5px; font-weight:700; letter-spacing:0.5px; word-break:break-all; user-select:all;">—</code>
                     <button class="icon-btn" title="Copia il codice" onclick="copyShareCode()">
                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 8h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
@@ -1197,10 +1270,10 @@
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button class="btn-secondary" style="flex:1; min-width:100px;" onclick="closeShareModal()">Chiudi</button>
                     <button class="btn-secondary hidden" id="shareSheetBtn" style="flex:1; min-width:100px;" onclick="shareInviteViaSheet()">Condividi…</button>
-                    <button class="btn-primary" style="flex:1; min-width:100px;" onclick="copyShareInvite()">Copia invito</button>
+                    <button class="btn-primary" id="shareInviteBtn" style="flex:1; min-width:100px;" onclick="copyShareInvite()">Copia invito</button>
                 </div>
 
-                <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">La lista viaggia cifrata da un browser all'altro: chi gestisce il ponte non può leggerla. Il codice resta valido qualche ora.</p>
+                <p style="font-size:11.5px; color:var(--text-tertiary); margin:12px 4px 0; line-height:1.5; text-align:center;">La wishlist viene cifrata nel browser e trasferita tramite un relay pubblico: chi gestisce il relay non può leggerla. Il codice resta valido qualche ora.</p>
             </div>
         </div>
     </div>
@@ -1261,6 +1334,45 @@
                 </button>
 
                 <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeImportChoiceModal()">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AVVISO ATTIVITÀ (ricezione in corso) ============ -->
+        <div id="activityPill" class="activity-pill hidden" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <span id="activityPillText"></span>
+        </div>
+
+        <!-- ============ ONLINE DIRECTORY ============ -->
+        <div id="directoryModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Utenti online</h3>
+                <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5; margin-bottom:14px;">
+                    Scegli un alias pubblico e vai online. Puoi chiedere una wishlist; il proprietario dovrà accettare prima di inviarti il codice.
+                </p>
+                <label class="field-label" for="directoryAlias">Alias visibile a tutti</label>
+                <div style="display:flex; gap:8px; margin-top:6px;">
+                    <input id="directoryAlias" class="ios-input" type="text" placeholder="Scegli un alias" maxlength="24" style="flex:1;">
+                    <button class="btn-primary" id="directoryToggleBtn" onclick="toggleDirectoryPresence()">Vai online</button>
+                </div>
+                <p id="directoryStatus" role="status" style="font-size:12.5px; color:var(--text-secondary); margin:10px 2px 14px; line-height:1.5;">Non sei online.</p>
+                <div style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:14px; padding:12px 14px;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:13.5px; font-weight:600;">Notifiche di sistema</div>
+                        <div id="directoryNotifyHint" style="font-size:11.5px; color:var(--text-secondary); margin-top:2px; line-height:1.4;">Avviso anche fuori dall’app quando arriva una richiesta o una wishlist.</div>
+                    </div>
+                    <button class="btn-secondary" id="directoryNotifyBtn" style="padding:10px 14px; font-size:13px; white-space:nowrap;" onclick="toggleBrowserNotifications()">Attiva</button>
+                </div>
+                <div class="divider" style="margin-top:12px;">richieste ricevute <span id="directoryRequestBadge" class="hidden" style="background:rgba(255,59,48,0.16); color:#ff6b6b; font-weight:700; padding:0 7px; border-radius:9px;">0</span></div>
+                <div id="directoryRequests" class="presence-list" aria-live="polite"></div>
+                <div class="divider">persone online</div>
+                <div id="directoryPeers" class="presence-list" aria-live="polite"></div>
+                <p style="font-size:11.5px; color:var(--text-tertiary); margin:14px 2px 0; line-height:1.5;">
+                    Chiunque può leggere la presenza e inviare richieste; gli alias non verificano l’identità. Per verificare una persona, confrontate l’ID temporaneo su un altro canale e non accettare richieste sconosciute. Il codice non appare nella lista: viene cifrato per il richiedente solo dopo il tuo consenso. La wishlist continua a essere trasferita cifrata tramite il servizio di condivisione. Chiudere questa finestra non ti mette offline: usa “Vai offline”; se chiudi l’app, la presenza scade entro pochi minuti.
+                </p>
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeDirectoryModal()">Chiudi</button>
             </div>
         </div>
     </div>
@@ -1350,7 +1462,25 @@
             storageMode: 'idb',
             shareCode: '',
             shareWatch: 0,
-            importToken: 0
+            importToken: 0,
+            directory: {
+                active: false,
+                id: '',
+                alias: '',
+                keyPair: null,
+                publicKey: null,
+                peers: {},
+                requests: {},
+                handledRequests: {},
+                outgoing: null,
+                heartbeatTimer: 0,
+                pollTimer: 0,
+                polling: false,
+                lastPoll: 0,
+                notify: false
+            },
+            peerShareRequest: null,
+            receivingFrom: ''
         };
 
         // ---------- SMALL HELPERS ----------
@@ -1575,6 +1705,9 @@
         function playDeleteSound() { tone(400, 0, 0.2, 0.05, 'triangle', 170); }
         function playErrorSound() { tone(240, 0, 0.12, 0.05, 'square', 200); tone(200, 0.13, 0.16, 0.045, 'square', 150); }
         function playShareSound() { tone(700, 0, 0.12, 0.05, 'sine', 1050); tone(1050, 0.1, 0.28, 0.055, 'sine', 1400); }
+        // Richiesta in arrivo: due bip ravvicinati, diversi dagli altri suoni.
+        function playNotifySound() { tone(1175, 0, 0.13, 0.055, 'sine', 1568); tone(1175, 0.2, 0.16, 0.05, 'sine', 1568); }
+        function playReceiveSound() { tone(880, 0, 0.14, 0.05, 'sine', 1320); tone(1320, 0.13, 0.22, 0.045, 'sine', 1760); }
 
         // ---------- THEME ----------
         function applyTheme(theme) {
@@ -1774,6 +1907,12 @@
         }
 
         async function enterApp(userId) {
+            if (state.currentUserId && state.currentUserId !== userId) {
+                if (state.directory.active) await stopDirectoryPresence(true);
+                state.directory.alias = '';
+            }
+            state.receivingFrom = '';
+            hideActivityPill();
             var users = await loadUsers();
             var user = users.filter(function (u) { return u.id === userId; })[0];
             if (!user) return;
@@ -1798,6 +1937,10 @@
         }
 
         async function logout() {
+            if (state.directory.active) await stopDirectoryPresence(true);
+            state.directory.alias = '';
+            state.receivingFrom = '';
+            hideActivityPill();
             state.currentUserId = null;
             state.ownListId = null;
             state.viewingFriendListId = null;
@@ -3709,11 +3852,10 @@
             }
         }
 
-        // ---------- CONDIVISIONE P2P (codice breve + trasferimento cifrato) ----------
+        // ---------- CONDIVISIONE (codice breve + trasferimento cifrato tramite relay) ----------
         // Dal codice derivano il nome del canale e la chiave AES: i due browser si
-        // passano la wishlist da un browser all'altro, passando per un ponte pubblico
-        // (ntfy.sh) che vede solo dati cifrati. Niente file da scaricare e niente
-        // messaggi chilometrici da incollare: basta il codice.
+        // scambiano la wishlist passando per il relay pubblico ntfy.sh, che vede solo
+        // dati cifrati. Niente file da scaricare e niente messaggi chilometrici da incollare.
         var SHARE_RELAY = 'https://ntfy.sh';
         var SHARE_TAG = 'WLM2:';
         var SHARE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
@@ -3721,6 +3863,10 @@
         var SHARE_INLINE_MAX = 2800;      // byte di lista che stanno in un singolo messaggio
         var SHARE_PART_MAX = 1400000;     // byte per allegato (il ponte arriva a ~2 MB)
         var IMPORT_WAIT_MS = 25000;       // attesa massima della wishlist dopo aver inserito il codice
+        var DIRECTORY_TOPIC = 'wishlismini-directory-v1';
+        var DIRECTORY_PRESENCE_MS = 60000;
+        var DIRECTORY_PEER_TTL_MS = 135000;
+        var DIRECTORY_REQUEST_TTL_MS = 300000;
 
         function bytesToBase64Url(bytes) {
             var bin = '';
@@ -3812,6 +3958,535 @@
 
         async function openText(key, bytes) {
             return new TextDecoder().decode(await openBytes(key, bytes));
+        }
+
+        function randomDirectoryId(byteLength) {
+            return bytesToBase64Url(crypto.getRandomValues(new Uint8Array(byteLength)));
+        }
+
+        function validDirectoryId(value) {
+            return /^[A-Za-z0-9_-]{20,40}$/.test(String(value || ''));
+        }
+
+        async function directoryIdFromPublicKey(key) {
+            var bytes = new TextEncoder().encode(String(key.n) + '.' + String(key.e));
+            var digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+            return bytesToBase64Url(digest.subarray(0, 18));
+        }
+
+        function directorySetStatus(text, variant) {
+            var el = $('directoryStatus');
+            if (!el) return;
+            el.textContent = text || '';
+            el.style.color = variant === 'error' ? '#ff6b6b' : 'var(--text-secondary)';
+        }
+
+        // ---------- AVVISI (richieste e ricezione) ----------
+        function isModalOpen(id) {
+            var el = $(id);
+            return !!el && !el.classList.contains('hidden');
+        }
+
+        function directoryRequestCount() {
+            var requests = state.directory.requests;
+            var now = Date.now();
+            return Object.keys(requests).filter(function (id) {
+                return now - requests[id].receivedAt < DIRECTORY_REQUEST_TTL_MS;
+            }).length;
+        }
+
+        // Il contatore resta visibile anche a finestra chiusa: è il segnale che
+        // qualcuno sta aspettando una risposta.
+        function updateDirectoryBadge() {
+            var count = directoryRequestCount();
+            var badge = $('directoryBadge');
+            if (badge) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.toggle('hidden', count === 0);
+            }
+            var button = $('directoryBtn');
+            if (button) button.classList.toggle('alerting', count > 0);
+            var inline = $('directoryRequestBadge');
+            if (inline) {
+                inline.textContent = String(count);
+                inline.classList.toggle('hidden', count === 0);
+            }
+        }
+
+        function browserNotifySupported() {
+            return typeof window.Notification === 'function';
+        }
+
+        function browserNotifyGranted() {
+            return browserNotifySupported() && window.Notification.permission === 'granted';
+        }
+
+        function browserNotifyEnabled() {
+            return !!state.directory.notify && browserNotifyGranted();
+        }
+
+        // Avviso di sistema: solo se l'utente l'ha attivato, e solo quando la
+        // finestra non è in primo piano (altrimenti bastano gli avvisi nell'app).
+        function notifySystem(title, body, tag) {
+            if (!browserNotifyEnabled()) return;
+            if (document.visibilityState === 'visible' && document.hasFocus()) return;
+            try {
+                new window.Notification(title, { body: body, tag: tag || 'wishlismini', renotify: false });
+            } catch (e) { /* notifica non disponibile */ }
+        }
+
+        function renderDirectoryNotify(errorText) {
+            var button = $('directoryNotifyBtn');
+            var supported = browserNotifySupported();
+            var enabled = browserNotifyEnabled();
+            if (button) {
+                button.textContent = enabled ? 'Disattiva' : 'Attiva';
+                button.disabled = !supported;
+            }
+            var hint = $('directoryNotifyHint');
+            if (!hint) return;
+            hint.textContent = errorText || (
+                !supported
+                    ? 'Il browser non supporta le notifiche di sistema: restano gli avvisi dentro l’app.'
+                    : (enabled
+                        ? 'Attive: ricevi un avviso anche quando l’app non è in primo piano.'
+                        : 'Avviso anche fuori dall’app quando arriva una richiesta o una wishlist.')
+            );
+            hint.style.color = errorText ? '#ff6b6b' : 'var(--text-secondary)';
+        }
+
+        async function toggleBrowserNotifications() {
+            var directory = state.directory;
+            if (browserNotifyEnabled()) {
+                directory.notify = false;
+                try { await Store.put('meta', false, 'directoryNotify'); } catch (e) { }
+                renderDirectoryNotify();
+                return;
+            }
+            if (!browserNotifySupported()) {
+                renderDirectoryNotify('Questo browser non supporta le notifiche di sistema.');
+                showToast('Notifiche di sistema non supportate: userò gli avvisi nell’app', { variant: 'error' });
+                return;
+            }
+            var permission = window.Notification.permission;
+            if (permission === 'default') {
+                try { permission = await window.Notification.requestPermission(); } catch (e) { permission = 'denied'; }
+            }
+            if (permission !== 'granted') {
+                renderDirectoryNotify('Permesso negato: puoi riattivarlo dalle impostazioni del browser.');
+                showToast('Notifiche di sistema bloccate: userò gli avvisi nell’app', { variant: 'error' });
+                return;
+            }
+            directory.notify = true;
+            try { await Store.put('meta', true, 'directoryNotify'); } catch (e) { }
+            playPopSound();
+            renderDirectoryNotify();
+            showToast('Notifiche di sistema attive');
+        }
+
+        function notifyDirectoryRequest(request) {
+            playNotifySound();
+            updateDirectoryBadge();
+            if (!isModalOpen('directoryModal')) {
+                var count = directoryRequestCount();
+                showToast('👋 ' + request.name + ' ti ha chiesto la wishlist. Apri “Trova utenti online” per rispondere' +
+                    (count > 1 ? ' (' + count + ' richieste)' : ''), { duration: 9000 });
+            }
+            notifySystem('Richiesta wishlist', request.name + ' vuole vedere la tua wishlist.', 'request-' + request.id);
+        }
+
+        // ---------- AVVISO DI ATTIVITÀ (ricezione in corso) ----------
+        function setActivityPillText(text) {
+            var pill = $('activityPill');
+            if (!pill || pill.classList.contains('hidden')) return;
+            $('activityPillText').textContent = text || '';
+        }
+
+        function showActivityPill(text) {
+            var pill = $('activityPill');
+            if (!pill) return;
+            $('activityPillText').textContent = text || '';
+            pill.classList.remove('leaving');
+            pill.classList.remove('hidden');
+        }
+
+        function hideActivityPill() {
+            var pill = $('activityPill');
+            if (!pill || pill.classList.contains('hidden')) return;
+            pill.classList.add('leaving');
+            setTimeout(function () {
+                pill.classList.add('hidden');
+                pill.classList.remove('leaving');
+            }, 300);
+        }
+
+        async function directoryFetch(url, options) {
+            var ctrl = ('AbortController' in window) ? new AbortController() : null;
+            var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 12000) : null;
+            var request = Object.assign({}, options || {});
+            if (ctrl) request.signal = ctrl.signal;
+            try {
+                return await fetch(url, request);
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
+        }
+
+        async function publishDirectoryMessage(message) {
+            var res = await directoryFetch(SHARE_RELAY + '/' + DIRECTORY_TOPIC, {
+                method: 'POST',
+                body: JSON.stringify(message)
+            });
+            if (!res.ok) throw new Error('directory relay ' + res.status);
+        }
+
+        async function publishDirectoryPresence() {
+            var directory = state.directory;
+            if (!directory.active) return;
+            await publishDirectoryMessage({
+                v: 1, t: 'presence', id: directory.id,
+                name: directory.alias, key: directory.publicKey, ts: Date.now()
+            });
+        }
+
+        function openDirectoryModal() {
+            if (!state.currentUserId) {
+                showToast('Entra prima nella tua wishlist', { variant: 'error' });
+                return;
+            }
+            playClickSound();
+            $('directoryAlias').value = state.directory.alias || '';
+            renderDirectory();
+            showModal('directoryModal');
+        }
+
+        function closeDirectoryModal() {
+            hideModal('directoryModal');
+        }
+
+        async function toggleDirectoryPresence() {
+            if (state.directory.active) {
+                await stopDirectoryPresence(false);
+                return;
+            }
+            var alias = $('directoryAlias').value.trim().slice(0, 24);
+            if (!alias) {
+                directorySetStatus('Scegli un alias da mostrare agli altri.', 'error');
+                $('directoryAlias').focus();
+                return;
+            }
+            if (!window.crypto || !crypto.subtle) {
+                directorySetStatus('La presenza sicura richiede HTTPS o localhost e Web Crypto.', 'error');
+                return;
+            }
+
+            var button = $('directoryToggleBtn');
+            button.disabled = true;
+            directorySetStatus('Creo un identificativo temporaneo sicuro…');
+            try {
+                var pair = await crypto.subtle.generateKey({
+                    name: 'RSA-OAEP',
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: 'SHA-256'
+                }, true, ['encrypt', 'decrypt']);
+                var publicKey = await crypto.subtle.exportKey('jwk', pair.publicKey);
+                var directory = state.directory;
+                directory.id = await directoryIdFromPublicKey(publicKey);
+                directory.alias = alias;
+                directory.keyPair = pair;
+                directory.publicKey = publicKey;
+                directory.peers = {};
+                directory.requests = {};
+                directory.outgoing = null;
+                directory.lastPoll = Math.floor(Date.now() / 1000) - 60;
+                directory.active = true;
+                $('directoryAlias').disabled = true;
+                await publishDirectoryPresence();
+                directorySetStatus('Sei online come ' + alias + '. L’alias è pubblico; il codice viene inviato solo dopo consenso.');
+                directory.heartbeatTimer = setInterval(async function () {
+                    try {
+                        await publishDirectoryPresence();
+                    } catch (e) {
+                        directorySetStatus('Sei online, ma non riesco ad aggiornare la presenza. Controlla la connessione.', 'error');
+                    }
+                }, DIRECTORY_PRESENCE_MS);
+                directory.pollTimer = setInterval(pollDirectory, 10000);
+                renderDirectory();
+                pollDirectory();
+            } catch (e) {
+                var directoryState = state.directory;
+                directoryState.active = false;
+                directoryState.id = '';
+                directoryState.keyPair = null;
+                directoryState.publicKey = null;
+                $('directoryAlias').disabled = false;
+                directorySetStatus('Non riesco ad attivare la directory. Verifica connessione e supporto HTTPS.', 'error');
+            } finally {
+                button.disabled = false;
+                renderDirectory();
+            }
+        }
+
+        async function stopDirectoryPresence(silent) {
+            var directory = state.directory;
+            if (!directory.active) return;
+            var id = directory.id;
+            directory.active = false;
+            clearInterval(directory.heartbeatTimer);
+            clearInterval(directory.pollTimer);
+            directory.heartbeatTimer = 0;
+            directory.pollTimer = 0;
+            directory.polling = false;
+            directory.peers = {};
+            directory.requests = {};
+            directory.outgoing = null;
+            directory.keyPair = null;
+            directory.publicKey = null;
+            state.peerShareRequest = null;
+            $('directoryAlias').disabled = false;
+            directorySetStatus('Non sei online.');
+            renderDirectory();
+            try {
+                await publishDirectoryMessage({ v: 1, t: 'offline', id: id, ts: Date.now() });
+            } catch (e) {
+                directorySetStatus('Sei offline; la presenza scomparirà automaticamente a breve.');
+                if (!silent) showToast('Non riesco ad aggiornare subito la lista online', { variant: 'error' });
+            }
+        }
+
+        function renderDirectory() {
+            var directory = state.directory;
+            var button = $('directoryToggleBtn');
+            if (button) button.textContent = directory.active ? 'Vai offline' : 'Vai online';
+            var alias = $('directoryAlias');
+            if (alias) {
+                alias.disabled = !!directory.active;
+                if (directory.active) alias.value = directory.alias;
+            }
+
+            var requests = Object.keys(directory.requests).map(function (id) { return directory.requests[id]; })
+                .filter(function (request) { return Date.now() - request.receivedAt < DIRECTORY_REQUEST_TTL_MS; });
+            $('directoryRequests').innerHTML = requests.length ? requests.map(function (request) {
+                return '<div class="presence-user"><div class="presence-name">Richiesta da ' + escapeHtml(request.name) +
+                    '<div style="font-size:10.5px; color:var(--text-tertiary); font-weight:400;">ID ' + escapeHtml(request.fromId.slice(0, 8)) + '</div></div>' +
+                    '<button class="btn-primary" style="padding:9px 12px; font-size:13px;" onclick="acceptDirectoryRequest(\'' + request.id + '\')">Accetta</button>' +
+                    '<button class="btn-secondary" style="padding:9px 12px; font-size:13px;" onclick="declineDirectoryRequest(\'' + request.id + '\')">Rifiuta</button></div>';
+            }).join('') : '<p style="font-size:13px; color:var(--text-tertiary);">Nessuna richiesta in attesa.</p>';
+
+            var peers = Object.keys(directory.peers).map(function (id) { return directory.peers[id]; })
+                .filter(function (peer) { return peer.id !== directory.id && Date.now() - peer.seenAt < DIRECTORY_PEER_TTL_MS; })
+                .sort(function (a, b) { return a.name.localeCompare(b.name); });
+            $('directoryPeers').innerHTML = peers.length ? peers.map(function (peer) {
+                var pending = directory.outgoing && directory.outgoing.targetId === peer.id;
+                return '<div class="presence-user"><div class="presence-name">' + escapeHtml(peer.name) +
+                    '<div style="font-size:10.5px; color:var(--text-tertiary); font-weight:400;">ID ' + escapeHtml(peer.id.slice(0, 8)) + '</div></div>' +
+                    '<button class="btn-secondary" style="padding:9px 12px; font-size:13px;" ' + (pending ? 'disabled' : '') +
+                    ' onclick="requestDirectoryWishlist(\'' + peer.id + '\')">' + (pending ? 'Richiesta inviata' : 'Chiedi wishlist') + '</button></div>';
+            }).join('') : '<p style="font-size:13px; color:var(--text-tertiary);">' +
+                (directory.active ? 'Nessun altro utente online per ora.' : 'Vai online per vedere chi sta usando l’app.') + '</p>';
+
+            updateDirectoryBadge();
+            renderDirectoryNotify();
+        }
+
+        async function requestDirectoryWishlist(peerId) {
+            var directory = state.directory;
+            var peer = directory.peers[peerId];
+            if (!directory.active || !peer || Date.now() - peer.seenAt >= DIRECTORY_PEER_TTL_MS) return;
+            if (directory.outgoing) {
+                showToast('Attendi la risposta alla richiesta già inviata', { variant: 'error' });
+                return;
+            }
+            var requestId = randomDirectoryId(18);
+            directory.outgoing = { requestId: requestId, targetId: peer.id, targetName: peer.name, sentAt: Date.now() };
+            renderDirectory();
+            try {
+                await publishDirectoryMessage({
+                    v: 1, t: 'request', id: directory.id, to: peer.id,
+                    requestId: requestId, name: directory.alias,
+                    key: directory.publicKey, ts: Date.now()
+                });
+                directorySetStatus('Richiesta inviata a ' + peer.name + '. Attendi che accetti.');
+            } catch (e) {
+                directory.outgoing = null;
+                directorySetStatus('Non riesco a inviare la richiesta. Controlla la connessione e riprova.', 'error');
+                renderDirectory();
+            }
+        }
+
+        function declineDirectoryRequest(requestId) {
+            state.directory.handledRequests[requestId] = Date.now();
+            delete state.directory.requests[requestId];
+            renderDirectory();
+        }
+
+        async function acceptDirectoryRequest(requestId) {
+            var request = state.directory.requests[requestId];
+            if (!state.directory.active || !request) return;
+            state.directory.handledRequests[requestId] = Date.now();
+            delete state.directory.requests[requestId];
+            renderDirectory();
+            var items;
+            try {
+                items = state.ownListId ? await Store.byIndex('items', 'listId', state.ownListId) : [];
+            } catch (e) {
+                directorySetStatus('Non riesco a leggere la wishlist per condividerla.', 'error');
+                showToast('Non riesco a leggere la wishlist', { variant: 'error' });
+                return;
+            }
+            if (!items.length) {
+                showToast('Aggiungi almeno un desiderio prima di condividere', { variant: 'error' });
+                return;
+            }
+            state.peerShareRequest = request;
+            closeDirectoryModal();
+            openShareModal();
+        }
+
+        async function sendDirectoryCode(request, code) {
+            var directory = state.directory;
+            if (!directory.active) throw new Error('Directory offline');
+            var publicKey = await crypto.subtle.importKey('jwk', request.publicKey, {
+                name: 'RSA-OAEP', hash: 'SHA-256'
+            }, false, ['encrypt']);
+            var secret = JSON.stringify({
+                v: 1, requestId: request.id, fromId: directory.id,
+                toId: request.fromId, code: code, ts: Date.now()
+            });
+            var ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+                { name: 'RSA-OAEP' }, publicKey, new TextEncoder().encode(secret)
+            ));
+            await publishDirectoryMessage({
+                v: 1, t: 'code', id: directory.id, to: request.fromId,
+                requestId: request.id, ciphertext: bytesToBase64Url(ciphertext), ts: Date.now()
+            });
+        }
+
+        async function handleDirectoryMessage(event) {
+            var directory = state.directory;
+            if (!directory.active || !event || event.event !== 'message') return;
+            var raw = relayBody(event);
+            var message = null;
+            try { message = JSON.parse(raw); } catch (e) { return; }
+            if (!message || message.v !== 1) return;
+
+            if (message.t === 'presence' && validDirectoryId(message.id) &&
+                message.id !== directory.id && typeof message.name === 'string' && message.name.trim() &&
+                message.key && message.key.kty === 'RSA' && typeof message.key.n === 'string' &&
+                message.key.n.length <= 700 && typeof message.key.e === 'string' && message.key.e.length <= 10) {
+                if (await directoryIdFromPublicKey(message.key) !== message.id) return;
+                directory.peers[message.id] = {
+                    id: message.id, name: message.name.trim().slice(0, 24),
+                    key: message.key, seenAt: Number(event.time) * 1000 || Date.now()
+                };
+                var peerIds = Object.keys(directory.peers);
+                if (peerIds.length > 100) {
+                    peerIds.sort(function (a, b) { return directory.peers[a].seenAt - directory.peers[b].seenAt; });
+                    delete directory.peers[peerIds[0]];
+                }
+                return;
+            }
+
+            if (message.t === 'offline' && validDirectoryId(message.id) && message.id !== directory.id) {
+                delete directory.peers[message.id];
+                return;
+            }
+
+            var requestAge = Date.now() - Number(message.ts);
+            if (message.t === 'request' && message.to === directory.id &&
+                validDirectoryId(message.id) && message.id !== directory.id &&
+                validDirectoryId(message.requestId) && typeof message.name === 'string' &&
+                !directory.handledRequests[message.requestId] && !directory.requests[message.requestId] &&
+                Object.keys(directory.requests).length < 20 &&
+                message.key && message.key.kty === 'RSA' &&
+                typeof message.key.n === 'string' && message.key.n.length <= 700 &&
+                typeof message.key.e === 'string' && message.key.e.length <= 10 &&
+                requestAge >= 0 && requestAge < DIRECTORY_REQUEST_TTL_MS) {
+                if (await directoryIdFromPublicKey(message.key) !== message.id) return;
+                var incoming = {
+                    id: message.requestId, fromId: message.id,
+                    name: message.name.trim().slice(0, 24) || 'Utente',
+                    publicKey: message.key, receivedAt: Date.now()
+                };
+                directory.requests[message.requestId] = incoming;
+                notifyDirectoryRequest(incoming);
+                return;
+            }
+
+            var outgoing = directory.outgoing;
+            if (message.t !== 'code' || message.to !== directory.id || !outgoing ||
+                message.requestId !== outgoing.requestId || message.id !== outgoing.targetId ||
+                typeof message.ciphertext !== 'string' || message.ciphertext.length > 1024 || !directory.keyPair) return;
+
+            var code = '';
+            try {
+                var plaintext = await crypto.subtle.decrypt(
+                    { name: 'RSA-OAEP' }, directory.keyPair.privateKey, base64UrlToBytes(message.ciphertext)
+                );
+                var secret = JSON.parse(new TextDecoder().decode(plaintext));
+                code = normalizeShareCode(secret.code);
+                if (!code || secret.requestId !== outgoing.requestId ||
+                    secret.fromId !== outgoing.targetId || secret.toId !== directory.id) {
+                    throw new Error('Codice o richiesta non validi');
+                }
+            } catch (e) {
+                directory.outgoing = null;
+                directorySetStatus('Non riesco a verificare il codice ricevuto. Invia una nuova richiesta.', 'error');
+                renderDirectory();
+                return;
+            }
+            directory.outgoing = null;
+            state.receivingFrom = outgoing.targetName;
+            directorySetStatus('Codice ricevuto da ' + outgoing.targetName + '. Apro il caricamento…');
+            renderDirectory();
+            playReceiveSound();
+            showToast('Codice ricevuto da ' + outgoing.targetName + ': scarico la wishlist…');
+            notifySystem('Wishlist in arrivo', outgoing.targetName + ' ha condiviso la sua wishlist con te.', 'code-' + outgoing.requestId);
+            closeDirectoryModal();
+            openImportModal();
+            $('importCodeInput').value = code;
+            await joinShare();
+        }
+
+        async function pollDirectory() {
+            var directory = state.directory;
+            if (!directory.active || directory.polling) return;
+            directory.polling = true;
+            try {
+                var since = Math.max(0, directory.lastPoll - 2);
+                var res = await directoryFetch(
+                    SHARE_RELAY + '/' + DIRECTORY_TOPIC + '/json?poll=1&since=' + since, { cache: 'no-store' }
+                );
+                if (!res.ok) throw new Error('directory relay ' + res.status);
+                var text = await res.text();
+                var events = [];
+                text.split('\n').forEach(function (line) {
+                    if (!line.trim()) return;
+                    try { events.push(JSON.parse(line)); } catch (e) { }
+                });
+                for (var i = 0; i < events.length; i++) await handleDirectoryMessage(events[i]);
+                directory.lastPoll = Math.floor(Date.now() / 1000);
+                var now = Date.now();
+                Object.keys(directory.peers).forEach(function (id) {
+                    if (now - directory.peers[id].seenAt >= DIRECTORY_PEER_TTL_MS) delete directory.peers[id];
+                });
+                Object.keys(directory.requests).forEach(function (id) {
+                    if (now - directory.requests[id].receivedAt >= DIRECTORY_REQUEST_TTL_MS) delete directory.requests[id];
+                });
+                Object.keys(directory.handledRequests).forEach(function (id) {
+                    if (now - directory.handledRequests[id] >= DIRECTORY_REQUEST_TTL_MS) delete directory.handledRequests[id];
+                });
+                if (directory.outgoing && now - directory.outgoing.sentAt >= DIRECTORY_REQUEST_TTL_MS) {
+                    directory.outgoing = null;
+                    directorySetStatus('La richiesta è scaduta. Puoi inviarne un’altra.');
+                }
+                renderDirectory();
+            } catch (e) {
+                if (directory.active) directorySetStatus('Sei online, ma non riesco ad aggiornare la lista. Riprovo automaticamente.', 'error');
+            } finally {
+                directory.polling = false;
+            }
         }
 
         async function relayPublish(channel, text) {
@@ -4006,7 +4681,13 @@
         function openShareModal() {
             if (!state.ownListId) return;
             playClickSound();
-            $('shareSheetBtn').classList.toggle('hidden', !navigator.share);
+            var peerRequest = state.peerShareRequest;
+            $('shareSheetBtn').classList.toggle('hidden', !navigator.share || !!peerRequest);
+            $('shareCodeRow').classList.toggle('hidden', !!peerRequest);
+            $('shareInviteBtn').classList.toggle('hidden', !!peerRequest);
+            $('shareDescription').textContent = peerRequest
+                ? 'Hai accettato la richiesta di ' + peerRequest.name + '. Preparo la wishlist e invierò il codice in modo privato.'
+                : 'Manda questo codice all\'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre Carica wishlist e lo inserisce.';
             $('shareCodeText').textContent = '—';
             state.shareCode = newShareCode();
             showModal('shareModal');
@@ -4015,6 +4696,9 @@
 
         function closeShareModal() {
             state.shareWatch = 0;
+            state.peerShareRequest = null;
+            $('shareCodeRow').classList.remove('hidden');
+            $('shareInviteBtn').classList.remove('hidden');
             hideModal('shareModal');
         }
 
@@ -4043,6 +4727,22 @@
                     if (state.shareWatch === token) setShareStatus(text);
                 });
                 if (state.shareWatch !== token) return;
+                var peerRequest = state.peerShareRequest;
+                if (peerRequest) {
+                    try {
+                        await sendDirectoryCode(peerRequest, code);
+                        if (state.shareWatch !== token || state.peerShareRequest !== peerRequest) return;
+                        state.peerShareRequest = null;
+                        setShareStatus('✅ Codice inviato in privato a ' + peerRequest.name, 'ok');
+                        watchShareAck(channel, token);
+                        return;
+                    } catch (e) {
+                        if (state.peerShareRequest === peerRequest) state.peerShareRequest = null;
+                        playErrorSound();
+                        setShareStatus('Wishlist preparata, ma non riesco a inviare il codice. Chiedi di riprovare.', 'error');
+                        return;
+                    }
+                }
                 setShareStatus('📡 Pronto. In attesa che l\'altro dispositivo si colleghi…');
                 watchShareAck(channel, token);
             } catch (e) {
@@ -4147,6 +4847,8 @@
 
         function closeImportModal() {
             state.importToken = 0;
+            state.receivingFrom = '';
+            hideActivityPill();
             hideModal('importModal');
         }
 
@@ -4194,21 +4896,25 @@
         // Il mittente pubblica la lista prima di mostrare il codice, quindi in genere
         // è già in rete: si ritenta comunque per qualche secondo, per i casi in cui il
         // suo telefono sta ancora caricando.
-        async function receiveShareWithRetry(channel, token) {
+        async function receiveShareWithRetry(channel, token, from) {
             var deadline = Date.now() + (state.importWaitMs || IMPORT_WAIT_MS);
             var last = null;
             for (;;) {
                 if (state.importToken !== token) return null;
                 try {
                     last = await receiveShare(channel, function (text) {
-                        if (state.importToken === token) setImportStatus(text);
+                        if (state.importToken !== token) return;
+                        setImportStatus(text);
+                        setActivityPillText(from ? from + ': ' + text : text);
                     });
                 } catch (e) {
                     last = { error: 'network' };
                 }
                 if (last && last.error !== 'empty' && last.error !== 'network') return last;
                 if (Date.now() > deadline) return last;
-                setImportStatus('Cerco la wishlist… l\'altro dispositivo deve averla già inviata.');
+                var waiting = 'Cerco la wishlist… l\'altro dispositivo deve averla già inviata.';
+                setImportStatus(waiting);
+                setActivityPillText(from ? from + ': ' + waiting : waiting);
                 await new Promise(function (resolve) { setTimeout(resolve, 3000); });
             }
         }
@@ -4223,13 +4929,15 @@
             }
             $('importCodeInput').value = code;
 
+            var from = state.receivingFrom;
             var token = state.importToken + 1;
             state.importToken = token;
             setImportBusy(true);
             setImportStatus('Mi collego…');
+            showActivityPill(from ? 'Ricezione della wishlist di ' + from + '…' : 'Ricerca della wishlist condivisa…');
             try {
                 var channel = await shareChannel(code);
-                var data = await receiveShareWithRetry(channel, token);
+                var data = await receiveShareWithRetry(channel, token, from);
                 if (state.importToken !== token || !data) return;
                 if (data.error) {
                     playErrorSound();
@@ -4254,13 +4962,17 @@
                 $('importChoiceInfo').innerHTML = 'Wishlist di <b>' + escapeHtml(data.owner) + '</b> con <b>' +
                     data.items.length + '</b> ' + (data.items.length === 1 ? 'desiderio' : 'desideri') + '.';
                 showModal('importChoiceModal');
-                playPopSound();
+                playReceiveSound();
+                showToast('✅ Wishlist di ' + data.owner + ' ricevuta', { duration: 4000 });
             } catch (e) {
                 if (state.importToken !== token) return;
                 playErrorSound();
                 setImportStatus('Non riesco a collegarmi: controlla la connessione e riprova.', 'error');
             } finally {
-                if (state.importToken === token) setImportBusy(false);
+                if (state.importToken === token) {
+                    setImportBusy(false);
+                    hideActivityPill();
+                }
             }
         }
 
@@ -4365,7 +5077,7 @@
 
             document.addEventListener('keydown', function (e) {
                 if (e.key !== 'Escape') return;
-                var open = ['imageModal', 'confirmModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal'];
+                var open = ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal'];
                 for (var i = 0; i < open.length; i++) {
                     if (!$(open[i]).classList.contains('hidden')) {
                         closeModalById(open[i]);
@@ -4380,6 +5092,7 @@
             switch (id) {
                 case 'imageModal': closeImageModal(); break;
                 case 'confirmModal': closeConfirm(); break;
+                case 'directoryModal': closeDirectoryModal(); break;
                 case 'usersModal': closeUsersModal(); break;
                 case 'importChoiceModal': closeImportChoiceModal(); break;
                 case 'importModal': closeImportModal(); break;
@@ -4389,7 +5102,7 @@
         }
 
         function closeAllModals() {
-            ['imageModal', 'confirmModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal']
+            ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal']
                 .forEach(closeModalById);
         }
 
@@ -4402,6 +5115,7 @@
             var theme = await Store.get('meta', 'theme');
             state.theme = (theme === 'light') ? 'light' : 'dark';
             applyTheme(state.theme);
+            state.directory.notify = (await Store.get('meta', 'directoryNotify')) === true;
 
             await refreshGateUsers();
 
