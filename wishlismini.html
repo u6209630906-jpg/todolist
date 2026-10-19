@@ -41,6 +41,10 @@
             --glass-inner-top: rgba(255, 255, 255, 0.08);
             --glass-inner-bottom: rgba(255, 255, 255, 0.02);
 
+            --tile-bg: rgba(255, 255, 255, 0.10);
+            --tile-border: rgba(255, 255, 255, 0.20);
+            --tile-icon: #ffffff;
+
             --header-bg: rgba(10, 10, 20, 0.55);
             --header-border: rgba(255, 255, 255, 0.08);
 
@@ -114,6 +118,10 @@
             --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
             --glass-inner-top: rgba(255, 255, 255, 0.9);
             --glass-inner-bottom: rgba(255, 255, 255, 0.3);
+
+            --tile-bg: rgba(15, 23, 42, 0.07);
+            --tile-border: rgba(15, 23, 42, 0.16);
+            --tile-icon: rgba(15, 23, 42, 0.9);
 
             --header-bg: rgba(255, 255, 255, 0.6);
             --header-border: rgba(0, 0, 0, 0.06);
@@ -697,6 +705,29 @@
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
         }
+        .qa-icon {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            background: var(--tile-bg);
+            border: 0.5px solid var(--tile-border);
+            color: var(--tile-icon);
+        }
+        .qa-icon svg { width: 18px; height: 18px; stroke: currentColor; }
+        .qa-row {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 16px;
+            justify-content: flex-start;
+            gap: 12px;
+            margin-bottom: 9px;
+            white-space: normal;
+        }
+        .qa-row > span { min-width: 0; }
+        .qa-title { display: block; font-size: 14.5px; font-weight: 650; }
+        .qa-sub { display: block; font-size: 12.5px; line-height: 1.35; color: var(--text-secondary); margin-top: 2px; }
+        .qa-chevron { flex-shrink: 0; }
 
         /* === BADGE / CHIP === */
         .badge {
@@ -1055,6 +1086,8 @@
                 <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:22px; line-height:1.6;">
                     Wishlist e utenti sono salvati su questo dispositivo.<br>Condivisione e presenza online usano relay di terze parti.
                 </p>
+                <button class="btn-secondary" style="width:100%; margin-top:12px; padding:11px; font-size:13px;" onclick="pickBackupFile()">Ripristina da backup</button>
+                <input id="backupFileInputGate" type="file" accept=".json,application/json" class="hidden" onchange="restoreBackupFromFile(this.files && this.files[0], this)">
             </div>
         </div>
     </div>
@@ -1090,18 +1123,14 @@
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         Fine
                     </button>
-                    <button class="glass-btn" onclick="openShareChooser()">
+                    <button class="glass-btn" id="quickActionsBtn" style="position:relative;" onclick="openQuickActions()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
-                        Condividi
-                    </button>
-                    <button class="glass-btn" onclick="openImportModal()">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg>
-                        Carica wishlist
-                    </button>
-                    <button class="glass-btn" id="directoryBtn" style="position:relative;" onclick="openDirectoryModal()">
-                        <span aria-hidden="true">👥</span>
-                        Trova utenti online
+                        Condividi e altro
                         <span id="directoryBadge" class="notify-badge hidden" aria-hidden="true"></span>
+                    </button>
+                    <button class="glass-btn" onclick="openBackupModal()" title="Backup e ripristino dei dati">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8M7 3v5h8"/></svg>
+                        Backup
                     </button>
                 </div>
             </div>
@@ -1238,6 +1267,50 @@
         </div>
     </div>
 
+    <!-- ============ QUICK ACTIONS MODAL ============ -->
+    <div id="quickActionsModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div class="qa-icon" style="width:52px; height:52px; border-radius:16px; margin:0 auto 10px;">
+                        <svg fill="none" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
+                    </div>
+                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi e altro</h3>
+                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Condividi la tua lista, importa quella di un amico o trova chi è online.</p>
+                </div>
+
+                <button class="glass-btn qa-row" onclick="runQuickAction('share')">
+                    <span class="qa-icon"><svg fill="none" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg></span>
+                    <span style="text-align:left; flex:1;">
+                        <span class="qa-title">Condividi la tua wishlist</span>
+                        <span class="qa-sub">Crea un codice da inviare</span>
+                    </span>
+                    <svg class="qa-chevron" width="15" height="15" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <button class="glass-btn qa-row" onclick="runQuickAction('import')">
+                    <span class="qa-icon"><svg fill="none" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 16V3m0 0L8 7m4-4l4 4"/></svg></span>
+                    <span style="text-align:left; flex:1;">
+                        <span class="qa-title">Carica wishlist</span>
+                        <span class="qa-sub">Inserisci il codice ricevuto</span>
+                    </span>
+                    <svg class="qa-chevron" width="15" height="15" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <button class="glass-btn qa-row" onclick="runQuickAction('directory')">
+                    <span class="qa-icon"><svg fill="none" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 19v-1a4 4 0 00-4-4H6a4 4 0 00-4 4v1M9 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM22 19v-1a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+                    <span style="text-align:left; flex:1;">
+                        <span class="qa-title">Trova utenti online</span>
+                        <span class="qa-sub">Vedi chi è online adesso</span>
+                    </span>
+                    <svg class="qa-chevron" width="15" height="15" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeQuickActions()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ SHARE CHOICE MODAL ============ -->
     <div id="shareChoiceModal" class="modal-overlay hidden">
         <div class="modal-content scale-in">
@@ -1262,7 +1335,7 @@
                 <div style="text-align:center; margin-bottom:14px;">
                     <div style="font-size:40px; margin-bottom:8px;">📤</div>
                     <h3 id="shareTitle" style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
-                    <p id="shareDescription" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Carica wishlist</b> e lo inserisce.</p>
+                    <p id="shareDescription" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Condividi e altro</b> → <b>Carica wishlist</b> e lo inserisce.</p>
                 </div>
 
                 <div id="shareCodeRow" style="display:flex; align-items:center; gap:10px; background:var(--glass-bg); border:0.5px solid var(--glass-border); border-radius:16px; padding:14px 16px;">
@@ -1414,6 +1487,49 @@
         </div>
     </div>
 
+    <!-- ============ BACKUP MODAL ============ -->
+    <div id="backupModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in" style="max-width:460px;">
+            <div class="modal-body">
+                <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:4px;">Backup dei dati</h3>
+                <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:16px; line-height:1.55;">
+                    La wishlist è salvata dentro il browser. Cancellare la sola cronologia non la elimina, ma scegliendo
+                    anche «Cookie e altri dati dei siti» i dati vengono rimossi e nessuna pagina web può impedirlo.
+                    Un backup su file ti permette di ripristinarli.
+                </p>
+
+                <div style="background:var(--thumb-bg, rgba(255,255,255,0.05)); border-radius:14px; padding:14px; margin-bottom:14px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                        <div style="min-width:0;">
+                            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:2px;">Backup automatico su file</div>
+                            <div id="backupStatus" style="font-size:13.5px; font-weight:600;">Non attivo</div>
+                        </div>
+                        <button class="btn-secondary hidden" id="backupDisableBtn" style="padding:8px 12px; font-size:12.5px; flex-shrink:0;" onclick="disableAutoBackup()">Disattiva</button>
+                    </div>
+                    <div id="backupLast" style="font-size:11.5px; color:var(--text-tertiary); margin-top:6px;"></div>
+                </div>
+
+                <button class="btn-primary" id="backupChooseBtn" style="width:100%; margin-bottom:9px;" onclick="startAutoBackup()">Scegli file di backup</button>
+                <div style="display:flex; gap:9px;">
+                    <button class="btn-secondary" style="flex:1; padding:12px 10px; font-size:13.5px;" onclick="exportBackupFile()">Esporta file</button>
+                    <button class="btn-secondary" style="flex:1; padding:12px 10px; font-size:13.5px;" onclick="pickBackupFile()">Ripristina</button>
+                </div>
+                <input id="backupFileInput" type="file" accept=".json,application/json" class="hidden" onchange="restoreBackupFromFile(this.files && this.files[0])">
+
+                <div class="divider">protezione del browser</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                    <div style="min-width:0;">
+                        <div id="persistStatus" style="font-size:13px; color:var(--text-secondary);">Archiviazione temporanea</div>
+                        <div style="font-size:11.5px; color:var(--text-tertiary); line-height:1.45; margin-top:3px;">Evita la cancellazione automatica per spazio insufficiente, non quella manuale.</div>
+                    </div>
+                    <button class="btn-secondary" id="persistBtn" style="padding:8px 12px; font-size:12.5px; flex-shrink:0;" onclick="requestPersistentStorage()">Attiva</button>
+                </div>
+
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeBackupModal()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ IMAGE VIEWER ============ -->
     <div id="imageModal" class="modal-overlay hidden" onclick="closeImageModal()">
         <div class="modal-content wide scale-in" onclick="event.stopPropagation()" style="padding:14px;">
@@ -1477,6 +1593,16 @@
             pendingImport: null,
             confirmAction: null,
             storageMode: 'idb',
+            backup: {
+                handle: null,
+                active: false,
+                writing: false,
+                pending: false,
+                timer: 0,
+                lastSaved: 0,
+                needsPermission: false,
+                protected: false
+            },
             shareCode: '',
             shareWatch: 0,
             shareListId: null,
@@ -1626,33 +1752,44 @@
                 return Promise.resolve(data[store] ? data[store][key] : undefined);
             },
             put(store, value, key) {
+                var done;
                 if (_db) {
-                    return new Promise(function (resolve, reject) {
+                    done = new Promise(function (resolve, reject) {
                         var tx = _db.transaction(store, 'readwrite');
                         var os = tx.objectStore(store);
                         var r = (key === undefined) ? os.put(value) : os.put(value, key);
                         r.onsuccess = function () { resolve(r.result); };
                         r.onerror = function () { reject(r.error); };
                     });
+                } else {
+                    var data = lsRead();
+                    if (!data[store]) data[store] = {};
+                    data[store][key === undefined ? value.id : key] = (key === undefined) ? value : value;
+                    lsWrite(data);
+                    done = Promise.resolve(key === undefined ? value.id : key);
                 }
-                var data = lsRead();
-                if (!data[store]) data[store] = {};
-                data[store][key === undefined ? value.id : key] = (key === undefined) ? value : value;
-                lsWrite(data);
-                return Promise.resolve(key === undefined ? value.id : key);
+                return done.then(function (result) {
+                    if (!(store === 'meta' && key === 'backupHandle')) scheduleBackupWrite();
+                    return result;
+                });
             },
             del(store, key) {
+                var done;
                 if (_db) {
-                    return new Promise(function (resolve, reject) {
+                    done = new Promise(function (resolve, reject) {
                         var tx = _db.transaction(store, 'readwrite');
                         var r = tx.objectStore(store).delete(key);
                         r.onsuccess = function () { resolve(); };
                         r.onerror = function () { reject(r.error); };
                     });
+                } else {
+                    var data = lsRead();
+                    if (data[store]) { delete data[store][key]; lsWrite(data); }
+                    done = Promise.resolve();
                 }
-                var data = lsRead();
-                if (data[store]) { delete data[store][key]; lsWrite(data); }
-                return Promise.resolve();
+                return done.then(function () {
+                    if (!(store === 'meta' && key === 'backupHandle')) scheduleBackupWrite();
+                });
             },
             getAll(store) {
                 if (_db) {
@@ -1681,6 +1818,307 @@
                 await Store.del('lists', listId);
             }
         };
+
+        // ---------- BACKUP / DATA PROTECTION ----------
+        var BACKUP_FILE_NAME = 'wishlismini-backup.json';
+        var BACKUP_META_KEYS = ['theme', 'currentUserId', 'directoryNotify'];
+
+        function supportsBackupFile() {
+            return typeof window.showSaveFilePicker === 'function';
+        }
+
+        function scheduleBackupWrite() {
+            if (!state.backup.active || !state.backup.handle) return;
+            if (state.backup.writing) { state.backup.pending = true; return; }
+            if (state.backup.timer) clearTimeout(state.backup.timer);
+            state.backup.timer = setTimeout(function () {
+                state.backup.timer = 0;
+                writeAutoBackup();
+            }, 1200);
+        }
+
+        async function buildBackupData() {
+            var meta = {};
+            for (var i = 0; i < BACKUP_META_KEYS.length; i++) {
+                var k = BACKUP_META_KEYS[i];
+                var v = await Store.get('meta', k);
+                if (v !== undefined) meta[k] = v;
+            }
+            return {
+                app: 'wishlismini',
+                format: 1,
+                exportedAt: new Date().toISOString(),
+                users: await Store.getAll('users'),
+                lists: await Store.getAll('lists'),
+                items: await Store.getAll('items'),
+                meta: meta
+            };
+        }
+
+        async function writeAutoBackup(interactive) {
+            var handle = state.backup.handle;
+            if (!handle) return false;
+            if (state.backup.writing) { state.backup.pending = true; return false; }
+            state.backup.writing = true;
+            try {
+                var perm = 'granted';
+                if (handle.queryPermission) {
+                    perm = await handle.queryPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted' && interactive && handle.requestPermission) {
+                        perm = await handle.requestPermission({ mode: 'readwrite' });
+                    }
+                }
+                if (perm !== 'granted') {
+                    state.backup.active = false;
+                    state.backup.needsPermission = true;
+                    updateBackupUI();
+                    return false;
+                }
+                var data = await buildBackupData();
+                var writable = await handle.createWritable();
+                await writable.write(JSON.stringify(data, null, 2));
+                await writable.close();
+                state.backup.lastSaved = Date.now();
+                state.backup.needsPermission = false;
+                state.backup.active = true;
+                updateBackupUI();
+                return true;
+            } catch (e) {
+                state.backup.active = false;
+                updateBackupUI();
+                if (interactive) showToast('Scrittura del backup non riuscita', { variant: 'error' });
+                return false;
+            } finally {
+                state.backup.writing = false;
+                if (state.backup.pending) {
+                    state.backup.pending = false;
+                    scheduleBackupWrite();
+                }
+            }
+        }
+
+        async function startAutoBackup() {
+            if (!supportsBackupFile()) {
+                showToast('Questo browser non supporta il backup automatico: usa «Esporta file».', { variant: 'error', duration: 5000 });
+                return;
+            }
+            try {
+                if (state.backup.needsPermission && state.backup.handle && state.backup.handle.requestPermission) {
+                    var perm = await state.backup.handle.requestPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted') {
+                        showToast('Permesso non concesso', { variant: 'error' });
+                        return;
+                    }
+                    state.backup.active = true;
+                    state.backup.needsPermission = false;
+                    if (!await writeAutoBackup(true)) throw new Error('backup non scritto');
+                    updateBackupUI();
+                    showToast('Backup automatico riattivato');
+                    return;
+                }
+                var handle = await window.showSaveFilePicker({
+                    suggestedName: BACKUP_FILE_NAME,
+                    types: [{ description: 'Backup Wishlismini', accept: { 'application/json': ['.json'] } }]
+                });
+                state.backup.handle = handle;
+                state.backup.active = true;
+                state.backup.needsPermission = false;
+                state.backup.lastSaved = 0;
+                try { await Store.put('meta', handle, 'backupHandle'); } catch (e) { /* backup valido solo per questa sessione */ }
+                var ok = await writeAutoBackup(true);
+                if (!ok) throw new Error('backup non scritto');
+                updateBackupUI();
+                showToast('Backup automatico attivo');
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+                showToast('Backup automatico non attivato', { variant: 'error' });
+            }
+        }
+
+        async function disableAutoBackup() {
+            if (state.backup.timer) { clearTimeout(state.backup.timer); state.backup.timer = 0; }
+            state.backup.active = false;
+            state.backup.handle = null;
+            state.backup.needsPermission = false;
+            state.backup.lastSaved = 0;
+            try { await Store.del('meta', 'backupHandle'); } catch (e) { }
+            updateBackupUI();
+            showToast('Backup automatico disattivato (il file su disco resta)');
+        }
+
+        async function exportBackupFile() {
+            try {
+                var data = await buildBackupData();
+                var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'wishlismini-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+                showToast('Backup esportato');
+            } catch (e) {
+                showToast('Esportazione non riuscita', { variant: 'error' });
+            }
+        }
+
+        function pickBackupFile() {
+            var modalOpen = $('backupModal') && !$('backupModal').classList.contains('hidden');
+            var input = modalOpen ? $('backupFileInput') : ($('backupFileInputGate') || $('backupFileInput'));
+            if (input) input.click();
+        }
+
+        async function restoreBackupFromFile(file, sourceInput) {
+            var input = sourceInput || $('backupFileInput');
+            if (!file) return;
+            var text = '';
+            try { text = await file.text(); } catch (e) { }
+            try { input.value = ''; } catch (e) { }
+            var other = $('backupFileInput') === input ? $('backupFileInputGate') : $('backupFileInput');
+            try { if (other) other.value = ''; } catch (e) { }
+            var data = null;
+            try { data = JSON.parse(text); } catch (e) { data = null; }
+            if (!data || data.app !== 'wishlismini' || !Array.isArray(data.users) ||
+                !Array.isArray(data.lists) || !Array.isArray(data.items)) {
+                showToast('File di backup non valido', { variant: 'error' });
+                return;
+            }
+            askConfirm(
+                'Ripristinare il backup?',
+                'Le voci del backup vengono aggiunte a quelle attuali; quelle con lo stesso ID vengono aggiornate. L\'app verrà ricaricata.',
+                'Ripristina',
+                async function () {
+                    try {
+                        var storeNames = ['users', 'lists', 'items'];
+                        for (var i = 0; i < storeNames.length; i++) {
+                            var name = storeNames[i];
+                            var rows = data[name];
+                            for (var j = 0; j < rows.length; j++) {
+                                var row = rows[j];
+                                if (row && row.id) await Store.put(name, row);
+                            }
+                        }
+                        if (data.meta && typeof data.meta === 'object') {
+                            var keys = Object.keys(data.meta);
+                            for (var m = 0; m < keys.length; m++) {
+                                if (BACKUP_META_KEYS.indexOf(keys[m]) === -1) continue;
+                                await Store.put('meta', data.meta[keys[m]], keys[m]);
+                            }
+                        }
+                        state.backup.active = false;
+                        showToast('Backup ripristinato');
+                        setTimeout(function () { location.reload(); }, 800);
+                    } catch (e) {
+                        showToast('Ripristino non riuscito', { variant: 'error' });
+                    }
+                }
+            );
+        }
+
+        function openBackupModal() {
+            updateBackupUI();
+            refreshPersistStatus();
+            showModal('backupModal');
+        }
+
+        function closeBackupModal() {
+            hideModal('backupModal');
+        }
+
+        function updateBackupUI() {
+            var status = $('backupStatus');
+            var last = $('backupLast');
+            var choose = $('backupChooseBtn');
+            var disable = $('backupDisableBtn');
+            if (!status) return;
+
+            if (state.backup.active) {
+                status.textContent = 'Attivo';
+                status.style.color = 'var(--text-primary)';
+            } else if (state.backup.needsPermission) {
+                status.textContent = 'Da riattivare';
+                status.style.color = 'var(--text-secondary)';
+            } else if (state.backup.handle) {
+                status.textContent = 'Non attivo';
+                status.style.color = 'var(--text-secondary)';
+            } else {
+                status.textContent = supportsBackupFile() ? 'Non attivo' : 'Non supportato da questo browser';
+                status.style.color = 'var(--text-secondary)';
+            }
+
+            if (last) {
+                if (state.backup.lastSaved) {
+                    last.textContent = 'Ultimo salvataggio: ' + new Date(state.backup.lastSaved).toLocaleString('it-IT', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                    });
+                } else if (state.backup.needsPermission) {
+                    last.textContent = 'Il browser richiede di riconfermare il permesso: tocca «Scegli file di backup».';
+                } else {
+                    last.textContent = 'Il file viene aggiornato automaticamente a ogni modifica.';
+                }
+            }
+
+            if (choose) {
+                choose.classList.toggle('hidden', !supportsBackupFile());
+                choose.textContent = state.backup.needsPermission
+                    ? 'Riattiva backup'
+                    : (state.backup.handle ? 'Cambia file di backup' : 'Scegli file di backup');
+            }
+            if (disable) disable.classList.toggle('hidden', !state.backup.handle);
+        }
+
+        async function refreshPersistStatus() {
+            var status = $('persistStatus');
+            var btn = $('persistBtn');
+            try {
+                if (navigator.storage && navigator.storage.persisted) {
+                    state.backup.protected = await navigator.storage.persisted();
+                }
+            } catch (e) { }
+            if (status) {
+                status.textContent = state.backup.protected
+                    ? 'Archiviazione protetta dal browser'
+                    : 'Archiviazione temporanea';
+            }
+            if (btn) btn.classList.toggle('hidden', state.backup.protected || !(navigator.storage && navigator.storage.persist));
+        }
+
+        async function requestPersistentStorage() {
+            try {
+                var ok = false;
+                if (navigator.storage && navigator.storage.persist) ok = await navigator.storage.persist();
+                state.backup.protected = ok;
+                await refreshPersistStatus();
+                showToast(ok ? 'Protezione del browser attivata' : 'Il browser non ha concesso la protezione');
+            } catch (e) {
+                showToast('Protezione non disponibile', { variant: 'error' });
+            }
+        }
+
+        async function initDataProtection() {
+            try {
+                if (navigator.storage && navigator.storage.persisted) {
+                    state.backup.protected = await navigator.storage.persisted();
+                }
+            } catch (e) { }
+            try {
+                var handle = await Store.get('meta', 'backupHandle');
+                if (handle && typeof handle.createWritable === 'function') {
+                    state.backup.handle = handle;
+                    var perm = handle.queryPermission ? await handle.queryPermission({ mode: 'readwrite' }) : 'granted';
+                    state.backup.active = perm === 'granted';
+                    state.backup.needsPermission = perm !== 'granted';
+                }
+            } catch (e) { }
+            updateBackupUI();
+            window.addEventListener('pagehide', function () {
+                if (!state.backup.active || !state.backup.handle) return;
+                if (state.backup.timer) { clearTimeout(state.backup.timer); state.backup.timer = 0; }
+                writeAutoBackup();
+            });
+        }
 
         // ---------- AUDIO ----------
         var audioCtx = null;
@@ -4022,7 +4460,7 @@
                 badge.textContent = count > 99 ? '99+' : String(count);
                 badge.classList.toggle('hidden', count === 0);
             }
-            var button = $('directoryBtn');
+            var button = $('quickActionsBtn');
             if (button) button.classList.toggle('alerting', count > 0);
             var inline = $('directoryRequestBadge');
             if (inline) {
@@ -4107,7 +4545,7 @@
             updateDirectoryBadge();
             if (!isModalOpen('directoryModal')) {
                 var count = directoryRequestCount();
-                showToast('👋 ' + request.name + ' ti ha chiesto la wishlist. Apri “Trova utenti online” per rispondere' +
+                showToast('👋 ' + request.name + ' ti ha chiesto la wishlist. Apri “Condividi e altro” → “Trova utenti online” per rispondere' +
                     (count > 1 ? ' (' + count + ' richieste)' : ''), { duration: 9000 });
             }
             notifySystem('Richiesta wishlist', request.name + ' vuole vedere la tua wishlist.', 'request-' + request.id);
@@ -4687,7 +5125,7 @@
 
         function shareInviteText(code) {
             return '🎁 Wishlismini — codice wishlist: ' + code + '\n' +
-                'Apri Wishlismini, tocca "Carica wishlist" e inserisci questo codice.';
+                'Apri Wishlismini, tocca "Condividi e altro" → "Carica wishlist" e inserisci questo codice.';
         }
 
         function setShareStatus(text, variant) {
@@ -4699,6 +5137,32 @@
 
         // Il mittente sceglie cosa condividere: la propria lista oppure una delle
         // wishlist degli amici che ha gia' salvato sul dispositivo.
+        // ---------- QUICK ACTIONS (condividi / carica / utenti online) ----------
+        function openQuickActions() {
+            playClickSound();
+            showModal('quickActionsModal');
+        }
+
+        function closeQuickActions() {
+            hideModal('quickActionsModal');
+            playClickSound();
+        }
+
+        function runQuickAction(kind) {
+            hideModal('quickActionsModal');
+            if (kind === 'share') {
+                if (!state.ownListId) {
+                    showToast('Entra prima nella tua wishlist', { variant: 'error' });
+                    return;
+                }
+                openShareChooser();
+            } else if (kind === 'import') {
+                openImportModal();
+            } else if (kind === 'directory') {
+                openDirectoryModal();
+            }
+        }
+
         async function openShareChooser() {
             if (!state.ownListId) return;
             playClickSound();
@@ -4792,7 +5256,7 @@
                 ? 'Hai accettato la richiesta di ' + peerRequest.name + '. Preparo la wishlist e invierò il codice in modo privato.'
                 : (friendShare
                     ? 'Stai condividendo la wishlist di ' + ownerName + '. Manda questo codice a chi vuoi: chi lo riceve sceglierà se è la sua o di un amico.'
-                    : 'Manda questo codice all\'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre Carica wishlist e lo inserisce.');
+                    : 'Manda questo codice all\'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre Condividi e altro → Carica wishlist e lo inserisce.');
             $('shareCodeText').textContent = '—';
             state.shareCode = newShareCode();
             showModal('shareModal');
@@ -5184,7 +5648,7 @@
 
             document.addEventListener('keydown', function (e) {
                 if (e.key !== 'Escape') return;
-                var open = ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal'];
+                var open = ['quickActionsModal', 'backupModal', 'imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal'];
                 for (var i = 0; i < open.length; i++) {
                     if (!$(open[i]).classList.contains('hidden')) {
                         closeModalById(open[i]);
@@ -5197,6 +5661,8 @@
 
         function closeModalById(id) {
             switch (id) {
+                case 'quickActionsModal': closeQuickActions(); break;
+                case 'backupModal': closeBackupModal(); break;
                 case 'imageModal': closeImageModal(); break;
                 case 'confirmModal': closeConfirm(); break;
                 case 'directoryModal': closeDirectoryModal(); break;
@@ -5210,7 +5676,7 @@
         }
 
         function closeAllModals() {
-            ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal']
+            ['quickActionsModal', 'backupModal', 'imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal']
                 .forEach(closeModalById);
         }
 
@@ -5220,6 +5686,7 @@
             wireEvents();
 
             await Store.init();
+            await initDataProtection();
             var theme = await Store.get('meta', 'theme');
             state.theme = (theme === 'light') ? 'light' : 'dark';
             applyTheme(state.theme);
