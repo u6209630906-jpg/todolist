@@ -1090,7 +1090,7 @@
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         Fine
                     </button>
-                    <button class="glass-btn" onclick="openShareModal()">
+                    <button class="glass-btn" onclick="openShareChooser()">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
                         Condividi
                     </button>
@@ -1238,13 +1238,30 @@
         </div>
     </div>
 
+    <!-- ============ SHARE CHOICE MODAL ============ -->
+    <div id="shareChoiceModal" class="modal-overlay hidden">
+        <div class="modal-content scale-in">
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div style="font-size:40px; margin-bottom:8px;">📤</div>
+                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Cosa vuoi condividere?</h3>
+                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Scegli la tua wishlist oppure una di quelle che hai salvato dai tuoi amici.</p>
+                </div>
+
+                <div id="shareChoiceList" style="max-height:56vh; overflow-y:auto;"></div>
+
+                <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="closeShareChoiceModal()">Annulla</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ SHARE MODAL ============ -->
     <div id="shareModal" class="modal-overlay hidden">
         <div class="modal-content scale-in">
             <div class="modal-body">
                 <div style="text-align:center; margin-bottom:14px;">
                     <div style="font-size:40px; margin-bottom:8px;">📤</div>
-                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
+                    <h3 id="shareTitle" style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi la tua wishlist</h3>
                     <p id="shareDescription" style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Manda questo codice all'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre <b>Carica wishlist</b> e lo inserisce.</p>
                 </div>
 
@@ -1462,6 +1479,7 @@
             storageMode: 'idb',
             shareCode: '',
             shareWatch: 0,
+            shareListId: null,
             importToken: 0,
             directory: {
                 active: false,
@@ -4341,6 +4359,7 @@
             }
             state.peerShareRequest = request;
             closeDirectoryModal();
+            state.shareListId = state.ownListId;
             openShareModal();
         }
 
@@ -4678,16 +4697,102 @@
             el.style.color = variant === 'ok' ? 'var(--accent)' : (variant === 'error' ? '#ff6b6b' : 'var(--text-secondary)');
         }
 
-        function openShareModal() {
+        // Il mittente sceglie cosa condividere: la propria lista oppure una delle
+        // wishlist degli amici che ha gia' salvato sul dispositivo.
+        async function openShareChooser() {
             if (!state.ownListId) return;
             playClickSound();
+
+            var lists = await Store.getAll('lists');
+            var friends = lists.filter(function (l) {
+                return l.type === 'friend' && (!l.viewerId || l.viewerId === state.currentUserId);
+            }).sort(function (a, b) { return (b.importedAt || 0) - (a.importedAt || 0); });
+
+            // Nessuna lista di amici salvata: non c'e' niente da scegliere.
+            if (!friends.length) {
+                state.shareListId = state.ownListId;
+                openShareModal();
+                return;
+            }
+
+            var own = await Store.get('lists', state.ownListId);
+            var ownItems = await Store.byIndex('items', 'listId', state.ownListId);
+            var html = shareChoiceCardHtml(state.ownListId, '🙋', (own && own.ownerName) || 'La mia wishlist', ownItems.length,
+                'La mia wishlist');
+
+            if (friends.length) {
+                html += '<div class="divider" style="margin:14px 0 10px;">wishlist dei tuoi amici</div>';
+                for (var i = 0; i < friends.length; i++) {
+                    var f = friends[i];
+                    var items = await Store.byIndex('items', 'listId', f.id);
+                    html += shareChoiceCardHtml(f.id, null, f.ownerName || 'Amico', items.length,
+                        'Wishlist di ' + (f.ownerName || 'un amico'));
+                }
+            }
+
+            $('shareChoiceList').innerHTML = html;
+            showModal('shareChoiceModal');
+        }
+
+        function shareChoiceCardHtml(listId, avatarText, title, count, subtitle) {
+            var sub = subtitle + ' · ' + count + (count === 1 ? ' desiderio' : ' desideri');
+            var avatar = avatarText
+                ? '<span class="avatar" style="width:40px; height:40px; border-radius:13px; font-size:17px; flex-shrink:0;">' + avatarText + '</span>'
+                : '<span class="avatar" style="width:40px; height:40px; border-radius:13px; font-size:16px; flex-shrink:0;">' + escapeHtml(initialOf(title)) + '</span>';
+            return '<button class="glass-btn" style="width:100%; padding:14px 16px; border-radius:16px; justify-content:flex-start; gap:13px; margin-bottom:9px;" onclick="chooseShareList(\'' + listId + '\')">' +
+                avatar +
+                '<span style="text-align:left; min-width:0; flex:1;">' +
+                    '<span style="display:block; font-size:14.5px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(title) + '</span>' +
+                    '<span style="display:block; font-size:12.5px; color:var(--text-secondary); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(sub) + '</span>' +
+                '</span>' +
+                '<svg width="15" height="15" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>' +
+            '</button>';
+        }
+
+        async function chooseShareList(listId) {
+            var list = await Store.get('lists', listId);
+            if (!list) return;
+            if (list.type === 'friend' && list.viewerId && list.viewerId !== state.currentUserId) return;
+            state.shareListId = listId;
+            hideModal('shareChoiceModal');
+            playClickSound();
+            openShareModal();
+        }
+
+        function closeShareChoiceModal() {
+            hideModal('shareChoiceModal');
+            playClickSound();
+        }
+
+        async function openShareModal() {
+            var listId = state.shareListId || state.ownListId;
+            if (!listId) return;
+            var list = await Store.get('lists', listId);
+            if (!list) return;
+            playClickSound();
+            state.shareListId = listId;
+
             var peerRequest = state.peerShareRequest;
+            // La richiesta ricevuta dalla directory riguarda la wishlist dell'utente.
+            if (peerRequest) {
+                listId = state.ownListId;
+                state.shareListId = listId;
+                list = await Store.get('lists', listId);
+            }
+            var friendShare = !!list && list.type === 'friend';
+            var ownerName = (list && list.ownerName) || 'Utente';
+
             $('shareSheetBtn').classList.toggle('hidden', !navigator.share || !!peerRequest);
             $('shareCodeRow').classList.toggle('hidden', !!peerRequest);
             $('shareInviteBtn').classList.toggle('hidden', !!peerRequest);
+            $('shareTitle').textContent = peerRequest
+                ? 'Condividi la tua wishlist'
+                : (friendShare ? 'Condividi la wishlist di ' + ownerName : 'Condividi la tua wishlist');
             $('shareDescription').textContent = peerRequest
                 ? 'Hai accettato la richiesta di ' + peerRequest.name + '. Preparo la wishlist e invierò il codice in modo privato.'
-                : 'Manda questo codice all\'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre Carica wishlist e lo inserisce.';
+                : (friendShare
+                    ? 'Stai condividendo la wishlist di ' + ownerName + '. Manda questo codice a chi vuoi: chi lo riceve sceglierà se è la sua o di un amico.'
+                    : 'Manda questo codice all\'altro dispositivo (WhatsApp, Telegram, SMS…). Chi lo riceve apre Carica wishlist e lo inserisce.');
             $('shareCodeText').textContent = '—';
             state.shareCode = newShareCode();
             showModal('shareModal');
@@ -4697,19 +4802,21 @@
         function closeShareModal() {
             state.shareWatch = 0;
             state.peerShareRequest = null;
+            state.shareListId = null;
             $('shareCodeRow').classList.remove('hidden');
             $('shareInviteBtn').classList.remove('hidden');
             hideModal('shareModal');
         }
 
         async function publishShare() {
-            var list = await Store.get('lists', state.ownListId);
-            var items = await Store.byIndex('items', 'listId', state.ownListId);
+            var listId = state.shareListId || state.ownListId;
+            var list = listId ? await Store.get('lists', listId) : null;
+            var items = listId ? await Store.byIndex('items', 'listId', listId) : [];
             items.sort(ownSort);
             if (!items.length) {
                 closeShareModal();
                 playErrorSound();
-                showToast('La tua wishlist è vuota', { variant: 'error' });
+                showToast(list && list.type === 'friend' ? 'Questa wishlist è vuota' : 'La tua wishlist è vuota', { variant: 'error' });
                 return;
             }
 
@@ -5077,7 +5184,7 @@
 
             document.addEventListener('keydown', function (e) {
                 if (e.key !== 'Escape') return;
-                var open = ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal'];
+                var open = ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal'];
                 for (var i = 0; i < open.length; i++) {
                     if (!$(open[i]).classList.contains('hidden')) {
                         closeModalById(open[i]);
@@ -5096,13 +5203,14 @@
                 case 'usersModal': closeUsersModal(); break;
                 case 'importChoiceModal': closeImportChoiceModal(); break;
                 case 'importModal': closeImportModal(); break;
+                case 'shareChoiceModal': closeShareChoiceModal(); break;
                 case 'shareModal': closeShareModal(); break;
                 case 'itemModal': closeItemModal(); break;
             }
         }
 
         function closeAllModals() {
-            ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareModal', 'itemModal']
+            ['imageModal', 'confirmModal', 'directoryModal', 'usersModal', 'importChoiceModal', 'importModal', 'shareChoiceModal', 'shareModal', 'itemModal']
                 .forEach(closeModalById);
         }
 
