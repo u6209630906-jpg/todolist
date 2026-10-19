@@ -41,10 +41,6 @@
             --glass-inner-top: rgba(255, 255, 255, 0.08);
             --glass-inner-bottom: rgba(255, 255, 255, 0.02);
 
-            --tile-bg: rgba(255, 255, 255, 0.10);
-            --tile-border: rgba(255, 255, 255, 0.20);
-            --tile-icon: #ffffff;
-
             --header-bg: rgba(10, 10, 20, 0.55);
             --header-border: rgba(255, 255, 255, 0.08);
 
@@ -118,10 +114,6 @@
             --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
             --glass-inner-top: rgba(255, 255, 255, 0.9);
             --glass-inner-bottom: rgba(255, 255, 255, 0.3);
-
-            --tile-bg: rgba(15, 23, 42, 0.07);
-            --tile-border: rgba(15, 23, 42, 0.16);
-            --tile-icon: rgba(15, 23, 42, 0.9);
 
             --header-bg: rgba(255, 255, 255, 0.6);
             --header-border: rgba(0, 0, 0, 0.06);
@@ -705,26 +697,56 @@
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
         }
-        .qa-icon {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            background: var(--tile-bg);
-            border: 0.5px solid var(--tile-border);
-            color: var(--tile-icon);
+        /* === QUICK ACTIONS (menu Condividi e altro) === */
+        .qa-head {
+            text-align: center;
+            margin-bottom: 18px;
         }
-        .qa-icon svg { width: 18px; height: 18px; stroke: currentColor; }
+        .qa-head-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px; height: 28px;
+            margin-bottom: 10px;
+            color: var(--accent);
+            filter: drop-shadow(0 6px 18px var(--accent-soft));
+        }
+        .qa-head-icon svg { width: 26px; height: 26px; stroke: currentColor; }
+        .qa-head h3 {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-bottom: 5px;
+            background: linear-gradient(120deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .qa-head p { color: var(--text-secondary); font-size: 13.5px; line-height: 1.5; }
+
         .qa-row {
             width: 100%;
             padding: 13px 14px;
             border-radius: 16px;
             justify-content: flex-start;
-            gap: 12px;
+            gap: 13px;
             margin-bottom: 9px;
             white-space: normal;
         }
+        .qa-row:hover {
+            background: var(--accent-soft);
+            border-color: var(--accent-border);
+        }
         .qa-row > span { min-width: 0; }
+        .qa-icon {
+            width: 22px; height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--accent);
+        }
+        .qa-icon svg { width: 20px; height: 20px; stroke: currentColor; }
         .qa-title { display: block; font-size: 14.5px; font-weight: 650; }
         .qa-sub { display: block; font-size: 12.5px; line-height: 1.35; color: var(--text-secondary); margin-top: 2px; }
         .qa-chevron { flex-shrink: 0; }
@@ -1271,12 +1293,12 @@
     <div id="quickActionsModal" class="modal-overlay hidden">
         <div class="modal-content scale-in">
             <div class="modal-body">
-                <div style="text-align:center; margin-bottom:16px;">
-                    <div class="qa-icon" style="width:52px; height:52px; border-radius:16px; margin:0 auto 10px;">
-                        <svg fill="none" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
+                <div class="qa-head">
+                    <div class="qa-head-icon">
+                        <svg fill="none" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4"/></svg>
                     </div>
-                    <h3 style="font-size:19px; font-weight:700; letter-spacing:-0.3px; margin-bottom:5px;">Condividi e altro</h3>
-                    <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.5;">Condividi la tua lista, importa quella di un amico o trova chi è online.</p>
+                    <h3>Condividi e altro</h3>
+                    <p>Condividi la tua lista, importa quella di un amico o trova chi è online.</p>
                 </div>
 
                 <button class="glass-btn qa-row" onclick="runQuickAction('share')">
