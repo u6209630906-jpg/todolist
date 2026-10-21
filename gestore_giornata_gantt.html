@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f9fafb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MyniApp">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
     <title>Gestore Giornata Gantt</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +42,7 @@
         .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid #f1f5f9; }
         .scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+    <script src="pwa.js" defer></script>
 </head>
 <body class="bg-gray-50 flex flex-col h-screen overflow-hidden text-gray-800">
 
@@ -48,7 +55,7 @@
             </button>
 
             <!-- Selettore Fascia Oraria -->
-            <div class="flex items-center space-x-2 text-sm ml-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200" title="Imposta orario visibile (non cancella eventi nascosti)">
+            <div class="flex items-center space-x-2 text-sm ml-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200" title="Imposta la fascia visibile: l'ora finale è inclusa nella tabella (non cancella eventi nascosti)">
                 <svg class="w-4 h-4 text-gray-500 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <select id="startHour" onchange="window.updateTimeRange()" class="bg-transparent border-none font-semibold text-gray-700 outline-none cursor-pointer">
                     <!-- Generato via JS -->
@@ -99,7 +106,7 @@
                 </div>
 
                 <!-- Area Griglia e Eventi -->
-                <div class="relative" id="ganttGrid">
+                <div class="relative shrink-0" id="ganttGrid">
                     
                     <!-- Intestazione delle Ore (Asse X) - "Appiccicata" in alto -->
                     <div class="flex border-b border-gray-200 bg-gray-50 sticky top-0 z-30 h-12 w-full shadow-sm" id="hoursHeader">
@@ -159,6 +166,28 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Titolo</label>
                     <input type="text" id="modalTitle" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm" placeholder="Es: Riunione, Palestra, Studio...">
+                </div>
+
+                <!-- Giorno, inizio e durata -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="modalDate">Giorno</label>
+                        <select id="modalDate" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                            <!-- Generato via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="modalStart">Inizio</label>
+                        <select id="modalStart" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                            <!-- Generato via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="modalDuration">Durata</label>
+                    <select id="modalDuration" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                        <!-- Generato via JS -->
+                    </select>
                 </div>
 
                 <!-- Descrizione -->
@@ -226,15 +255,27 @@
         </div>
 
         <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-            import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-            import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            // Firebase viene caricato solo quando serve e c'è rete: così l'app
+            // resta utilizzabile offline con i dati salvati in locale.
+            let firebase = null;
+
+            async function loadFirebase() {
+                if (firebase) return firebase;
+                const [appMod, authMod, firestoreMod] = await Promise.all([
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")
+                ]);
+                firebase = Object.assign({}, appMod, authMod, firestoreMod);
+                return firebase;
+            }
 
             // Variabili di configurazione e costanti
             const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#64748b'];
             const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
             const LANE_HEIGHT = 60;
             const PIXELS_PER_MINUTE = 2; // 120px l'ora = 2px al minuto
+            const HOUR_PX = 120;
             const MIN_DURATION = 15;
 
             // Stato dell'applicazione
@@ -274,6 +315,9 @@
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', onMouseUp);
 
+            // Clic su una cella vuota: crea l'evento esattamente in quel giorno e orario
+            document.getElementById('gridBackground').addEventListener('click', onGridClick);
+
             document.getElementById('weekSelector').addEventListener('change', (e) => {
                 currentWeekStr = e.target.value;
                 updateWeekDates();
@@ -284,22 +328,23 @@
         });
 
         async function initStorage() {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config && navigator.onLine) {
                 try {
+                    const fb = await loadFirebase();
                     isFirebaseActive = true;
                     appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                     const firebaseConfig = JSON.parse(__firebase_config);
-                    const app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
+                    const app = fb.initializeApp(firebaseConfig);
+                    auth = fb.getAuth(app);
+                    db = fb.getFirestore(app);
                     
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
+                        await fb.signInWithCustomToken(auth, __initial_auth_token);
                     } else {
-                        await signInAnonymously(auth);
+                        await fb.signInAnonymously(auth);
                     }
                     
-                    onAuthStateChanged(auth, (user) => {
+                    fb.onAuthStateChanged(auth, (user) => {
                         if (user) {
                             userId = user.uid;
                             loadFromFirestore();
@@ -307,18 +352,19 @@
                     });
                 } catch (e) {
                     console.error("Firebase init error, fallback a LocalStorage:", e);
+                    isFirebaseActive = false;
                     loadEventsFromLocalFallback();
                 }
             } else {
-                console.log("App aperta localmente. Uso LocalStorage.");
+                console.log("App aperta localmente o offline. Uso LocalStorage.");
                 loadEventsFromLocalFallback();
             }
         }
 
         function loadFromFirestore() {
             if (!userId) return;
-            const eventsRef = collection(db, 'artifacts', appId, 'users', userId, 'gantt_events');
-            onSnapshot(eventsRef, (snapshot) => {
+            const eventsRef = firebase.collection(db, 'artifacts', appId, 'users', userId, 'gantt_events');
+            firebase.onSnapshot(eventsRef, (snapshot) => {
                 events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderEvents();
             }, (error) => {
@@ -345,8 +391,8 @@
 
             if (isFirebaseActive && userId) {
                 try {
-                    const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
-                    await setDoc(ref, ev);
+                    const ref = firebase.doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
+                    await firebase.setDoc(ref, ev);
                 } catch(e) {
                     console.error("Errore Cloud", e);
                 }
@@ -360,8 +406,8 @@
             events = events.filter(x => x.id !== id);
             if (isFirebaseActive && userId) {
                 try {
-                    const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', id);
-                    await deleteDoc(ref);
+                    const ref = firebase.doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', id);
+                    await firebase.deleteDoc(ref);
                 } catch(e) {
                     console.error("Errore Cloud", e);
                 }
@@ -459,7 +505,7 @@
             const start = parseInt(document.getElementById('startHour').value);
             const end = parseInt(document.getElementById('endHour').value);
             
-            if(start >= end) {
+            if(start > end) {
                 initTimeSelectors(); 
                 return;
             }
@@ -472,8 +518,9 @@
         }
 
         function initGrid() {
-            const totalHours = displayEndHour - displayStartHour;
-            const gridWidth = totalHours * 120; // 120px per ora
+            const bounds = visibleBounds();
+            const totalHours = (bounds.endMinute - bounds.startMinute) / 60;
+            const gridWidth = totalHours * HOUR_PX;
             
             document.getElementById('ganttGrid').style.width = `${gridWidth}px`;
 
@@ -486,13 +533,20 @@
             for (let i = 0; i < totalHours; i++) {
                 const currentHour = displayStartHour + i;
                 headerHTML += `
-                    <div class="absolute top-0 bottom-0 border-l border-gray-200 flex items-center px-2" style="left: ${i * 120}px; width: 120px;">
+                    <div class="absolute top-0 bottom-0 border-l border-gray-200 flex items-center px-2" style="left: ${i * HOUR_PX}px; width: ${HOUR_PX}px;">
                         <span class="text-xs font-semibold text-gray-500">${currentHour.toString().padStart(2, '0')}:00</span>
                     </div>`;
-                bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100" style="left: ${i * 120}px;"></div>`;
+                bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100" style="left: ${i * HOUR_PX}px;"></div>`;
+                bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100/60" style="left: ${i * HOUR_PX + HOUR_PX / 2}px;"></div>`;
             }
-            
-            bgHTML += `<div class="absolute top-0 bottom-0 border-l border-gray-100" style="left: ${totalHours * 120}px;"></div>`;
+
+            // Bordo e etichetta di chiusura: rendono visibile l'ultima ora della soglia scelta.
+            bgHTML += `<div class="absolute top-0 bottom-0 border-l-2 border-gray-300" style="left: ${gridWidth}px;"></div>`;
+            const endLabel = formatTime(bounds.endMinute);
+            headerHTML += `
+                <div class="absolute top-0 bottom-0 flex items-center justify-end pr-1 pointer-events-none" style="left: ${gridWidth - 46}px; width: 46px;">
+                    <span class="text-xs font-semibold text-gray-500">${endLabel}</span>
+                </div>`;
 
             for (let i = 0; i < 7; i++) {
                 bgHTML += `<div class="absolute left-0 right-0 border-t border-gray-100" style="top: ${i * LANE_HEIGHT}px; height: ${LANE_HEIGHT}px; width: ${gridWidth}px;"></div>`;
@@ -500,6 +554,13 @@
 
             hoursHeader.innerHTML = headerHTML;
             gridBackground.innerHTML = bgHTML;
+        }
+
+        // La soglia scelta è inclusiva dell'ora finale: 8-20 mostra anche la fascia
+        // 20:00-21:00, così gli eventi non finiscono fuori dalla tabella.
+        function visibleBounds() {
+            const lastHour = displayEndHour < 24 ? displayEndHour + 1 : 24;
+            return { startMinute: displayStartHour * 60, endMinute: lastHour * 60 };
         }
 
         function updateWeekDates() {
@@ -524,21 +585,25 @@
             const container = document.getElementById('eventsContainer');
             container.innerHTML = '';
 
+            const bounds = visibleBounds();
             const currentWeekEvents = events.filter(e => weekDates.includes(e.date));
 
             currentWeekEvents.forEach(ev => {
                 const laneIndex = weekDates.indexOf(ev.date);
                 if (laneIndex === -1) return;
 
-                const visibleStartMinute = ev.startMinute - (displayStartHour * 60);
-                
+                const eventStart = ev.startMinute;
+                const eventEnd = ev.startMinute + ev.durationMinute;
+                const visibleStart = Math.max(eventStart, bounds.startMinute);
+                const visibleEnd = Math.min(eventEnd, bounds.endMinute);
+
                 // Salta graficamente gli eventi totalmente fuori fascia
-                if (visibleStartMinute + ev.durationMinute <= 0 || visibleStartMinute >= (displayEndHour - displayStartHour) * 60) {
-                    return; 
+                if (visibleEnd <= visibleStart) {
+                    return;
                 }
 
-                const left = visibleStartMinute * PIXELS_PER_MINUTE;
-                const width = ev.durationMinute * PIXELS_PER_MINUTE;
+                const left = (visibleStart - bounds.startMinute) * PIXELS_PER_MINUTE;
+                const width = Math.max((visibleEnd - visibleStart) * PIXELS_PER_MINUTE, 8);
                 const top = laneIndex * LANE_HEIGHT;
 
                 const el = document.createElement('div');
@@ -548,6 +613,7 @@
                 el.style.width = `${width}px`;
                 el.style.top = `${top}px`;
                 el.style.backgroundColor = ev.color;
+                el.title = `${ev.title} · ${formatTime(ev.startMinute)} - ${formatTime(ev.startMinute + ev.durationMinute)}`;
                 
                 let timeText = '';
                 if(ev.durationMinute >= 45) {
@@ -556,14 +622,19 @@
                 
                 const descIcon = ev.description ? `<div class="absolute top-1 right-1 opacity-70"><svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg></div>` : '';
 
+                const leftHandle = eventStart >= bounds.startMinute
+                    ? `<div class="resize-handle left" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-left')"></div>` : '';
+                const rightHandle = eventEnd <= bounds.endMinute
+                    ? `<div class="resize-handle right" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-right')"></div>` : '';
+
                 el.innerHTML = `
-                    <div class="resize-handle left" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-left')"></div>
+                    ${leftHandle}
                     <div class="flex flex-col px-1 w-full overflow-hidden pointer-events-none text-center justify-center relative h-full">
                         ${descIcon}
                         <span class="text-sm font-medium text-white drop-shadow-md truncate px-2">${ev.title}</span>
                         ${timeText}
                     </div>
-                    <div class="resize-handle right" onmousedown="window.onMouseDown(event, '${ev.id}', 'resize-right')"></div>
+                    ${rightHandle}
                 `;
 
                 el.onmousedown = (e) => {
@@ -622,9 +693,10 @@
             const currentLane = weekDates.indexOf(dragInfo.originalDate);
             let newLane = currentLane;
 
-            // Limiti: tutta la giornata 0..24
-            const MINUTE_LIMIT_START = 0;
-            const MINUTE_LIMIT_END = 24 * 60;
+            // Limiti: la fascia oraria scelta, così l'evento resta sempre visibile
+            const bounds = visibleBounds();
+            const MINUTE_LIMIT_START = bounds.startMinute;
+            const MINUTE_LIMIT_END = bounds.endMinute;
 
             if (dragInfo.type === 'move') {
                 newStart += deltaMinutes;
@@ -662,8 +734,7 @@
                 if(dragInfo.type === 'move') {
                     domEl.style.top = `${newLane * LANE_HEIGHT}px`;
                 }
-            }
-        }
+            }        }
 
         function onMouseUp(e) {
             if (!dragInfo) return;
@@ -699,20 +770,90 @@
         }
 
         window.addEvent = function() {
-            let defaultStart = 9 * 60; 
-            if(defaultStart < displayStartHour * 60) defaultStart = displayStartHour * 60;
-            if(defaultStart >= displayEndHour * 60) defaultStart = (displayEndHour - 1) * 60;
+            const slot = defaultEventSlot();
+            createEventAt(slot.date, slot.startMinute);
+        }
 
+        function todayIsoDate() {
+            const d = new Date();
+            const pad = n => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
+
+        function defaultEventSlot() {
+            const bounds = visibleBounds();
+            let date = weekDates[0] || getDatesOfWeek(currentWeekStr)[0];
+            const today = todayIsoDate();
+            if (weekDates.includes(today)) date = today;
+
+            const now = new Date();
+            let startMinute = Math.ceil((now.getHours() * 60 + now.getMinutes()) / MIN_DURATION) * MIN_DURATION;
+            if (startMinute < bounds.startMinute || startMinute + MIN_DURATION > bounds.endMinute) {
+                startMinute = bounds.startMinute;
+            }
+            return { date: date, startMinute: startMinute };
+        }
+
+        // Crea un evento nella posizione richiesta: serve sia al tasto "Nuovo Evento"
+        // sia al clic direttamente sulla griglia.
+        function createEventAt(date, startMinute) {
+            const bounds = visibleBounds();
+            let start = Math.round(startMinute / MIN_DURATION) * MIN_DURATION;
+            start = Math.max(bounds.startMinute, Math.min(start, bounds.endMinute - MIN_DURATION));
+
+            const duration = Math.min(60, bounds.endMinute - start);
             const newEvent = {
                 id: generateId(),
                 title: 'Nuovo Impegno',
                 description: '',
-                date: weekDates[0] || getDatesOfWeek(currentWeekStr)[0],
-                startMinute: defaultStart,
-                durationMinute: 60,
+                date: date,
+                startMinute: start,
+                durationMinute: duration,
                 color: COLORS[5]
             };
             saveEventDB(newEvent);
+            openModal(newEvent.id);
+        }
+
+        function onGridClick(e) {
+            if (!weekDates.length) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const lane = Math.floor((e.clientY - rect.top) / LANE_HEIGHT);
+            if (lane < 0 || lane > 6 || !weekDates[lane]) return;
+
+            const bounds = visibleBounds();
+            const minutesFromLeft = ((e.clientX - rect.left) / HOUR_PX) * 60;
+            const minute = bounds.startMinute + Math.round(minutesFromLeft / MIN_DURATION) * MIN_DURATION;
+            createEventAt(weekDates[lane], minute);
+        }
+
+        function formatDuration(minutes) {
+            if (minutes < 60) return `${minutes} min`;
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return m ? `${h} h ${m} min` : `${h} h`;
+        }
+
+        function buildModalSelectors(ev) {
+            const dateSelect = document.getElementById('modalDate');
+            dateSelect.innerHTML = weekDates.map((date, i) => {
+                const parts = date.split('-');
+                return `<option value="${date}">${DAY_NAMES[i]} ${parts[2]}/${parts[1]}</option>`;
+            }).join('');
+
+            const startSelect = document.getElementById('modalStart');
+            const bounds = visibleBounds();
+            let startOptions = '';
+            for (let m = bounds.startMinute; m + MIN_DURATION <= bounds.endMinute; m += MIN_DURATION) {
+                startOptions += `<option value="${m}">${formatTime(m)}</option>`;
+            }
+            startSelect.innerHTML = startOptions;
+
+            const durationSelect = document.getElementById('modalDuration');
+            const durations = [15, 30, 45, 60, 90, 120, 180, 240, 300, 360];
+            if (ev && !durations.includes(ev.durationMinute)) durations.push(ev.durationMinute);
+            durations.sort((a, b) => a - b);
+            durationSelect.innerHTML = durations.map(d => `<option value="${d}">${formatDuration(d)}</option>`).join('');
         }
 
         function openModal(id) {
@@ -720,8 +861,12 @@
             if(!ev) return;
             
             editingEventId = id;
+            buildModalSelectors(ev);
             document.getElementById('modalTitle').value = ev.title;
             document.getElementById('modalDescription').value = ev.description || '';
+            document.getElementById('modalDate').value = ev.date;
+            document.getElementById('modalStart').value = String(ev.startMinute);
+            document.getElementById('modalDuration').value = String(ev.durationMinute);
             window.selectModalColor(ev.color);
             
             const modal = document.getElementById('editModal');
@@ -754,11 +899,26 @@
             if(!editingEventId) return;
             const evIndex = events.findIndex(x => x.id === editingEventId);
             if(evIndex > -1) {
+                const bounds = visibleBounds();
+                const current = events[evIndex];
+                const chosenDate = document.getElementById('modalDate').value || current.date;
+                const chosenStart = parseInt(document.getElementById('modalStart').value, 10);
+                const chosenDuration = parseInt(document.getElementById('modalDuration').value, 10);
+
+                let startMinute = isNaN(chosenStart) ? current.startMinute : chosenStart;
+                startMinute = Math.max(bounds.startMinute, Math.min(startMinute, bounds.endMinute - MIN_DURATION));
+
+                let durationMinute = isNaN(chosenDuration) ? current.durationMinute : chosenDuration;
+                durationMinute = Math.max(MIN_DURATION, Math.min(durationMinute, bounds.endMinute - startMinute));
+
                 const updatedEv = {
-                    ...events[evIndex],
+                    ...current,
                     title: document.getElementById('modalTitle').value || 'Senza Titolo',
                     description: document.getElementById('modalDescription').value || '',
-                    color: selectedColor
+                    color: selectedColor,
+                    date: chosenDate,
+                    startMinute: startMinute,
+                    durationMinute: durationMinute
                 };
                 saveEventDB(updatedEv);
             }
@@ -911,8 +1071,8 @@
             if (isFirebaseActive && userId) {
                 try {
                     for(let ev of newEvents) {
-                        const ref = doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
-                        await setDoc(ref, ev);
+                        const ref = firebase.doc(db, 'artifacts', appId, 'users', userId, 'gantt_events', ev.id);
+                        await firebase.setDoc(ref, ev);
                     }
                 } catch(e) {
                     console.error("Errore durante l'incolla cloud degli eventi:", e);

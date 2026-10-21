@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a14">
+<meta name="description" content="Le mini app di Alessandro Calonaci in un'unica app: Gantt della settimana, Todo List, Wishlist e FileTransfer. Funzionano anche offline.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyniApp">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <title>MyniApp</title>
 <style>
         * {
@@ -330,6 +337,31 @@
             margin-top: 22px;
             line-height: 1.6;
         }
+
+        /* === INSTALL (PWA) === */
+        [hidden] { display: none !important; }
+        .install-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            margin-top: 18px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: -0.1px;
+            color: var(--text-primary);
+            cursor: pointer;
+            background: var(--accent-soft);
+            border: 0.5px solid var(--glass-border-strong);
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .install-btn:hover { background: var(--glass-bg-hover); border-color: var(--accent); transform: translateY(-1px); }
+        .install-btn:active { transform: scale(0.98); }
+        .install-btn svg { flex-shrink: 0; }
+        .offline-note { display: block; margin-top: 4px; color: var(--text-secondary); }
 </style>
 </head>
 <body>
@@ -408,19 +440,28 @@
                         <span class="app-icon">📁</span>
                         <span class="app-text">
                             <span class="app-label">Apri Filetransfer</span>
-                            <span class="app-note">Trasferisci file in modo semplice</span>
+                            <span class="app-note">Scegli chi è online e invia i file</span>
                         </span>
                         <span class="app-chevron">›</span>
                     </a>
                 </nav>
 
+                <button class="install-btn" id="installAppBtn" type="button" hidden>
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                    </svg>
+                    Installa MyniApp
+                </button>
+
                 <p class="foot-note">
-                    Nessun account, nessun server.<br>Tutto funziona direttamente nel tuo browser.
+                    Nessun account, nessun server.<br>Tutto funziona direttamente nel tuo browser.<br>
+                    <span class="offline-note">Dopo il primo avvio le app restano disponibili anche senza connessione.</span>
                 </p>
             </div>
         </div>
     </div>
 
+<script src="pwa.js" defer></script>
 <script>
     /* =========================================================
        MYNIAPP — AUDIO
