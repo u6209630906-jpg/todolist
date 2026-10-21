@@ -9,6 +9,12 @@
   var deferredPrompt = null;
   var listeners = [];
 
+  function notify() {
+    listeners.forEach(function (fn) {
+      try { fn(!!deferredPrompt); } catch (e) { /* ignora */ }
+    });
+  }
+
   /* ===== TEMA CONDIVISO ===== */
   // Un solo tema per tutta la PWA: cambiarlo in un'app vale anche per le altre,
   // comprese le finestre già aperte (sincronizzazione con l'evento "storage").
@@ -139,7 +145,7 @@
   });
 
   var api = {
-    canInstall: function () { return !!deferredPrompt; },
+    canInstall: function () { return !!installMode(); },
     onChange: function (fn) { if (typeof fn === 'function') listeners.push(fn); },
     promptInstall: function () {
       if (!deferredPrompt) return Promise.resolve(false);
@@ -162,12 +168,237 @@
     event.preventDefault();
     deferredPrompt = event;
     notify();
+    // Il browser dice che l'app è installabile: propongo l'installazione.
+    if (installSheet && !installSheet.hidden) return;
+    scheduleInstallOffer(1200);
   });
 
   window.addEventListener('appinstalled', function () {
     deferredPrompt = null;
     notify();
+    markInstalled();
   });
+
+  /* ===== PROPOSTA DI INSTALLAZIONE ===== */
+  // Il popup compare solo quando l'installazione è davvero possibile:
+  // su Chrome/Edge/Android quando arriva "beforeinstallprompt", su iPhone
+  // solo in Safari (dove si fa da Condividi → Aggiungi alla schermata Home).
+  var INSTALL_DONE_KEY = 'myniapp_install_done';
+  var INSTALL_DISMISS_KEY = 'myniapp_install_dismissed_at';
+  var INSTALL_COUNT_KEY = 'myniapp_install_dismiss_count';
+  var INSTALL_SESSION_KEY = 'myniapp_install_offered';
+  var INSTALL_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
+  var INSTALL_MAX_DISMISSALS = 3;
+  var installSheet = null;
+  var installTimer = 0;
+  var installRetries = 0;
+
+  function storageGet(key, storage) {
+    try { return (storage || window.localStorage).getItem(key); } catch (e) { return null; }
+  }
+  function storageSet(key, value, storage) {
+    try { (storage || window.localStorage).setItem(key, value); } catch (e) { /* modalità privata */ }
+  }
+
+  function isIosDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  // Su iOS solo Safari può aggiungere un sito alla schermata Home.
+  function isIosSafari() {
+    if (!isIosDevice()) return false;
+    return /Safari/.test(navigator.userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS|mercury)/i.test(navigator.userAgent);
+  }
+
+  function installMode() {
+    if (api.isStandalone()) return null;
+    if (deferredPrompt) return 'prompt';
+    if (isIosSafari()) return 'ios';
+    return null;
+  }
+
+  // Se l'app ha già una finestra aperta (trasferimento, modale…) aspetto.
+  function appDialogOpen() {
+    var nodes = document.querySelectorAll('[class*="modal"], .overlay, [role="dialog"]');
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.classList.contains('myni-install-overlay')) continue;
+      if (node.classList.contains('hidden') || node.hidden) continue;
+      var rect = node.getBoundingClientRect();
+      if (rect.width > 4 && rect.height > 4) return true;
+    }
+    return false;
+  }
+
+  function shouldOfferInstall(force) {
+    if (!installMode()) return false;
+    if (storageGet(INSTALL_DONE_KEY)) return false;
+    if (force) return true;
+    if (storageGet(INSTALL_SESSION_KEY, window.sessionStorage)) return false;
+    var dismissals = parseInt(storageGet(INSTALL_COUNT_KEY) || '0', 10) || 0;
+    if (dismissals >= INSTALL_MAX_DISMISSALS) return false;
+    var dismissedAt = parseInt(storageGet(INSTALL_DISMISS_KEY) || '0', 10) || 0;
+    if (dismissedAt && Date.now() - dismissedAt < INSTALL_COOLDOWN_MS) return false;
+    return true;
+  }
+
+  function scheduleInstallOffer(delay, force) {
+    if (installTimer) return;
+    if (!shouldOfferInstall(force)) return;
+    installTimer = window.setTimeout(function () {
+      installTimer = 0;
+      showInstallSheet(force);
+    }, typeof delay === 'number' ? delay : 2600);
+  }
+
+  function injectInstallStyles() {
+    if (document.getElementById('myni-install-style')) return;
+    var style = document.createElement('style');
+    style.id = 'myni-install-style';
+    style.textContent = [
+      '@keyframes myniFadeIn{from{opacity:0}to{opacity:1}}',
+      '@keyframes myniSheetIn{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}',
+      '.myni-install-overlay{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;',
+      'padding:14px;background:rgba(6,6,12,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);',
+      'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;animation:myniFadeIn .22s ease}',
+      '.myni-install-overlay[hidden]{display:none !important}',
+      '@media (min-width:640px){.myni-install-overlay{align-items:center}}',
+      '.myni-install-sheet{position:relative;width:100%;max-width:420px;border-radius:24px;padding:24px 22px 18px;',
+      'text-align:center;background:#15151f;color:#f5f5fa;border:1px solid rgba(255,255,255,.14);',
+      'box-shadow:0 24px 60px rgba(0,0,0,.45);animation:myniSheetIn .32s cubic-bezier(.16,1,.3,1)}',
+      '.myni-install-sheet.myni-light{background:#fff;color:#0f172a;border-color:rgba(15,23,42,.1);',
+      'box-shadow:0 24px 60px rgba(15,23,42,.2)}',
+      '.myni-install-icon{font-size:34px;line-height:1;margin-bottom:10px}',
+      '.myni-install-title{font-size:18px;font-weight:700;letter-spacing:-.3px;margin:0 0 6px}',
+      '.myni-install-text{font-size:13.5px;line-height:1.5;margin:0;opacity:.78}',
+      '.myni-install-steps{display:none;margin:14px 0 0;padding:12px 14px;border-radius:14px;',
+      'background:rgba(127,127,127,.16);font-size:12.5px;line-height:1.65;text-align:left}',
+      '.myni-install-steps.show{display:block}',
+      '.myni-install-actions{display:flex;gap:10px;margin-top:18px}',
+      '.myni-install-btn{flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid rgba(127,127,127,.34);',
+      'background:transparent;color:inherit;font:inherit;font-size:14px;font-weight:600;cursor:pointer;',
+      'transition:transform .18s ease,background .2s ease,filter .2s ease}',
+      '.myni-install-btn:hover{background:rgba(127,127,127,.16)}',
+      '.myni-install-btn:active{transform:scale(.97)}',
+      '.myni-install-btn:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}',
+      '.myni-install-btn.primary{background:linear-gradient(135deg,#a78bfa,#f0abfc);border-color:transparent;',
+      'color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}',
+      '.myni-install-btn.primary:hover{filter:brightness(1.06);background:linear-gradient(135deg,#a78bfa,#f0abfc)}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  function buildInstallSheet() {
+    if (installSheet) return installSheet;
+    injectInstallStyles();
+    var overlay = document.createElement('div');
+    overlay.className = 'myni-install-overlay';
+    overlay.hidden = true;
+    overlay.innerHTML =
+      '<div class="myni-install-sheet" role="dialog" aria-modal="true" aria-labelledby="myniInstallTitle">' +
+        '<div class="myni-install-icon" aria-hidden="true">📱</div>' +
+        '<h2 class="myni-install-title" id="myniInstallTitle">Installa MyniApp</h2>' +
+        '<p class="myni-install-text">Aggiungila alla schermata Home: si apre a tutto schermo e le app funzionano anche senza connessione.</p>' +
+        '<div class="myni-install-steps" id="myniInstallSteps"></div>' +
+        '<div class="myni-install-actions">' +
+          '<button type="button" class="myni-install-btn" data-install="later">Non ora</button>' +
+          '<button type="button" class="myni-install-btn primary" data-install="go">Installa</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) dismissInstallSheet();
+    });
+
+    overlay.addEventListener('click', function (event) {
+      var button = event.target.closest ? event.target.closest('[data-install]') : null;
+      if (!button) return;
+      if (button.getAttribute('data-install') === 'later') { dismissInstallSheet(); return; }
+      if (installMode() === 'ios') { dismissInstallSheet(); return; }
+      var goBtn = button;
+      goBtn.disabled = true;
+      api.promptInstall().then(function (accepted) {
+        goBtn.disabled = false;
+        if (accepted) markInstalled();
+        else dismissInstallSheet();
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || !installSheet || installSheet.hidden) return;
+      dismissInstallSheet();
+    });
+
+    installSheet = overlay;
+    return overlay;
+  }
+
+  function decoratedInstallSheet(dialog) {
+    if (!dialog) return;
+    dialog.classList.toggle('myni-light', currentTheme === 'light' && !THEME_FIXED);
+  }
+
+  function showInstallSheet(force) {
+    if (!shouldOfferInstall(force)) return;
+    if (appDialogOpen()) {
+      // L'utente sta facendo qualcosa: riprovo più tardi senza insistere.
+      installRetries++;
+      if (installRetries <= 40) {
+        installTimer = 0;
+        scheduleInstallOffer(5000, force);
+      }
+      return;
+    }
+    var overlay = buildInstallSheet();
+    var dialog = overlay.querySelector('.myni-install-sheet');
+    var steps = overlay.querySelector('#myniInstallSteps');
+    var goBtn = overlay.querySelector('[data-install="go"]');
+    var mode = installMode();
+
+    decoratedInstallSheet(dialog);
+    if (mode === 'ios') {
+      steps.innerHTML = '1. Tocca <b>Condividi</b> (□↑) nella barra di Safari.<br>' +
+        '2. Scegli <b>Aggiungi alla schermata Home</b>.<br>3. Conferma con <b>Aggiungi</b>.';
+      steps.classList.add('show');
+      goBtn.textContent = 'Ho capito';
+    } else {
+      steps.classList.remove('show');
+      steps.innerHTML = '';
+      goBtn.textContent = 'Installa';
+    }
+
+    storageSet(INSTALL_SESSION_KEY, String(Date.now()), window.sessionStorage);
+    installRetries = 0;
+    overlay.hidden = false;
+    window.setTimeout(function () {
+      try { goBtn.focus({ preventScroll: true }); } catch (e) { /* ignora */ }
+    }, 60);
+  }
+
+  function dismissInstallSheet() {
+    if (installSheet) installSheet.hidden = true;
+    var count = parseInt(storageGet(INSTALL_COUNT_KEY) || '0', 10) || 0;
+    storageSet(INSTALL_COUNT_KEY, String(count + 1));
+    storageSet(INSTALL_DISMISS_KEY, String(Date.now()));
+  }
+
+  function markInstalled() {
+    storageSet(INSTALL_DONE_KEY, String(Date.now()));
+    if (installSheet) installSheet.hidden = true;
+    notify();
+  }
+
+  // Cambiando tema mentre il popup è aperto, lo ricolorò subito.
+  themeApi.onChange(function () {
+    if (!installSheet || installSheet.hidden) return;
+    decoratedInstallSheet(installSheet.querySelector('.myni-install-sheet'));
+  });
+
+  // Il pulsante "Installa" della home apre sempre il popup, anche se in
+  // passato l'utente aveva scelto "Non ora".
+  api.showInstallPrompt = function () { scheduleInstallOffer(0, true); };
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', function () {
@@ -237,16 +468,20 @@
     if (button && !isHome) button.hidden = true;
     if (button) {
       button.addEventListener('click', function () {
+        // Su iPhone non esiste il prompt del browser: mostro le istruzioni.
+        if (!deferredPrompt) { showInstallSheet(true); return; }
         api.promptInstall().then(function (accepted) {
           if (!accepted) return;
           button.hidden = true;
         });
       });
       api.onChange(function (available) {
-        button.hidden = !available;
+        button.hidden = !available && !isIosSafari();
       });
       button.hidden = !api.canInstall();
     }
+    // Propongo l'installazione solo se il browser la consente davvero.
+    scheduleInstallOffer(2600);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

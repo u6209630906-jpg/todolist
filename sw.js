@@ -4,7 +4,7 @@
    pagine visitate vengono messe in cache al primo uso. Le richieste di rete
    verso i relay (presenza, segnalazione P2P) non vengono mai messe in cache. */
 
-const VERSION = 'myniapp-v7';
+const VERSION = 'myniapp-v9';
 const SHELL_CACHE = VERSION + '-shell';
 const RUNTIME_CACHE = VERSION + '-runtime';
 
@@ -84,8 +84,13 @@ async function matchCached(cache, request) {
   if (hit) return hit;
   // Le risorse esterne possono essere salvate con una modalità diversa da
   // quella usata dalla pagina: riprovo per URL.
-  if (typeof request === 'string') return cache.match(request, { ignoreVary: true });
-  return cache.match(request.url, { ignoreVary: true });
+  var url = typeof request === 'string' ? request : request.url;
+  hit = await cache.match(url, { ignoreVary: true });
+  if (hit) return hit;
+  // Se la risorsa è fra quelle precaricate all'installazione, la uso anche
+  // quando non è ancora passata dalla cache "runtime" (primo avvio offline).
+  var shell = await caches.open(SHELL_CACHE);
+  return (await shell.match(url, { ignoreVary: true })) || null;
 }
 
 async function networkFirst(request, cacheName) {
