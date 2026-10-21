@@ -398,7 +398,7 @@
         </div>
     </div>
 
-<script src="pwa.js" defer></script>
+<script src="pwa.js"></script>
 <script>
 (function () {
     'use strict';
@@ -418,7 +418,7 @@
     var ALIAS_KEY = 'myniappft:alias';
     var ID_KEY = 'myniappft:id';
     var PEER_KEY = 'myniappft:peer';
-    var THEME_KEY = 'ftx:theme';
+    var THEME_KEY = 'myniapp_theme';
 
     /* ============ STATO ============ */
     var presence = {
@@ -523,9 +523,21 @@
         btn.classList.add('rotating');
         setTimeout(function () { btn.classList.remove('rotating'); }, 500);
         var next = document.body.classList.contains('light') ? 'dark' : 'light';
-        applyTheme(next);
-        try { localStorage.setItem(THEME_KEY, next); } catch (e) { }
+        // Un unico tema per tutta la MyniApp: lo salva il modulo condiviso.
+        if (window.MyniAppTheme) window.MyniAppTheme.set(next);
+        else {
+            applyTheme(next);
+            try { localStorage.setItem(THEME_KEY, next); } catch (e) { }
+        }
     };
+
+    function watchSharedTheme() {
+        if (!window.MyniAppTheme) return;
+        window.MyniAppTheme.onChange(function (value) {
+            applyTheme(value);
+            try { localStorage.setItem(THEME_KEY, value); } catch (e) { }
+        });
+    }
 
     /* ============ TOAST ============ */
     function toast(message, duration) {
@@ -1789,7 +1801,12 @@
 
         var savedTheme = 'dark';
         try { savedTheme = localStorage.getItem(THEME_KEY) || 'dark'; } catch (e) { }
+        if (window.MyniAppTheme) {
+            window.MyniAppTheme.setDefault(savedTheme);
+            savedTheme = window.MyniAppTheme.get();
+        }
         applyTheme(savedTheme);
+        watchSharedTheme();
 
         bindPicker();
         updatePresenceBadge();

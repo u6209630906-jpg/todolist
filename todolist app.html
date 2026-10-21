@@ -935,7 +935,7 @@
             margin: 0 auto 16px;
         }
     </style>
-    <script src="pwa.js" defer></script>
+    <script src="pwa.js"></script>
 </head>
 <body>
     <!-- Background -->
@@ -1126,7 +1126,7 @@
         let audioCtx = null;
         let deleteTargetId = null;
 
-        // === THEME ===
+        // === THEME (unico per tutta la MyniApp) ===
         function applyTheme(theme) {
             if (theme === 'light') {
                 document.body.classList.add('light');
@@ -1134,6 +1134,8 @@
                 document.body.classList.remove('light');
             }
             updateThemeIcon(theme);
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f0f2f5' : '#0a0a14');
         }
 
         function updateThemeIcon(theme) {
@@ -1153,6 +1155,17 @@
             state.theme = state.theme === 'dark' ? 'light' : 'dark';
             applyTheme(state.theme);
             saveState();
+            // Il tema vale per tutte le app MyniApp, non solo per questa.
+            if (window.MyniAppTheme) window.MyniAppTheme.set(state.theme, true);
+        }
+
+        function watchSharedTheme() {
+            if (!window.MyniAppTheme) return;
+            window.MyniAppTheme.onChange((value) => {
+                state.theme = value;
+                applyTheme(value);
+                saveState();
+            });
         }
 
         // === AUDIO ===
@@ -2053,7 +2066,15 @@
 
         // === INIT ===
         loadState();
+        // Il tema condiviso ha la precedenza su quello salvato nella Todo List;
+        // quello vecchio serve solo per la prima migrazione.
+        if (window.MyniAppTheme) {
+            window.MyniAppTheme.setDefault(state.theme === 'light' ? 'light' : 'dark');
+            state.theme = window.MyniAppTheme.get();
+        }
         applyTheme(state.theme);
+        saveState();
+        watchSharedTheme();
         renderProjects();
         setInterval(updateCountdowns, 1000);
     </script>

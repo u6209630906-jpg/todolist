@@ -363,6 +363,7 @@
         .install-btn svg { flex-shrink: 0; }
         .offline-note { display: block; margin-top: 4px; color: var(--text-secondary); }
 </style>
+<script src="pwa.js"></script>
 </head>
 <body>
     <!-- Background -->
@@ -461,7 +462,6 @@
         </div>
     </div>
 
-<script src="pwa.js" defer></script>
 <script>
     /* =========================================================
        MYNIAPP — AUDIO
@@ -555,11 +555,15 @@
     }
 
     function applyTheme(value) {
-        if (value === 'light') document.body.classList.add('light');
-        else document.body.classList.remove('light');
+        if (window.MyniAppTheme) {
+            window.MyniAppTheme.apply(value);
+        } else {
+            if (value === 'light') document.body.classList.add('light');
+            else document.body.classList.remove('light');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', value === 'light' ? '#f0f2f5' : '#0a0a14');
+        }
         updateThemeIcon(value);
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', value === 'light' ? '#f0f2f5' : '#0a0a14');
     }
 
     function updateThemeIcon(value) {
@@ -580,8 +584,20 @@
         }
         theme = theme === 'dark' ? 'light' : 'dark';
         applyTheme(theme);
-        saveTheme(theme);
+        if (window.MyniAppTheme) window.MyniAppTheme.set(theme, true);
+        else saveTheme(theme);
         playPopSound();
+    }
+
+    // Il tema è unico per tutta la MyniApp: se cambia in un'altra scheda,
+    // questa pagina si aggiorna subito.
+    function watchSharedTheme() {
+        if (!window.MyniAppTheme) return;
+        window.MyniAppTheme.onChange(function (value) {
+            theme = value;
+            applyTheme(value);
+            saveTheme(value);
+        });
     }
 
     /* =========================================================
@@ -605,6 +621,14 @@
     var saved = readSavedTheme();
     theme = (saved === 'light' || saved === 'dark') ? saved : systemTheme();
     applyTheme(theme);
+    // Il tema condiviso è la fonte unica: allinea la home alle altre app.
+    if (window.MyniAppTheme) {
+        window.MyniAppTheme.setDefault(theme);
+        theme = window.MyniAppTheme.get();
+        applyTheme(theme);
+        saveTheme(theme);
+    }
+    watchSharedTheme();
     initAppLinks();
     if (!playBootOnce()) armBootSound();
 </script>

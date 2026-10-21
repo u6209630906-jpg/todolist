@@ -1,10 +1,10 @@
-﻿/* MyniApp â€” service worker.
+/* MyniApp â€” service worker.
    Rende le mini app disponibili anche offline: la "shell" (pagine, icone,
    manifest) viene salvata all'installazione, le librerie caricate da CDN e le
    pagine visitate vengono messe in cache al primo uso. Le richieste di rete
    verso i relay (presenza, segnalazione P2P) non vengono mai messe in cache. */
 
-const VERSION = 'myniapp-v3';
+const VERSION = 'myniapp-v7';
 const SHELL_CACHE = VERSION + '-shell';
 const RUNTIME_CACHE = VERSION + '-runtime';
 
@@ -27,7 +27,9 @@ const SHELL_ASSETS = [
 // le salvo subito cosÃ¬ le app restano utilizzabili anche senza rete.
 const CDN_ASSETS = [
   'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'
+  'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js',
+  'https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
 // Host che rispondono con dati live (presenza, segnalazione, database): mai in cache.
@@ -77,6 +79,15 @@ function isCacheable(request, url) {
   return true;
 }
 
+async function matchCached(cache, request) {
+  var hit = await cache.match(request, { ignoreVary: true });
+  if (hit) return hit;
+  // Le risorse esterne possono essere salvate con una modalità diversa da
+  // quella usata dalla pagina: riprovo per URL.
+  if (typeof request === 'string') return cache.match(request, { ignoreVary: true });
+  return cache.match(request.url, { ignoreVary: true });
+}
+
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
@@ -84,7 +95,7 @@ async function networkFirst(request, cacheName) {
     if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone());
     return response;
   } catch (e) {
-    const cached = await cache.match(request, { ignoreSearch: true });
+    const cached = await matchCached(cache, request);
     if (cached) return cached;
     if (request.mode === 'navigate') {
       const shell = await caches.open(SHELL_CACHE);
@@ -96,7 +107,7 @@ async function networkFirst(request, cacheName) {
 
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const cached = await matchCached(cache, request);
   const network = fetch(request).then((response) => {
     if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone());
     return response;

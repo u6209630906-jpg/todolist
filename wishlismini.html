@@ -1078,7 +1078,7 @@
 
         .price-inline { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
 </style>
-    <script src="pwa.js" defer></script>
+    <script src="pwa.js"></script>
 </head>
 <body>
     <!-- Background -->
@@ -2218,7 +2218,18 @@
             state.theme = state.theme === 'dark' ? 'light' : 'dark';
             applyTheme(state.theme);
             playPopSound();
-            Store.put('meta', state.theme, 'theme').catch(function () { });
+            // Un unico tema per tutta la MyniApp: lo salva il modulo condiviso.
+            if (window.MyniAppTheme) window.MyniAppTheme.set(state.theme, true);
+            else Store.put('meta', state.theme, 'theme').catch(function () { });
+        }
+
+        function watchSharedTheme() {
+            if (!window.MyniAppTheme) return;
+            window.MyniAppTheme.onChange(function (value) {
+                state.theme = value;
+                applyTheme(value);
+                Store.put('meta', value, 'theme').catch(function () { });
+            });
         }
 
         // ---------- TOAST ----------
@@ -5716,9 +5727,19 @@
 
             await Store.init();
             await initDataProtection();
-            var theme = await Store.get('meta', 'theme');
-            state.theme = (theme === 'light') ? 'light' : 'dark';
+            if (window.MyniAppTheme) {
+                // Il tema è unico per la MyniApp: quello delle vecchie versioni
+                // viene usato solo per la prima migrazione.
+                var legacyTheme = await Store.get('meta', 'theme');
+                window.MyniAppTheme.setDefault(legacyTheme === 'light' ? 'light' : 'dark');
+                state.theme = window.MyniAppTheme.get();
+                Store.put('meta', state.theme, 'theme').catch(function () { });
+            } else {
+                var theme = await Store.get('meta', 'theme');
+                state.theme = (theme === 'light') ? 'light' : 'dark';
+            }
             applyTheme(state.theme);
+            watchSharedTheme();
             state.directory.notify = (await Store.get('meta', 'directoryNotify')) === true;
 
             await refreshGateUsers();
