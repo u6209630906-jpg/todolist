@@ -16,6 +16,7 @@
         }
 
         :root {
+            color-scheme: dark;
             /* DARK THEME (default) */
             --bg-base-1: #0a0a14;
             --bg-base-2: #05050a;
@@ -64,6 +65,7 @@
             --icon-btn-hover: rgba(255, 255, 255, 0.08);
             --icon-btn-danger-hover: rgba(255, 80, 70, 0.1);
             --icon-btn-danger-color: #ff6b6b;
+            --due-soon: #fbbf24;
 
             --danger-bg: rgba(255, 80, 70, 0.9);
             --danger-bg-hover: rgba(255, 80, 70, 1);
@@ -96,6 +98,7 @@
 
         /* LIGHT THEME */
         body.light {
+            color-scheme: light;
             --bg-base-1: #f0f2f5;
             --bg-base-2: #e4e7ec;
             --bg-radial-1: #dbeafe;
@@ -143,6 +146,7 @@
             --icon-btn-hover: rgba(15, 23, 42, 0.06);
             --icon-btn-danger-hover: rgba(220, 38, 38, 0.08);
             --icon-btn-danger-color: #dc2626;
+            --due-soon: #b45309;
 
             --danger-bg: rgba(220, 38, 38, 0.9);
             --danger-bg-hover: rgba(220, 38, 38, 1);
@@ -418,6 +422,31 @@
             color: var(--text-primary);
         }
 
+        .task-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .task-content .task-text,
+        .task-content .task-edit-input {
+            width: 100%;
+            overflow-wrap: anywhere;
+        }
+
+        .task-countdown {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.1px;
+            line-height: 1.3;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.2s;
+        }
+        .task-countdown.soon { color: var(--due-soon); }
+        .task-countdown.overdue { color: var(--danger-icon-color); }
+
         .task-edit-input {
             flex: 1;
             background: var(--edit-input-bg);
@@ -547,9 +576,10 @@
             -webkit-backdrop-filter: blur(40px) saturate(180%);
             border: 0.5px solid var(--glass-border);
             border-radius: 18px;
-            padding: 6px 6px 6px 18px;
+            padding: 12px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: stretch;
             gap: 8px;
             box-shadow:
                 var(--glass-shadow),
@@ -566,18 +596,81 @@
             background: linear-gradient(180deg, var(--glass-highlight), transparent);
             pointer-events: none;
         }
-        .add-task-bar input {
+        .add-task-bar input[type="text"] {
             flex: 1;
+            min-width: 0;
+            width: 100%;
             background: transparent;
             border: none;
             outline: none;
             color: var(--text-primary);
             font-size: 16px;
-            padding: 10px 0;
+            padding: 6px 4px;
             position: relative;
             z-index: 1;
         }
-        .add-task-bar input::placeholder { color: var(--text-tertiary); }
+        .add-task-bar input[type="text"]::placeholder { color: var(--text-tertiary); }
+
+        .add-task-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .due-field {
+            flex: 1 1 140px;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 12px;
+            border: 0.5px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .due-field:focus-within {
+            border-color: var(--input-focus-border);
+            background: var(--input-focus-bg);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+        .due-field svg { flex-shrink: 0; }
+        .due-field input {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .due-field input::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+        .due-field.has-value { color: var(--text-secondary); }
+        .due-clear {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 0;
+            line-height: 0;
+            flex-shrink: 0;
+        }
+        .due-field.has-value .due-clear { display: flex; }
+        .due-clear:hover { color: var(--text-primary); }
+
 
         .add-btn {
             background: var(--btn-primary-bg);
@@ -592,6 +685,8 @@
             white-space: nowrap;
             position: relative;
             z-index: 1;
+            flex: 1 1 auto;
+            min-width: 88px;
         }
         .add-btn:hover { background: var(--btn-primary-hover); }
         .add-btn:active { transform: scale(0.97); }
@@ -905,7 +1000,20 @@
             <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
                 <div class="add-task-bar" style="margin-bottom: 20px;">
                     <input id="taskInput" type="text" placeholder="Aggiungi attività..." onkeydown="if(event.key==='Enter') addTask()">
-                    <button onclick="addTask()" class="add-btn">Aggiungi</button>
+                    <div class="add-task-row">
+                        <label class="due-field" id="taskDueField" title="Scadenza (opzionale)" onclick="handleDueFieldClick(event)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="pointer-events: none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 3v4m8-4v4M4 9h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <input id="taskDueDate" type="date" aria-label="Data di scadenza" onchange="syncDueFieldState()" onkeydown="if(event.key==='Enter') addTask()">
+                            <button type="button" class="due-clear" aria-label="Rimuovi data" onclick="clearDueDate(event)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </label>
+                        <button onclick="addTask()" class="add-btn">Aggiungi</button>
+                    </div>
                 </div>
 
                 <div id="taskList" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -1303,7 +1411,11 @@
                 version: 1,
                 project: {
                     name: project.name,
-                    tasks: project.tasks.map(t => ({ text: t.text, createdAt: t.createdAt || Date.now() }))
+                    tasks: project.tasks.map(t => ({
+                        text: t.text,
+                        createdAt: t.createdAt || Date.now(),
+                        dueDate: Number(t.dueDate) > 0 ? Number(t.dueDate) : null
+                    }))
                 }
             };
             try {
@@ -1455,7 +1567,13 @@
                 const text = String((item && item.text) || '').replace(/\s+/g, ' ').trim().slice(0, P2P_MAX_TASK_TEXT);
                 if (!text) return null;
                 const createdAt = Number(item && item.createdAt);
-                return { id: generateId(), text, createdAt: Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now() };
+                const dueDate = Number(item && item.dueDate);
+                return {
+                    id: generateId(),
+                    text,
+                    createdAt: Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now(),
+                    dueDate: Number.isFinite(dueDate) && dueDate > 0 ? dueDate : null
+                };
             }).filter(Boolean) : [];
             return { name, tasks };
         }
@@ -1638,17 +1756,102 @@
             }
             empty.classList.add('hidden');
 
-            list.innerHTML = project.tasks.map((task, index) => `
+            list.innerHTML = project.tasks.map((task, index) => {
+                const dueDate = Number(task.dueDate) > 0 ? Number(task.dueDate) : null;
+                const dueTitle = dueDate ? `Scadenza: ${formatDueDateLabel(dueDate)}` : '';
+                return `
                 <div id="task-${task.id}" class="task-item glass fade-in" style="border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; animation-delay: ${index * 0.03}s">
                     <input type="checkbox" class="ios-checkbox" onchange="completeTask('${task.id}', this)">
-                    <span id="task-text-${task.id}" class="task-text hint" style="flex: 1; font-size: 15px; color: var(--text-primary); letter-spacing: -0.1px;" ondblclick="startEditTask('${task.id}')">${escapeHtml(task.text)}</span>
+                    <div class="task-content">
+                        <span id="task-text-${task.id}" class="task-text hint" style="font-size: 15px; color: var(--text-primary); letter-spacing: -0.1px;" ondblclick="startEditTask('${task.id}')">${escapeHtml(task.text)}</span>
+                        ${dueDate ? `<span class="task-countdown" data-due="${dueDate}" title="${dueTitle}"></span>` : ''}
+                    </div>
                     <button onclick="deleteTask('${task.id}')" class="icon-btn">
                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
+
+            updateCountdowns();
+        }
+
+        // === SCADENZE E COUNTDOWN ===
+        function openDuePicker() {
+            const input = document.getElementById('taskDueDate');
+            if (typeof input.showPicker === 'function') {
+                try { input.showPicker(); return; } catch (e) { /* fallback sotto */ }
+            }
+            input.focus();
+        }
+
+        function handleDueFieldClick(event) {
+            const target = event.target;
+            if (target.closest('.due-clear')) return;
+            if (target.id === 'taskDueDate') return;
+            openDuePicker();
+        }
+
+        function syncDueFieldState() {
+            const field = document.getElementById('taskDueField');
+            const input = document.getElementById('taskDueDate');
+            field.classList.toggle('has-value', !!input.value);
+        }
+
+        function clearDueDate(event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const input = document.getElementById('taskDueDate');
+            input.value = '';
+            syncDueFieldState();
+            document.getElementById('taskInput').focus();
+        }
+
+        function parseDueDateInput(value) {
+            if (!value) return null;
+            const parts = String(value).split('-').map(Number);
+            if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+            const date = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999);
+            return Number.isNaN(date.getTime()) ? null : date.getTime();
+        }
+
+        function formatDueDateLabel(timestamp) {
+            return new Date(timestamp).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+
+        function formatCountdown(dueTimestamp, now) {
+            const diff = dueTimestamp - now;
+            const overdue = diff < 0;
+            const abs = Math.abs(diff);
+            const totalMinutes = Math.floor(abs / 60000);
+            const days = Math.floor(totalMinutes / 1440);
+            const hours = Math.floor((totalMinutes % 1440) / 60);
+            const minutes = totalMinutes % 60;
+            const seconds = Math.floor((abs % 60000) / 1000);
+
+            let value;
+            if (days > 0) value = `${days}g ${hours}h`;
+            else if (hours > 0) value = `${hours}h ${minutes}m`;
+            else value = `${minutes}m ${seconds}s`;
+
+            return {
+                overdue,
+                soon: !overdue && abs <= 3600000,
+                text: overdue ? `Scaduta da ${value}` : `Mancano ${value}`
+            };
+        }
+
+        function updateCountdowns() {
+            const now = Date.now();
+            document.querySelectorAll('.task-countdown[data-due]').forEach(el => {
+                const due = Number(el.getAttribute('data-due'));
+                if (!Number.isFinite(due) || due <= 0) return;
+                const info = formatCountdown(due, now);
+                el.textContent = `${info.overdue ? '⏰' : '⏳'} ${info.text}`;
+                el.classList.toggle('overdue', info.overdue);
+                el.classList.toggle('soon', info.soon);
+            });
         }
 
         // === EDIT TASK ===
@@ -1773,14 +1976,18 @@
         // === TASK OPERATIONS ===
         function addTask() {
             const input = document.getElementById('taskInput');
+            const dateInput = document.getElementById('taskDueDate');
             const text = input.value.trim();
             if (!text) return;
             const project = state.projects.find(p => p.id === state.currentProjectId);
             if (!project) return;
-            project.tasks.push({ id: generateId(), text, createdAt: Date.now() });
+            const dueDate = parseDueDateInput(dateInput.value);
+            project.tasks.push({ id: generateId(), text, createdAt: Date.now(), dueDate });
             saveState();
             renderTasks();
             input.value = '';
+            dateInput.value = '';
+            syncDueFieldState();
             input.focus();
             playAddSound();
         }
@@ -1841,6 +2048,7 @@
         loadState();
         applyTheme(state.theme);
         renderProjects();
+        setInterval(updateCountdowns, 1000);
     </script>
 </body>
 </html>
